@@ -1,0 +1,93 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+    
+                <div class="card-header pb-0">
+                    <div class="d-lg-flex">
+                        <div>
+                            <h5 class="mb-0">List View</h5>
+                        </div>
+                        <div class="ms-auto my-auto mt-lg-0 mt-4">
+                            <div class="ms-auto my-auto">
+                                <a href="{% url 'purchase:create_purchase_items' %}" class="btn bg-gradient-primary btn-sm mb-0">+&nbsp; Add</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body px-0 pb-0">
+                    <div class="table-responsive">
+                        <div class="dataTable-wrapper dataTable-loading no-footer sortable searchable fixed-columns">
+                            <div class="dataTable-container">
+                                <table class="table table-flush dataTable-table" id="products-list">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th style="width: 2;text-align:center !important;">#</th>
+                                            <th style="text-align:center !important;">Date of Added</th>
+                                            <th style="text-align:left !important;">Creater</th>
+                                            <th style="text-align:left !important;">Item Name</th>
+                                            <th style="text-align:right !important;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% load el_pagination_tags %}
+                                        {% paginate 20 instances %}
+                                        {% for instance in instances %}
+                                        <tr>
+                                            <td class="text-sm text-center" style="">{{ forloop.counter }}</td>
+                                            <td class="text-sm  text-center" >{{ instance.date_added }}</td>
+                                            <td class="text-sm text-left text-capitalize">{{ instance.get_user }}</td>
+                                            <td class="text-sm text-left text-capitalize">{{ instance.name }}</td>
+                                            <td style="text-align:right !important;">
+                                                <a href="{% url 'purchase:edit_purchase_item' pk=instance.pk %}" class="mx-3">
+                                                    <i class="fas fa-user-edit text-secondary" aria-hidden="true"></i>
+                                                </a>
+                                                <a class="action-button remove" href="{% url 'purchase:delete_purchase_items' pk=instance.pk %}" data-id="{{instance.pk}}" data-text="{{confirm_delete_message}}" data-title="Are you sure?" data-bs-toggle="tooltip" data-bs-original-title="Delete">
+                                                    <i class="fas fa-trash text-secondary" aria-hidden="true"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {% comment %} <div class="clearfix"></div>
+                            <div class="row pagi my-3">
+                                <div class="col-sm-6 col-xs-6 text-left my-pagina">{% show_pages %}</div>
+                                <div class="col-sm-6 col-xs-6 text-right tot my-pagination align-items-center">
+                                    <div class="m-t-10">
+                                        Showing {{title}}
+                                        <span class="current_page_index">{{ pages.current_start_index }}</span> - <span
+                                        class="current_end_status"></span> of <span
+                                        class="total_count"></span>
+                                    </div>
+                                </div>
+                            </div> {% endcomment %}
+                            
+                            {% get_pages %}
+                            <div class="dataTable-bottom">
+                                <div class="dataTable-info">Showing {{ pages.current_start_index }} to {{ pages.current_end_index }} of {{ pages.total_count }} entries</div>
+                                <nav class="dataTable-pagination">
+                                    <ul class="dataTable-pagination-list">
+                                        <li class="pager"><a href="#" data-page="1">‹</a></li>
+                                        <li class="active"><a href="#" data-page="1">1</a></li>
+                                        <li class=""><a href="#" data-page="2">2</a></li>
+                                        <li class=""><a href="#" data-page="3">3</a></li>
+                                        <li class="pager"><a href="#" data-page="2">›</a></li>
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {%include 'admin_panel/includes/footer.html' %}
+</div>
+{% endblock content %}

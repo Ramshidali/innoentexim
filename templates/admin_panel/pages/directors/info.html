@@ -1,0 +1,43 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load main_templates_tags %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header min-height-300 border-radius-xl mt-4" style="background-image: url({% static 'admin_panel/assets/img/curved-images/curved0.jpg' %}); background-position-y: 50%;">
+        <span class="mask bg-gradient-primary opacity-6"></span>
+    </div>
+    <div class="card card-body blur shadow-blur mx-4 mt-n6 overflow-hidden">
+        <div class="row gx-4">
+            <div class="col-auto">
+                <div class="avatar avatar-xl position-relative">
+                    <img src="
+                            {% if user_details.image %}
+                            {{ user_details.image.url }}
+                            {% else %}
+                            {% static 'admin_panel/assets/img/bruce-mars.jpg' %}
+                            {% endif %}
+                        " alt="profile_image" height="80" class="w-100 border-radius-lg shadow-sm">
+                </div>
+            </div>
+            <div class="col-auto my-auto">
+                <div class="h-100">
+                    <h5 class="mb-1">{{user_details.first_name}} {{user_details.last_name}}</h5>
+                    <p class="mb-0 font-weight-bold text-sm">
+                        {% for group in user_details.user.groups.all %}
+                        {{ group.name|format_group_name }}
+                        {% endfor %}
+                    </p>
+                    <span class="badge bg-gradient-info mt-1">
+                        {% if user_details.employee_id %}
+                        {{user_details.employee_id}}
+                        {% elif user_details.investor_id %}
+                        {{user_details.investor_id}}
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

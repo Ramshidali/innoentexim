@@ -1,0 +1,96 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="multisteps-form mb-5">
+                <div class="row">
+                    <div class="col-12 col-lg-8 m-auto">
+                        <form action="." method="POST" enctype="multipart/form-data" class="multisteps-form__form mb-8 ajax redirect" style="height: 700px;">
+                            {% csrf_token %}
+                            <div class="card multisteps-form__panel p-3 border-radius-xl bg-white js-active" data-animation="FadeIn">
+                                <h5 class="font-weight-bolder mb-0">Purchase Items</h5>
+                                <p class="mb-0 text-sm">Add Items</p>
+                                <div class="row">
+                                    <div class="table-responsive card-body add_item_container purchase_items_formset">
+                                        <table id="data-table-basic" class="table table-striped table-vmiddle">
+                                            <tbody>
+                                                <th style="min-width: 15px;">Item Name</th>
+                                                <th style="min-width: 15px;"></th>
+                                                {% for item in purchase_items_formset.forms %}
+                                                <tr class="form_set_row purchase_items_formset">
+                                                    {{item.id}}
+                                                    <td>
+                                                        <span class="name">
+                                                            {{ item.name }}
+                                                        </span>
+                                                    </td>
+                                                    <td class="delete">
+                                                        {% if item.instance.pk %}{{ item.DELETE }}{% endif %}
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                        {{ purchase_items_formset.management_form }}
+                                    </div>
+                                </div>
+                                <div class="button-row d-flex mt-4">
+                                    <button class="btn bg-gradient-dark ms-auto mb-0" type="submit">Submit</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {%include 'admin_panel/includes/footer.html' %}
+</div>
+{% endblock content %}
+{% block static %}
+{% load static %}
+<style>
+    .dynamic-formset-add td{
+        text-align: center !important;
+    }
+    .dynamic-formset1-add td{
+        text-align: center !important;
+    }
+    .purchase_items_formset a.add-row::before{
+        content: "+ Add"
+    }
+    .purchase_items_formset a.remove::before{
+        content: "Remove"
+    }
+    .purchase_expense_formset a.add-row::before{
+        content: "+ Add"
+    }
+    .purchase_expense_formset a.remove::before{
+        content: "Remove"
+    }
+</style>
+<script>
+    $(document).ready(function () {
+        $('.purchase_items_formset table tr.form_set_row').formset({
+            prefix: '{{ purchase_items_formset.prefix }}',
+            formCssClass: 'dynamic-formset',
+
+            'added': function (row) {
+                
+            },
+        });
+        $('.purchase_expense_formset table tr.form_set_row').formset({
+            prefix: '{{ purchase_expense_formset.prefix }}',
+            formCssClass: 'dynamic-formset1',
+
+            'added': function (row) {
+                
+            },
+        });
+        
+    });
+</script>
+{% endblock static %}
