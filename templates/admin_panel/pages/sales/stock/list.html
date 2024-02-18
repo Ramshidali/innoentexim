@@ -1,0 +1,97 @@
+{% extends 'admin_panel/base.html' %}
+{% load sales_templates_tags %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+    
+                <div class="card-header pb-0">
+                    <div class="d-lg-flex">
+                        <div>
+                            <h5 class="mb-0">List View</h5>
+                        </div>
+                        <div class="ms-auto my-auto mt-lg-0 mt-4">
+                            <form action=".">
+                                <div class="ms-auto my-auto d-flex justify-content-center align-items-center">
+                                    <div class="d-flex justify-content-center align-items-center mx-2">
+                                        <label class="m-0 mx-2">Counrty</label>
+                                        <select class="form-control p-2" name="country">
+                                            <option value="">Select Country</option>
+                                            {% get_sales_countries as counties %}
+                                            {% for c in counties %}
+                                            <option value="{{c.pk}}" {% if filter_data.country == c.pk %} selected {% endif %}>{{c.country_name}}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn bg-gradient-info btn-sm mb-0 d-flex justify-content-center align-items-center"><i class="fa fa-filter m-0 p-0" aria-hidden="true"></i>&nbsp; Filter</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body px-0 pb-0">
+                    <div class="table-responsive">
+                        <div class="dataTable-wrapper dataTable-loading no-footer sortable searchable fixed-columns">
+                            <div class="dataTable-container">
+                                <table class="table table-flush dataTable-table">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th style="width: 2;text-align:center !important;">#</th>
+                                            <th style="text-align:center !important;">Items</th>
+                                            <th style="text-align:center !important;">Country</th>
+                                            <th style="text-align:center !important;">QTY</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% load el_pagination_tags %}
+                                        {% paginate 20 instances %}
+                                        {% for instance in instances %}
+                                        <tr>
+                                            <td class="text-sm" style="text-align:center !important;">{{ forloop.counter }}</td>
+                                            <td class="text-sm" style="text-align:center !important;">{{ instance.purchase_item.name }}</td>
+                                            <td class="text-sm" style="text-align:center !important;">{{ instance.country.country_name }}</td>
+                                            <td class="text-sm" style="text-align:center !important;">{{ instance.qty }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {% comment %} <div class="clearfix"></div>
+                            <div class="row pagi my-3">
+                                <div class="col-sm-6 col-xs-6 text-left my-pagina">{% show_pages %}</div>
+                                <div class="col-sm-6 col-xs-6 text-right tot my-pagination align-items-center">
+                                    <div class="m-t-10">
+                                        Showing {{title}}
+                                        <span class="current_page_index">{{ pages.current_start_index }}</span> - <span
+                                        class="current_end_status"></span> of <span
+                                        class="total_count"></span>
+                                    </div>
+                                </div>
+                            </div> {% endcomment %}
+                            
+                            {% get_pages %}
+                            <div class="dataTable-bottom">
+                                <div class="dataTable-info">Showing {{ pages.current_start_index }} to {{ pages.current_end_index }} of {{ pages.total_count }} entries</div>
+                                <nav class="dataTable-pagination">
+                                    <ul class="dataTable-pagination-list">
+                                        <li class="pager"><a href="#" data-page="1">‹</a></li>
+                                        <li class="active"><a href="#" data-page="1">1</a></li>
+                                        <li class=""><a href="#" data-page="2">2</a></li>
+                                        <li class=""><a href="#" data-page="3">3</a></li>
+                                        <li class="pager"><a href="#" data-page="2">›</a></li>
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {%include 'admin_panel/includes/footer.html' %}
+</div>
+{% endblock content %}

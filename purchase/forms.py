@@ -44,7 +44,7 @@ class PurchasedItemsForm(forms.ModelForm):
         fields = ['purchase_item','qty','amount']
 
         widgets = {
-            'purchase_item': Select(attrs={'class': 'required form-control','placeholder' : 'Enter Items'}),
+            'purchase_item': Select(attrs={'class': 'required form-control','placeholder' : 'Enter Items','style':'width: auto;'}),
             'qty': TextInput(attrs={'type':'number','class': 'required form-control','placeholder' : 'Enter QTY'}), 
             'amount': TextInput(attrs={'type':'number','class': 'form-control','placeholder' : 'Enter Amount'}), 
         }

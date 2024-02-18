@@ -12,19 +12,27 @@
                         <div>
                             <h5 class="mb-0">List View</h5>
                         </div>
+                        <div class="ms-auto my-auto mt-lg-0 mt-4">
+                            <div class="ms-auto my-auto">
+                                <a href="{% url 'sales_party:create_sales_party' %}" class="btn bg-gradient-primary btn-sm mb-0">+&nbsp; Add</a>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="card-body px-0 pb-0">
                     <div class="table-responsive">
                         <div class="dataTable-wrapper dataTable-loading no-footer sortable searchable fixed-columns">
                             <div class="dataTable-container">
-                                <table class="table table-flush dataTable-table">
+                                <table class="table table-flush dataTable-table" id="products-list">
                                     <thead class="thead-light">
                                         <tr>
                                             <th style="width: 2;text-align:center !important;">#</th>
-                                            <th style="text-align:center !important;">Exporting Items</th>
-                                            <th style="text-align:center !important;">Country</th>
-                                            <th style="text-align:center !important;">QTY</th>
+                                            <th style="text-align:center !important;">Party ID</th>
+                                            <th style="text-align:left !important;">First Name</th>
+                                            <th style="text-align:left !important;">Last Name</th>
+                                            <th style="text-align:left !important;">Email</th>
+                                            <th style="text-align:left !important;">Phone</th>
+                                            <th style="text-align:right !important;">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -32,10 +40,23 @@
                                         {% paginate 20 instances %}
                                         {% for instance in instances %}
                                         <tr>
-                                            <td class="text-sm" style="text-align:center !important;">{{ forloop.counter }}</td>
-                                            <td class="text-sm" style="text-align:center !important;">{{ instance.export_item.purchasestock.purchase_item.name }}</td>
-                                            <td class="text-sm" style="text-align:center !important;">{{ instance.country.country_name }}</td>
-                                            <td class="text-sm" style="text-align:center !important;">{{ instance.qty }}</td>
+                                            <td class="text-sm text-center" style="">{{ forloop.counter }}</td>
+                                            <td class="text-sm  text-center" >{{ instance.party_id }}</td>
+                                            <td class="text-sm text-left text-capitalize">{{ instance.first_name }}</td>
+                                            <td class="text-sm text-left text-capitalize">{{ instance.last_name }}</td>
+                                            <td class="text-sm text-left">{{ instance.email }}</td>
+                                            <td class="text-sm text-left">{{ instance.phone }}</td>
+                                            <td style="text-align:right !important;">
+                                                <a href="{% url 'sales_party:sales_party_info' pk=instance.pk %}" data-bs-toggle="tooltip" data-bs-original-title="Preview">
+                                                    <i class="fas fa-eye text-secondary" aria-hidden="true"></i>
+                                                </a>
+                                                <a href="{% url 'sales_party:edit_sales_party' pk=instance.pk %}" class="mx-3">
+                                                    <i class="fas fa-user-edit text-secondary" aria-hidden="true"></i>
+                                                </a>
+                                                <a class="action-button remove" href="{% url 'sales_party:delete_sales_party' pk=instance.pk %}" data-id="{{instance.pk}}" data-text="{{confirm_delete_message}}" data-title="Are you sure?" data-bs-toggle="tooltip" data-bs-original-title="Delete">
+                                                    <i class="fas fa-trash text-secondary" aria-hidden="true"></i>
+                                                </a>
+                                            </td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>

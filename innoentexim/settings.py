@@ -24,12 +24,14 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     
     'main',
+    'sales',
     'purchase',
     'coreteam',
     'investors',
     'exporting',
     'directors',
     'executieves',
+    'sales_party',
     'purchase_party',
 ]
 

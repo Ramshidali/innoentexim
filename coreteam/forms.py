@@ -2,18 +2,6 @@ from dal import autocomplete
 from django.forms.widgets import TextInput,Textarea,Select,DateInput,CheckboxInput,FileInput,PasswordInput
 from django import forms
 from . models import *
-
-# class DesignationForm(forms.ModelForm):
-
-#     class Meta:
-#         model = Designation
-#         fields = ['name','description']
-
-#         widgets = {
-#             'name': TextInput(attrs={'class': 'multisteps-form__input required form-control','placeholder' : 'Enter Name'}),
-#             'description': Textarea(attrs={'class': 'required form-control text-area','placeholder' : 'Enter Description','rows':'2'}), 
-#         }
-        
         
 class CoreTeamForm(forms.ModelForm):
     re_password = forms.CharField(
@@ -22,14 +10,13 @@ class CoreTeamForm(forms.ModelForm):
 
     class Meta:
         model = CoreTeam
-        fields = ['first_name','last_name','email','phone','date_of_birth','state','country','image','address','investment_amount','zip','password','re_password']
+        fields = ['first_name','last_name','email','phone','date_of_birth','state','country','image','address','zip','password','re_password']
 
         widgets = {
             'first_name': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter First Name'}), 
             'last_name': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Last Name'}), 
             'email': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Email'}), 
             'phone': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Phone Number'}), 
-            'investment_amount': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Investment Amount'}), 
             'date_of_birth': TextInput(attrs={'class': 'required form-control','id':'date_of_birth','name':'birthday','placeholder' : 'Enter Date of Birth'}), 
             'state': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter State'}), 
             'country': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Country'}), 
@@ -69,14 +56,13 @@ class CoreTeamEditForm(forms.ModelForm):
 
     class Meta:
         model = CoreTeam
-        fields = ['first_name','last_name','email','phone','date_of_birth','state','country','image','address','investment_amount','zip']
+        fields = ['first_name','last_name','email','phone','date_of_birth','state','country','image','address','zip']
 
         widgets = {
             'first_name': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter First Name'}), 
             'last_name': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Last Name'}), 
             'email': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Email'}), 
             'phone': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Phone Number'}), 
-            'investment_amount': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Investment Amount'}), 
             'date_of_birth': TextInput(attrs={'class': 'required form-control','id':'date_of_birth','name':'birthday','placeholder' : 'Enter Date of Birth'}), 
             'state': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter State'}), 
             'country': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Country'}), 

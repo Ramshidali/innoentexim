@@ -267,7 +267,16 @@ def create_director(request):
             data.date_updated = datetime.datetime.today()
             data.updater = request.user
             data.save()
+            
+            group_names = ["director",form.cleaned_data["department"].name]
 
+            for group_name in group_names:
+                if Group.objects.filter(name=group_name).exists():
+                    group = Group.objects.get(name=group_name)
+                else:
+                    group = Group.objects.create(name=group_name)
+                User.objects.get(pk=data.user.pk).groups.add(group)
+            
             response_data = {
                 "status": "true",
                 "title": "Successfully Created",

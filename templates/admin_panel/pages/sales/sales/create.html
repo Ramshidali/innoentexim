@@ -11,47 +11,45 @@
                         <form action="." method="POST" enctype="multipart/form-data" class="multisteps-form__form mb-8 ajax redirect" style="height: 700px;">
                             {% csrf_token %}
                             <div class="card multisteps-form__panel p-3 border-radius-xl bg-white js-active" data-animation="FadeIn">
-                                <h5 class="font-weight-bolder mb-0">Export</h5>
-                                <p class="mb-0 text-sm">Export info</p>
+                                <h5 class="font-weight-bolder mb-0">Sales</h5>
+                                <p class="mb-0 text-sm">Items Info</p>
                                 <div class="multisteps-form__content">
                                     <div class="row mt-3">
-                                        <div class="col-12 col-sm-6">
-                                            <label>Date</label>
-                                            {{exporting_form.date}}
-                                        </div>
                                         <div class="col-12 col-sm-6 mt-3 mt-sm-0">
-                                            <label>Exporting Country</label>
-                                            {{exporting_form.exporting_country}}
+                                            <label>Date</label>
+                                            {{form.date}}
                                         </div>
-                                    </div>
-                                    <div class="row">
                                         <div class="col-12 col-sm-6">
-                                            <label>Courier Partner</label>
-                                            {{exporting_form.courier_partner}}
+                                            <label>Country</label>
+                                            {{form.country}}
                                         </div>
+                                        <div class="col-12 col-sm-6">
+                                            <label>Sales Party</label>
+                                            {{form.sales_party}}
+                                        </div>                                        
                                     </div>
                                 </div>
 
                                 <div class="row">
-                                    <div class="table-responsive card-body add_item_container exporting_items_formset">
+                                    <div class="table-responsive card-body add_item_container sales_items_formset">
                                         <table id="data-table-basic" class="table table-striped table-vmiddle">
                                             <thead>
                                                 <tr>
-                                                    <th data-column-id="image" colspan="4">Add Exporting Items</th>
+                                                    <th data-column-id="image" colspan="4">Add Sales</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 <th style="min-width: 15px;">Items</th>
-                                                <th style="min-width: 15px;">QTY</th>
-                                                <th style="min-width: 15px;">Per KG Amount</th>
+                                                <th style="min-width: 15px;">Qty</th>
+                                                <th style="min-width: 15px;">Amount/KG</th>
                                                 <th style="min-width: 15px;">Amount</th>
                                                 <th style="min-width: 15px;"></th>
-                                                {% for item in exporting_items_formset.forms %}
-                                                <tr class="form_set_row exporting_items_formset">
+                                                {% for item in sales_items_formset.forms %}
+                                                <tr class="form_set_row sales_items_formset">
                                                     {{item.id}}
                                                     <td>
-                                                        <span class="purchasestock">
-                                                            {{ item.purchasestock }}
+                                                        <span class="sales_stock">
+                                                            {{ item.sales_stock }}
                                                         </span>
                                                     </td>
                                                     <td>
@@ -59,7 +57,7 @@
                                                             {{ item.qty }}
                                                         </span>
                                                     </td>
-                                                    <td class="">
+                                                    <td>
                                                         <span class="per_kg_amount">
                                                             {{ item.per_kg_amount }}
                                                         </span>
@@ -76,24 +74,24 @@
                                                 {% endfor %}
                                             </tbody>
                                         </table>
-                                        {{ exporting_items_formset.management_form }}
+                                        {{ sales_items_formset.management_form }}
                                     </div>
                                 </div>
 
                                 <div class="row">
-                                    <div class="table-responsive card-body add_item_container exporting_expense_formset">
+                                    <div class="table-responsive card-body add_item_container sales_expense_formset">
                                         <table id="data-table-basic" class="table table-striped table-vmiddle" style='margin-bottom:0 !important;'>
                                             <thead>
                                                 <tr>
-                                                    <th data-column-id="image" colspan="4">Add Exporting Expenses</th>
+                                                    <th data-column-id="image" colspan="4">Add Sales Expenses</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 <th style="min-width: 15px;">Title</th>
                                                 <th style="min-width: 15px;">Amount</th>
                                                 <th style="min-width: 15px;"></th>
-                                                {% for e_item in exporting_expense_formset.forms %}
-                                                <tr class="form_set_row exporting_expense_formset">
+                                                {% for e_item in sales_expense_formset.forms %}
+                                                <tr class="form_set_row sales_expense_formset">
                                                     {{e_item.id}}
                                                     <td>
                                                         <span class="title">
@@ -112,7 +110,7 @@
                                                 {% endfor %}
                                             </tbody>
                                         </table>
-                                        {{ exporting_expense_formset.management_form }}
+                                        {{ sales_expense_formset.management_form }}
                                     </div>
                                 </div>
 
@@ -138,31 +136,31 @@
     .dynamic-formset1-add td{
         text-align: center !important;
     }
-    .exporting_items_formset a.add-row::before{
+    .sales_items_formset a.add-row::before{
         content: "+ Add"
     }
-    .exporting_items_formset a.remove::before{
+    .sales_items_formset a.remove::before{
         content: "Remove"
     }
-    .exporting_expense_formset a.add-row::before{
+    .sales_expense_formset a.add-row::before{
         content: "+ Add"
     }
-    .exporting_expense_formset a.remove::before{
+    .sales_expense_formset a.remove::before{
         content: "Remove"
     }
 </style>
 <script>
     $(document).ready(function () {
-        $('.exporting_items_formset table tr.form_set_row').formset({
-            prefix: '{{ exporting_items_formset.prefix }}',
+        $('.sales_items_formset table tr.form_set_row').formset({
+            prefix: '{{ sales_items_formset.prefix }}',
             formCssClass: 'dynamic-formset',
 
             'added': function (row) {
                 
             },
         });
-        $('.exporting_expense_formset table tr.form_set_row').formset({
-            prefix: '{{ exporting_expense_formset.prefix }}',
+        $('.sales_expense_formset table tr.form_set_row').formset({
+            prefix: '{{ sales_expense_formset.prefix }}',
             formCssClass: 'dynamic-formset1',
 
             'added': function (row) {
@@ -173,7 +171,7 @@
     });
 </script>
 <script>
-    $(".purchase-item").change(function(){
+    $(".sales-item").change(function(){
         var itemValue = $(this).val();
         var digitValue = $(this).attr("id");
         var digitValue = digitValue.match(/\d+/);
@@ -182,19 +180,21 @@
             var digitValue = digitValue[0];
         }
 
-        var url = "{% url 'exporting:product_item_qty' %}"
+        var country = $('#id_country').val();
+        var url = "{% url 'sales:sales_item_qty' %}"
 
         $.ajax({
             type: 'GET',
             url: url,
             dataType: 'json',
             data: {
-                'purchase_item': itemValue,
+                'item_pk': itemValue,
+                'country': country,
             },
     
             success: function (data) {
                 var qty = data['qty'];
-                $("#id_exporting_items_formset-"+digitValue+"-qty").val(qty);
+                $("#id_sales_items_formset-"+digitValue+"-qty").val(qty);
             },
     
             error: function (data) {
@@ -209,12 +209,13 @@
         var elemId = $(this).attr("id");
         var formCount = elemId.match(/\d+/);
         var amount = parseFloat($(this).val()); // Parse the amount as a float
-        var qtyValue = parseFloat($("#id_exporting_items_formset-"+formCount+"-qty").val()); // Parse the qtyValue as a float
+        var qtyValue = parseFloat($("#id_sales_items_formset-"+formCount+"-qty").val()); // Parse the qtyValue as a float
     
         var totalAmount = qtyValue * amount;
     
         // Limit the totalAmount to two decimal places and update the field
-        $("#id_exporting_items_formset-"+formCount+"-amount").val(totalAmount.toFixed(2));
+        $("#id_sales_items_formset-"+formCount+"-amount").val(totalAmount.toFixed(2));
     });
+    
 </script>
 {% endblock static %}

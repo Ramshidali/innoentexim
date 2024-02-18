@@ -104,6 +104,12 @@ class Exporting(BaseModel):
             total += expense.amount
 
         return total
+    
+    def current_status(self):
+        status = ""
+        status = self.exportstatus_set.latest().get_status_display()
+        
+        return status
 
 class ExportItem(BaseModel):
     qty = models.PositiveIntegerField()
@@ -135,33 +141,21 @@ class ExportExpense(BaseModel):
     def __str__(self):
         return f'{self.title} {self.amount}'
     
-
-class ExportingStock(BaseModel):
-    qty = models.DecimalField(max_digits=10, decimal_places=2)
-    
-    export = models.ManyToManyField(Exporting)
-    purchase_item = models.ForeignKey(PurchaseItems, on_delete=models.CASCADE)
-    country = models.ForeignKey(ExportingCountry, on_delete=models.CASCADE)
-    
-    class Meta:
-        db_table = 'exporting_stock'
-        verbose_name = ('Exporting Stock')
-        verbose_name_plural = ('Exporting Stock')
-    
-    def __str__(self):
-        return f'{self.pk}'
-    
-    
+        
 class ExportStatus(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     date_added = models.DateTimeField(db_index=True, auto_now_add=True)
     status = models.CharField(max_length=200,choices=EXPORT_STATUS, default="010")
+    caption = models.TextField()
     export = models.ForeignKey(Exporting, on_delete=models.CASCADE)
+    creator = models.ForeignKey(
+        "auth.User", blank=True, related_name="creator_%(class)s_objects", on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'export_status'
         verbose_name = ('Export Status')
         verbose_name_plural = ('Export Status')
+        get_latest_by = ('date_added')
 
     def __str__(self):
-        return f'{self.status_display}'
+        return f'{self.status}'

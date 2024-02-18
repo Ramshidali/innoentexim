@@ -31,6 +31,7 @@
                                             <th style="text-align:center !important;">Exporting ID</th>
                                             <th style="text-align:center !important;">Country</th>
                                             <th style="text-align:center !important;">Courier Partner</th>
+                                            <th style="text-align:center !important;">Current Status</th>
                                             <th style="text-align:right !important;">QTY</th>
                                             <th style="text-align:right !important;">Amount</th>
                                             <th style="text-align:right !important;">Expence</th>
@@ -48,6 +49,17 @@
                                             <td class="text-sm" style="text-align:center !important;">{{ instance.exporting_id }}</td>
                                             <td class="text-sm" style="text-align:center !important;">{{ instance.exporting_country.country_name }}</td>
                                             <td class="text-sm" style="text-align:center !important;">{{ instance.courier_partner.employee_id }}</td>
+                                            <td class="text-sm" style="text-align:center !important;">
+                                                {% if instance.current_status == "Pending" %}
+                                                <span class="badge bg-gradient-warning" data-bs-toggle="modal" data-bs-target="#exampleModalMessage" data-unique_id="{{instance.pk}}" onclick="handleButtonClick(this)">{{ instance.current_status }}</span>
+                                                {% elif instance.current_status == "Shipped" %}
+                                                <span class="badge bg-gradient-primary" data-bs-toggle="modal" data-bs-target="#exampleModalMessage" data-unique_id="{{instance.pk}}" onclick="handleButtonClick(this)">{{ instance.current_status }}</span>
+                                                {% elif instance.current_status == "Out of Delivery" %}
+                                                <span class="badge bg-gradient-info" data-bs-toggle="modal" data-bs-target="#exampleModalMessage" data-unique_id="{{instance.pk}}" onclick="handleButtonClick(this)">{{ instance.current_status }}</span>
+                                                {% elif instance.current_status == "Delived" %}
+                                                <span class="badge bg-gradient-success" data-bs-toggle="modal" data-bs-target="#DelivedModalMessage" data-unique_id="{{instance.pk}}" onclick="handleButtonClick(this)">{{ instance.current_status }}</span>
+                                                {% endif %}
+                                            </td>
                                             <td class="text-sm" style="text-align:right !important;">{{ instance.total_qty }}</td>
                                             <td class="text-sm" style="text-align:right !important;">{{ instance.items_total_amount }}</td>
                                             <td class="text-sm" style="text-align:right !important;">{{ instance.items_total_expense }}</td>
@@ -103,4 +115,77 @@
     </div>
     {%include 'admin_panel/includes/footer.html' %}
 </div>
+
+<!-- Modal -->
+<div class="modal fade" id="exampleModalMessage" tabindex="-1" role="dialog" aria-labelledby="exampleModalMessageTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Update Status</h5>
+          <button type="button" class="btn-close text-dark" data-bs-dismiss="modal" aria-label="Close" onclick="clearForm()">
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
+        <form action="{% url 'exporting:update_expoting_status' %}" method="POST" enctype="multipart/form-data" class="ajax redirect">
+            <div class="modal-body">
+                {% csrf_token %}
+                {% comment %} <input type="hidden" name="export_id" class="form-control" id="exportIdModalField"> {% endcomment %}
+                {{status_form.export_id}}
+                <div class="form-group">
+                    <label for="recipient-name" class="col-form-label">Status:</label>
+                    {{status_form.status}}
+                    {% comment %} <select class="form-control" id="exportStatusField">
+                        <option value="">Select Status</option>
+                        <option value="010">Pending</option>
+                        <option value="015">Shipped</option>
+                        <option value="020">Out of Delivery</option>
+                        <option value="025">Delived</option>
+                    </select> {% endcomment %}
+                </div>
+                <div class="form-group">
+                    <label for="message-text" class="col-form-label">Caption:</label>
+                    {{status_form.caption}}
+                    {% comment %} <textarea class="form-control" id="message-text"></textarea> {% endcomment %}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn bg-gradient-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" class="btn bg-gradient-primary" >Submit</button>
+            </div>
+        </form>
+      </div>
+    </div>
+</div>
+
+<!-- Delived Modal -->
+<div class="modal fade" id="DelivedModalMessage" tabindex="-1" role="dialog" aria-labelledby="DelivedModalMessageTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content bg-gradient-success">
+            <div class="modal-body">
+                <button type="button" class="btn-close float-end" data-bs-dismiss="modal" aria-label="Close" onclick="clearForm()">
+                    <span aria-hidden="true">×</span>
+                </button>
+                <div class="text-center text-white py-3">
+                    <p class="p-0 m-0">This is Item Delivered.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock content %}
+{% block static %}
+{% load static %}
+<script>
+    function handleButtonClick(button) {
+        var exportId = $(button).attr("data-unique_id");
+        $("#exportIdModalField").val(exportId);
+    };
+
+    function clearForm() {
+        // Clear the form fields
+        document.getElementById('exportIdModalField').value = '';
+        document.getElementById('exportStatusField').value = '';
+      }
+  </script>
+{% endblock static %}

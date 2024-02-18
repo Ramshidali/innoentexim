@@ -4,6 +4,8 @@ from . import views
 app_name = 'exporting'
 
 urlpatterns = [
+    re_path(r'product-item-qty/$', views.product_item_qty, name='product_item_qty'),
+      
     re_path(r'export-country-list/$', views.export_countries, name='export_countries'),
     re_path(r'create-export-country/$', views.create_export_country, name='create_export_country'),
     re_path(r'^edit-export-country/(?P<pk>.*)/$', views.edit_export_country, name='edit_export_country'),
@@ -20,8 +22,7 @@ urlpatterns = [
     re_path(r'^create-export/$', views.create_exporting, name='create_exporting'),
     re_path(r'^edit-export/(?P<pk>.*)/$', views.edit_exporting, name='edit_exporting'),
     re_path(r'^delete-export/(?P<pk>.*)/$', views.delete_exporting, name='delete_exporting'),   
-    
-    re_path(r'export-stock/$', views.export_stock, name='export_stock'),
+    re_path(r'^update-export-status/$', views.update_expoting_status, name='update_expoting_status'),   
 ]
 
 

@@ -1,46 +1,33 @@
+#django
 from django.db import models
 from django.contrib.auth.models import User
-
+#third party
 from versatileimagefield.fields import VersatileImageField
-
+#local
 from main.models import BaseModel
 from main.variables import phone_regex
 
 # Create your models here.
-# class Designation(BaseModel):
-#     name = models.CharField(max_length=200)
-#     description = models.TextField(blank=True,null=True)
-    
-#     class Meta:
-#         db_table = 'core_team_designation'
-#         verbose_name = ('Designation')
-#         verbose_name_plural = ('Designation')
-    
-#     def __str__(self):
-#         return str(self.name)
-
-
-class CoreTeam(BaseModel):
-    employee_id = models.CharField(max_length=100)
+class SalesParty(BaseModel):
+    party_id = models.CharField(max_length=15)
     first_name = models.CharField(max_length=200)
     last_name = models.CharField(max_length=200)
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=10, validators=[phone_regex], unique=True)
     date_of_birth = models.DateField()
+    gst_no = models.CharField(max_length=15)
     address = models.TextField()
-    password = models.CharField(max_length=256,null=True,blank=True)
     state = models.CharField(max_length=200)
     country = models.CharField(max_length=200)
     zip = models.CharField(max_length=200)
-    
-    image = VersatileImageField('Image', upload_to="core_team/profile_pic", blank=True, null=True)
+    image = VersatileImageField('Image', upload_to="sales_party/profile_pic", blank=True, null=True)
     
     user = models.OneToOneField(User,on_delete=models.CASCADE,blank=True,null=True)
     
     class Meta:
-        db_table = 'core_team'
-        verbose_name = ('Core Team')
-        verbose_name_plural = ('Core Team')
+        db_table = 'sales_party'
+        verbose_name = ('Sales Party')
+        verbose_name_plural = ('Sales Party')
         
     def __str__(self):
         return f'{self.first_name} {self.last_name}'

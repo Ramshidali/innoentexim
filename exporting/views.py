@@ -11,15 +11,40 @@ from django.contrib.auth.models import User,Group
 from django.shortcuts import get_object_or_404, render
 from django.contrib.auth.decorators import login_required
 from django.forms import formset_factory, inlineformset_factory
-#local
+# rest framework
+from rest_framework import status
+# local
+from sales.models import SalesStock
 from executieves.models import Executive
-from exporting.forms import CourierPartnerForm, ExportingCountryForm, ExportingExpenseForm, ExportingForm, ExportingItemsForm, ExportingStatusForm
+from purchase.models import PurchaseStock
 from main.decorators import role_required
 from main.functions import generate_form_errors, get_auto_id, get_current_role, has_group
-from purchase.models import PurchaseStock
-from . models import CourierPartner, ExportExpense, ExportItem, Exporting, ExportingCountry, ExportingStock
+from . models import CourierPartner, ExportExpense, ExportItem, ExportStatus, Exporting, ExportingCountry
+from exporting.forms import CourierPartnerForm, ExportingCountryForm, ExportingExpenseForm, ExportingForm, ExportingItemsForm, ExportingStatusForm
 
 # Create your views here.
+def product_item_qty(request):
+    print("enter")
+    item_pk = request.GET.get("purchase_item")
+    
+    if (instances:=PurchaseStock.objects.filter(pk=item_pk,is_deleted=False)).exists():
+        qty = instances.first().qty
+        
+        status_code = status.HTTP_200_OK
+        response_data = {
+            "status": "true",
+            "qty": str(qty),
+        }
+    else:
+        status_code = status.HTTP_404_NOT_FOUND
+        response_data = {
+            "status": "false",
+            "title": "Failed",
+            "message": "item not found",
+        }
+
+    return HttpResponse(json.dumps(response_data),status=status_code, content_type="application/json")
+
 @login_required
 @role_required(['superadmin','core_team','office_executive'])
 def export_countries(request):
@@ -425,7 +450,6 @@ def delete_courier_partner(request, pk):
 
     return HttpResponse(json.dumps(response_data), content_type='application/javascript')
 
-
 @login_required
 @role_required(['superadmin','core_team','office_executive'])
 def exporting(request,pk):
@@ -500,6 +524,7 @@ def exporting_list(request):
     
     context = {
         'instances': instances,
+        'status_form': ExportingStatusForm(),
         'page_name' : 'Exporting Report',
         'page_title' : 'Exporting Report',
         'filter_data' :filter_data,
@@ -560,23 +585,6 @@ def create_exporting(request):
                             purchase_stock.qty -= item_data.qty
                             purchase_stock.save()
                             
-                        # if (update_exporting_stock:=ExportingStock.objects.filter(export_item=item_data,country=exporting_data.exporting_country,is_deleted=False)).exists():
-                        #     stock = ExportingStock.objects.get(export_item=item_data,country=exporting_data.exporting_country,is_deleted=False)
-                        #     stock.qty += item_data.qty
-                        #     if not update_exporting_stock.filter(export=exporting_data).exists():
-                        #         stock.export.add(exporting_data)
-                        #     stock.save()
-                        # else:
-                        #     stock_item = ExportingStock.objects.create(
-                        #         auto_id = get_auto_id(ExportingStock),
-                        #         creator = request.user,
-                        #         export_item = item_data,
-                        #         qty = item_data.qty,
-                        #         country = exporting_data.exporting_country,
-                        #     )
-                        #     stock_item.export.add(exporting_data)
-                        #     stock_item.save()
-                    
                     for form in exporting_expense_formset:
                         expense_data = form.save(commit=False)
                         expense_data.auto_id = get_auto_id(ExportExpense)
@@ -584,12 +592,15 @@ def create_exporting(request):
                         expense_data.export = exporting_data
                         expense_data.save()
                         
+                    ExportStatus.objects.create(
+                        export = exporting_data,
+                        creator = request.user,
+                    )
                     
-                        
                     response_data = {
                         "status": "true",
                         "title": "Successfully Created",
-                        "message": "Product created successfully.",
+                        "message": "Export created successfully.",
                         'redirect': 'true',
                         "redirect_url": reverse('exporting:exporting_list')
                     }
@@ -599,7 +610,7 @@ def create_exporting(request):
                 response_data = {
                     "status": "false",
                     "title": "Failed",
-                    "message": "Integrity error occurred. Please check your data.",
+                    "message": str(e),
                 }
 
             except Exception as e:
@@ -833,28 +844,6 @@ def delete_exporting(request, pk):
     
     return HttpResponse(json.dumps(response_data), content_type='application/javascript')
 
-
-@login_required
-@role_required(['superadmin','core_team','office_executive'])
-def export_stock(request):
-    """
-    Export Stock
-    :param request:
-    :return: Export Stock List
-    """
-    instances = ExportingStock.objects.filter(is_deleted=False)
-    
-    context = {
-        'instances': instances,
-        'page_name' : 'Export Stock',
-        'page_title' : 'Export Stock',
-        'is_exporting' : True,
-        'is_export_stock_page': True,
-    }
-
-    return render(request, 'admin_panel/pages/export/stock/list.html', context)
-
-
 @login_required
 @role_required(['superadmin','core_team'])
 def update_expoting_status(request):
@@ -864,19 +853,45 @@ def update_expoting_status(request):
     :param pk:
     :return:
     """
+    print('enter')
     if request.method == 'POST':
-        form = ExportingStatusForm(request.POST,files=request.FILES)
-            
+        print('post')
+        form = ExportingStatusForm(request.POST)
         if form.is_valid():
+            print('valid')
+            export = Exporting.objects.get(pk=form.cleaned_data['export_id'])
             
-            status = form.cleaned_data['status']
+            data = form.save(commit=False)
+            data.creator = request.user
+            data.export = export
+            data.save()
+            
+            if form.cleaned_data['status'] == "025" :
+                export_items = ExportItem.objects.filter(export=export)
+                for item in export_items:
+                    if (update_sales_stock:=SalesStock.objects.filter(purchase_item=item.purchasestock.purchase_item,country=export.exporting_country,is_deleted=False)).exists():
+                        stock = SalesStock.objects.get(purchase_item=item.purchasestock.purchase_item,country=export.exporting_country,is_deleted=False)
+                        stock.qty += item.qty
+                        if not update_sales_stock.filter(export=export).exists():
+                            stock.export.add(export)
+                        stock.save()
+                    else:
+                        stock_item = SalesStock.objects.create(
+                            auto_id = get_auto_id(SalesStock),
+                            creator = request.user,
+                            purchase_item = item.purchasestock.purchase_item,
+                            qty = item.qty,
+                            country = export.exporting_country,
+                        )
+                        stock_item.export.add(export)
+                        stock_item.save()
            
             response_data = {
                 "status": "true",
-                "title": "Successfully Created",
-                "message": "Courier Partner created successfully.",
+                "title": "Successfully Updated",
+                "message": "Status Update successfully.",
                 'redirect': 'true',
-                "redirect_url": reverse('exporting:courier_partner_list')
+                "redirect_url": reverse('exporting:exporting_list')
             }
                 
         else:
@@ -888,78 +903,3 @@ def update_expoting_status(request):
             }
 
         return HttpResponse(json.dumps(response_data), content_type='application/javascript')
-    
-    else:
-        
-        form = CourierPartnerForm()
-
-        context = {
-            'form': form,
-            'page_name' : 'Create Courier Partner',
-            'page_title' : 'Create Courier Partner',
-            'url' : reverse('exporting:create_courier_partner'),
-            
-            'is_need_datetime_picker': True,
-            'is_need_forms': True,
-            'is_exporting' : True,
-            'is_courier_partner': True,
-        }
-
-        return render(request, 'admin_panel/pages/export/courier_partner/create.html',context)
-    
-@login_required
-@role_required(['superadmin','core_team'])
-def edit_courier_partner(request,pk):
-    """
-    edit operation of courier_partner
-    :param request:
-    :param pk:
-    :return:
-    """
-    instance = get_object_or_404(CourierPartner, pk=pk)
-        
-    message = ''
-    if request.method == 'POST':
-        form = CourierPartnerForm(request.POST,files=request.FILES,instance=instance)
-        
-        if form.is_valid():
-            #update CourierPartner
-            data = form.save(commit=False)
-            data.date_updated = datetime.datetime.today()
-            data.updater = request.user
-            data.save()
-                    
-            response_data = {
-                "status": "true",
-                "title": "Successfully Created",
-                "message": "Courier Partner Update successfully.",
-                'redirect': 'true',
-                "redirect_url": reverse('exporting:courier_partner_list')
-            }
-    
-        else:
-            message = generate_form_errors(form ,formset=False)
-            
-            response_data = {
-                "status": "false",
-                "title": "Failed",
-                "message": message
-            }
-
-        return HttpResponse(json.dumps(response_data), content_type='application/javascript')
-    
-    else:
-        
-        form = CourierPartnerForm(instance=instance)
-
-        context = {
-            'form': form,
-            'page_name' : 'Edit Courier Partner',
-            'page_title' : 'Edit Courier Partner',
-            'is_need_datetime_picker': True,
-            'is_need_forms': True,
-            'is_exporting' : True,
-            'is_courier_partner': True,
-        }
-
-        return render(request, 'admin_panel/pages/export/courier_partner/create.html',context)

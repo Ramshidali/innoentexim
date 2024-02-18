@@ -39,22 +39,11 @@
                                             <label>Date of Birth</label>
                                             {{form.date_of_birth}}
                                         </div>
-                                        <div class="col-6 mt-sm-0">
-                                            <label>Zip</label>
-                                            {{form.zip}}
-                                        </div>
-                                    </div>
-                                    {% if form.password or form.re_password %}
-                                    <div class="row mt-3">
                                         <div class="col-12 col-sm-6">
-                                            <label>Password</label>
-                                            {{form.password}}
+                                            <label>GST</label>
+                                            {{form.gst_no}}
                                         </div>
-                                        <div class="col-12 col-sm-6 mt-3 mt-sm-0">
-                                            <label>Repeat Password</label>
-                                            {{form.re_password}}
                                     </div>
-                                    {% endif %}
                                     <div class="row mt-3">
                                         <div class="col-12 col-sm-6 mt-3 mt-sm-0">
                                             <label>State</label>
@@ -72,6 +61,10 @@
                                         </div>
                                     </div>
                                     <div class="row">
+                                        <div class="col-6 mt-sm-0">
+                                            <label>Zip</label>
+                                            {{form.zip}}
+                                        </div>
                                         <div class="col-6 mt-sm-0">
                                             <label>Image</label>
                                             {{form.image}}
