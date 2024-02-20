@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'executieves',
     'sales_party',
     'purchase_party',
+    'other_expences',
 ]
 
 MIDDLEWARE = [

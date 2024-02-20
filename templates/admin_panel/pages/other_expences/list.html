@@ -14,7 +14,7 @@
                         </div>
                         <div class="ms-auto my-auto mt-lg-0 mt-4">
                             <div class="ms-auto my-auto">
-                                <a href="{% url 'sales:create_sales' %}" class="btn bg-gradient-primary btn-sm mb-0">+&nbsp; Add</a>
+                                <a href="{% url 'other_expences:create_other_expence' %}" class="btn bg-gradient-primary btn-sm mb-0">+&nbsp; Add</a>
                             </div>
                         </div>
                     </div>
@@ -27,15 +27,10 @@
                                     <thead class="thead-light">
                                         <tr>
                                             <th style="width: 2;text-align:center !important;">#</th>
-                                            <th style="text-align:center !important;">Date of Sales</th>
-                                            <th style="text-align:center !important;">Sales ID</th>
-                                            <th style="text-align:center !important;">Sales Party ID</th>
-                                            <th style="text-align:left !important;">Country</th>
-                                            <th style="text-align:center !important;">Qty</th>
+                                            <th style="text-align:center !important;">Date Added</th>
+                                            <th style="text-align:start !important;">Expence Type</th>
+                                            <th style="text-align:start !important;">Remark</th>
                                             <th style="text-align:right !important;">Amount</th>
-                                            <th style="text-align:right !important;">Expence</th>
-                                            <th style="text-align:right !important;">Grand Total</th>
-                                            <th style="text-align:right !important;">Grand Total INR</th>
                                             <th style="text-align:right !important;">Action</th>
                                         </tr>
                                     </thead>
@@ -44,36 +39,33 @@
                                         {% paginate 20 instances %}
                                         {% for instance in instances %}
                                         <tr>
-                                            <td class="text-sm" style="text-align:center !important;">{{ forloop.counter }}</td>
-                                            <td class="text-sm" style="text-align:center !important;">{{ instance.date }}</td>
-                                            <td class="text-sm" style="text-align:center !important;">{{ instance.sales_id }}</td>
-                                            <td class="text-sm" style="text-align:center !important;">{{ instance.sales_party.get_fullname }}</td>
-                                            <td class="text-sm" style="text-align:left !important;">{{ instance.country.country_name }}</td>
-                                            <td class="text-sm" style="text-align:center !important;">{{ instance.total_qty }}</td>
-                                            <td class="text-sm" style="text-align:right !important;">{{ instance.items_total_amount }}</td>
-                                            <td class="text-sm" style="text-align:right !important;">{{ instance.items_total_expence }}</td>
-                                            <td class="text-sm" style="text-align:right !important;">{{ instance.sub_total }}</td>
-                                            <td class="text-sm" style="text-align:right !important;">{{ instance.exchange_sub_total }}</td>
-                                            <td class="text-sm" style="text-align:right !important;">
-                                                <a href="{% url 'sales:sales_info' pk=instance.pk %}" data-bs-toggle="tooltip" data-bs-original-title="Preview">
-                                                    <i class="fas fa-eye text-secondary" aria-hidden="true"></i>
-                                                </a>
-                                                <a href="{% url 'sales:edit_sales' pk=instance.pk %}" class="mx-3">
+                                            <td class="text-sm text-center" style="">{{ forloop.counter }}</td>
+                                            <td class="text-sm text-center">{{ instance.date_added|date:"d-M-Y" }}</td>
+                                            <td class="text-sm text-start text-capitalize">{{ instance.expence_type.name }}</td>
+                                            <td class="text-sm text-start text-capitalize">{{ instance.remark }}</td>
+                                            <td class="text-sm text-end text-capitalize">{{ instance.amount }}</td>
+                                            <td style="text-align:end !important;">
+                                                <a href="{% url 'other_expences:edit_other_expence_type' pk=instance.pk %}" class="mx-3">
                                                     <i class="fas fa-user-edit text-secondary" aria-hidden="true"></i>
                                                 </a>
-                                                <a class="action-button remove" href="{% url 'sales:delete_sales' pk=instance.pk %}" data-id="{{instance.pk}}" data-text="{{confirm_delete_message}}" data-title="Are you sure?" data-bs-toggle="tooltip" data-bs-original-title="Delete">
+                                                <a class="action-button remove" href="{% url 'other_expences:delete_other_expence_type' pk=instance.pk %}" data-id="{{instance.pk}}" data-text="{{confirm_delete_message}}" data-title="Are you sure?" data-bs-toggle="tooltip" data-bs-original-title="Delete">
                                                     <i class="fas fa-trash text-secondary" aria-hidden="true"></i>
                                                 </a>
                                             </td>
                                         </tr>
                                         {% endfor %}
+                                        <tr>
+                                            <td class="font-weight-bold text-end" colspan="4">Grand Total: </td>
+                                            <td class="font-weight-bold text-end">{{total_amount}}</td>
+                                            <td class="font-weight-bold text-center"></td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
 
                             {% comment %} <div class="clearfix"></div>
                             <div class="row pagi my-3">
-                                <div class="col-sm-6 col-xs-6 text-left my-pagina">{% show_pages %}</div>
+                                <div class="col-sm-6 col-xs-6 text-start my-pagina">{% show_pages %}</div>
                                 <div class="col-sm-6 col-xs-6 text-right tot my-pagination align-items-center">
                                     <div class="m-t-10">
                                         Showing {{title}}

@@ -5,6 +5,9 @@ from main.models import BaseModel
 from purchase.models import PurchaseItems
 from sales_party.models import SalesParty
 
+from forex_python.converter import CurrencyRates
+
+
 # Create your models here.
 class SalesStock(BaseModel):
     qty = models.DecimalField(max_digits=10, decimal_places=2)
@@ -93,6 +96,19 @@ class Sales(BaseModel):
             total += expense.amount
 
         return total
+    
+    def exchange_sub_total(self):
+        total = 0
+        # Calculate the sub-total for SalesItems
+        sales_items = SalesItems.objects.filter(sales=self)
+        for item in sales_items:
+            total += item.amount
+
+        # Calculate the sub-total for SalesMoreExpense
+        sales_expenses = SalesExpenses.objects.filter(sales=self)
+        for expense in sales_expenses:
+            total += expense.amount
+        
     
 class SalesItems(BaseModel):
     qty = models.DecimalField(max_digits=10, decimal_places=2)
