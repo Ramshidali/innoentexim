@@ -189,7 +189,7 @@ from main.functions import encrypt_message, generate_form_errors, get_auto_id, p
 #     return HttpResponse(json.dumps(response_data), content_type='application/javascript')
 
 @login_required
-@role_required(['superadmin','core_team','office_executive','field_executive'])
+@role_required(['superadmin','core_team'])
 def core_team(request,pk):
     """
     CoreTeam info

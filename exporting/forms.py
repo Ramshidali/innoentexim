@@ -59,12 +59,10 @@ class ExportingItemsForm(forms.ModelForm):
     
     class Meta:
         model = ExportItem
-        fields = ['per_kg_amount','qty','amount','purchasestock']
+        fields = ['qty','purchasestock']
 
         widgets = {
-            'per_kg_amount': TextInput(attrs={'class': 'required form-control amount_per_kg','placeholder' : 'Enter pe kg Amount'}), 
             'qty': TextInput(attrs={'type':'number','class': 'required form-control','placeholder' : 'Enter QTY'}), 
-            'amount': TextInput(attrs={'type':'number','class': 'form-control','placeholder' : 'Enter Amount'}), 
             'purchasestock': Select(attrs={'class': 'required form-control purchase-item','style':'width: auto;'}),
         }
     
@@ -106,18 +104,6 @@ class ExportingItemsForm(forms.ModelForm):
                 raise forms.ValidationError(error_message)
 
         return cleaned_data
-
-class ExportingExpenseForm(forms.ModelForm):
-    
-    class Meta:
-        model = ExportExpense
-        fields = ['title','amount']
-
-        widgets = {
-            'title': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter title'}), 
-            'amount': TextInput(attrs={'type':'number','class': 'required form-control','placeholder' : 'Enter Amount'}), 
-        }
-        
         
 class ExportingStatusForm(forms.ModelForm):
     export_id = forms.CharField(widget=forms.TextInput(attrs={'type': 'hidden','name': 'export_id','id':'exportIdModalField'}))

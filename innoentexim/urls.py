@@ -12,6 +12,7 @@ urlpatterns = [
     path('super-admin/',general_views.app,name='app'),
     
     path('super-admin/sales/',include(('sales.urls'),namespace='sales')), 
+    path('super-admin/profit/',include(('profit.urls'),namespace='profit')), 
     path('super-admin/purchase/',include(('purchase.urls'),namespace='purchase')), 
     path('super-admin/export/',include(('exporting.urls'),namespace='exporting')), 
     path('super-admin/core-team/',include(('coreteam.urls'),namespace='core_team')), 

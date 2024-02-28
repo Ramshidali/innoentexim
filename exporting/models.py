@@ -67,17 +67,17 @@ class Exporting(BaseModel):
             self.date = self.date_added.date()
         super().save(*args, **kwargs)
 
-    def sub_total(self):
-        total = 0
-        # Calculate the sub-total for PurchasedItems
-        items = self.exportitem_set.all()
-        for item in items:
-            total += item.amount
-        # Calculate the sub-total for PurchaseMoreExpense
-        expenses = self.exportexpense_set.all()
-        for expense in expenses:
-            total += expense.amount
-        return total
+    # def sub_total(self):
+    #     total = 0
+    #     # Calculate the sub-total for PurchasedItems
+    #     items = self.exportitem_set.all()
+    #     for item in items:
+    #         total += item.amount
+    #     # Calculate the sub-total for PurchaseMoreExpense
+    #     # expenses = self.exportexpense_set.all()
+    #     # for expense in expenses:
+    #     #     total += expense.amount
+    #     return total
     
     def total_qty(self):
         total = 0
@@ -88,22 +88,14 @@ class Exporting(BaseModel):
 
         return total
     
-    def items_total_amount(self):
-        total = 0
-        # Calculate the sub-total for PurchaseMaterials
-        items = self.exportitem_set.all()
-        for item in items:
-            total += item.amount
+    # def items_total_amount(self):
+    #     total = 0
+    #     # Calculate the sub-total for PurchaseMaterials
+    #     items = self.exportitem_set.all()
+    #     for item in items:
+    #         total += item.amount
 
-        return total
-    
-    def items_total_expense(self):
-        total = 0
-        expenses = self.exportexpense_set.all()
-        for expense in expenses:
-            total += expense.amount
-
-        return total
+    #     return total
     
     def current_status(self):
         status = ""
@@ -113,8 +105,6 @@ class Exporting(BaseModel):
 
 class ExportItem(BaseModel):
     qty = models.PositiveIntegerField()
-    per_kg_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
     
     export = models.ForeignKey(Exporting, on_delete=models.CASCADE)
     purchasestock = models.ForeignKey(PurchaseStock, on_delete=models.CASCADE)
@@ -126,22 +116,7 @@ class ExportItem(BaseModel):
 
     def __str__(self):
         return f'{self.qty} {self.amount}'
-
-class ExportExpense(BaseModel):
-    title = models.CharField(max_length=200)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
     
-    export = models.ForeignKey(Exporting, on_delete=models.CASCADE)
-
-    class Meta:
-        db_table = 'export_expense'
-        verbose_name = ('Export Expense')
-        verbose_name_plural = ('Export Expenses')
-
-    def __str__(self):
-        return f'{self.title} {self.amount}'
-    
-        
 class ExportStatus(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     date_added = models.DateTimeField(db_index=True, auto_now_add=True)

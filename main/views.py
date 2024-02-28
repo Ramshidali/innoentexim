@@ -27,7 +27,7 @@ def app(request):
 
 # Create your views here.
 @login_required
-@role_required(['superadmin'])
+@role_required(['superadmin','core_team','director'])
 def index(request):
     today_date = timezone.now().date()
     last_month_start = (today_date - timedelta(days=today_date.day)).replace(day=1)

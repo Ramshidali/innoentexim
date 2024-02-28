@@ -19,8 +19,8 @@ from executieves.models import Executive
 from purchase.models import PurchaseStock
 from main.decorators import role_required
 from main.functions import generate_form_errors, get_auto_id, get_current_role, has_group
-from . models import CourierPartner, ExportExpense, ExportItem, ExportStatus, Exporting, ExportingCountry
-from exporting.forms import CourierPartnerForm, ExportingCountryForm, ExportingExpenseForm, ExportingForm, ExportingItemsForm, ExportingStatusForm
+from . models import CourierPartner, ExportItem, ExportStatus, Exporting, ExportingCountry
+from exporting.forms import CourierPartnerForm, ExportingCountryForm, ExportingForm, ExportingItemsForm, ExportingStatusForm
 
 # Create your views here.
 def product_item_qty(request):
@@ -46,7 +46,7 @@ def product_item_qty(request):
     return HttpResponse(json.dumps(response_data),status=status_code, content_type="application/json")
 
 @login_required
-@role_required(['superadmin','core_team','office_executive'])
+@role_required(['superadmin','core_team','director'])
 def export_countries(request):
     """
     Export Countries
@@ -66,7 +66,7 @@ def export_countries(request):
     return render(request, 'admin_panel/pages/export/countries/list.html', context)
 
 @login_required
-@role_required(['superadmin','core_team','office_executive'])
+@role_required(['superadmin','core_team','director'])
 def create_export_country(request):
     ExportingCountryFormset = formset_factory(ExportingCountryForm, extra=2)
     
@@ -115,7 +115,7 @@ def create_export_country(request):
         return render(request,'admin_panel/pages/export/countries/create.html',context)
     
 @login_required
-@role_required(['superadmin','core_team','office_executive'])
+@role_required(['superadmin','core_team','director'])
 def edit_export_country(request,pk):
     """
     edit operation of export item
@@ -171,7 +171,7 @@ def edit_export_country(request,pk):
         return render(request, 'admin_panel/pages/export/countries/edit.html',context)
 
 @login_required
-@role_required(['superadmin','core_team','office_executive'])
+@role_required(['superadmin','core_team','director'])
 def delete_export_country(request, pk):
     """
     export items deletion, it only mark as is deleted field to true
@@ -451,7 +451,7 @@ def delete_courier_partner(request, pk):
     return HttpResponse(json.dumps(response_data), content_type='application/javascript')
 
 @login_required
-@role_required(['superadmin','core_team','office_executive'])
+@role_required(['superadmin','core_team','director'])
 def exporting(request,pk):
     """
     Exporting
@@ -471,7 +471,7 @@ def exporting(request,pk):
     return render(request, 'admin_panel/pages/export/exporting/info.html', context)
 
 # @login_required
-# @role_required(['superadmin','core_team','office_executive'])
+# @role_required(['superadmin','core_team','director'])
 # def print_exporting(request,pk):
 #     """
 #     Print Exporting
@@ -541,20 +541,13 @@ def exporting_list(request):
 @role_required(['superadmin','core_team'])
 def create_exporting(request):
     ExportingItemsFormset = formset_factory(ExportingItemsForm, extra=2)
-    ExportExpensesFormset = formset_factory(ExportingExpenseForm, extra=2)
     
     message = ''
     if request.method == 'POST':
         exporting_form = ExportingForm(request.POST)
         exporting_items_formset = ExportingItemsFormset(request.POST,prefix='exporting_items_formset', form_kwargs={'empty_permitted': False})
-        exporting_expense_formset = ExportExpensesFormset(request.POST,prefix='exporting_expense_formset', form_kwargs={'empty_permitted': False})
         
-        if exporting_form.is_valid() and exporting_items_formset.is_valid() and exporting_expense_formset.is_valid():
-            
-            # Generate a unique invoice number based on current date and a random number
-            # date_part = timezone.now().strftime('%Y%m%d')
-            # random_part = str(random.randint(1000, 9999))
-            # invoice_number = f'IEEIP-{date_part}-{random_part}'
+        if exporting_form.is_valid() and exporting_items_formset.is_valid() :
             executive = None
             if not request.user.is_superuser:
                 executive = Executive.objects.get(user=request.user,is_deleted=False)
@@ -585,13 +578,6 @@ def create_exporting(request):
                             purchase_stock.qty -= item_data.qty
                             purchase_stock.save()
                             
-                    for form in exporting_expense_formset:
-                        expense_data = form.save(commit=False)
-                        expense_data.auto_id = get_auto_id(ExportExpense)
-                        expense_data.creator = request.user
-                        expense_data.export = exporting_data
-                        expense_data.save()
-                        
                     ExportStatus.objects.create(
                         export = exporting_data,
                         creator = request.user,
@@ -623,7 +609,6 @@ def create_exporting(request):
         else:
             message = generate_form_errors(exporting_form,formset=False)
             message += generate_form_errors(exporting_items_formset,formset=True)
-            message += generate_form_errors(exporting_expense_formset,formset=True)
             
             response_data = {
                 "status": "false",
@@ -636,12 +621,10 @@ def create_exporting(request):
     else:
         exporting_form = ExportingForm()
         exporting_items_formset = ExportingItemsFormset(prefix='exporting_items_formset')
-        exporting_expense_formset = ExportExpensesFormset(prefix='exporting_expense_formset')
         
         context = {
             'exporting_form': exporting_form,
             'exporting_items_formset': exporting_items_formset,
-            'exporting_expense_formset': exporting_expense_formset,
             
             'page_title': 'Create Exporting',
             'url': reverse('exporting:create_exporting'),
@@ -653,7 +636,7 @@ def create_exporting(request):
         return render(request,'admin_panel/pages/export/exporting/create.html',context)
 
 @login_required
-@role_required(['superadmin','core_team','office_executive'])
+@role_required(['superadmin','core_team','director'])
 def edit_exporting(request,pk):
     """
     edit operation of exporting
@@ -663,18 +646,12 @@ def edit_exporting(request,pk):
     """
     export_instance = get_object_or_404(Exporting, pk=pk)
     exportingd_items = ExportItem.objects.filter(export=export_instance)
-    expences = ExportExpense.objects.filter(export=export_instance)
     
     if ExportItem.objects.filter(export=export_instance).exists():
         i_extra = 0
     else:
         i_extra = 1 
         
-    if ExportExpense.objects.filter(export=export_instance).exists():
-        e_extra = 0
-    else:
-        e_extra = 1 
-
     ExportingItemsFormset = inlineformset_factory(
         Exporting,
         ExportItem,
@@ -682,13 +659,6 @@ def edit_exporting(request,pk):
         form=ExportingItemsForm,
     )
     
-    ExpencesFormset = inlineformset_factory(
-        Exporting,
-        ExportExpense,
-        extra=e_extra,
-        form=ExportingExpenseForm,
-    )
-        
     message = ''
     
     if request.method == 'POST':
@@ -697,12 +667,8 @@ def edit_exporting(request,pk):
                                             instance=export_instance,
                                             prefix='exporting_items_formset',
                                             form_kwargs={'empty_permitted': False})            
-        exporting_expense_formset = ExpencesFormset(request.POST,
-                                            instance=export_instance, 
-                                            prefix='exporting_expense_formset', 
-                                            form_kwargs={'empty_permitted': False})            
         
-        if exporting_form.is_valid() and  exporting_items_formset.is_valid() and exporting_expense_formset.is_valid():
+        if exporting_form.is_valid() and  exporting_items_formset.is_valid() :
             #create
             data = exporting_form.save(commit=False)
             data.date_updated = datetime.today()
@@ -722,18 +688,6 @@ def edit_exporting(request,pk):
             for f in exporting_items_formset.deleted_forms:
                 f.instance.delete()
                 
-            for form in exporting_expense_formset:
-                if form not in exporting_expense_formset.deleted_forms:
-                    e_data = form.save(commit=False)
-                    if not e_data.auto_id :
-                        e_data.auto_id = get_auto_id(ExportExpense)
-                        e_data.creator = request.user
-                        e_data.exporting = export_instance
-                    e_data.save()
-
-            for f in exporting_expense_formset.deleted_forms:
-                f.instance.delete()
-                
             response_data = {
                 "status": "true",
                 "title": "Successfully Updated",
@@ -746,7 +700,6 @@ def edit_exporting(request,pk):
         else:
             message = generate_form_errors(exporting_form,formset=False)
             message += generate_form_errors(exporting_items_formset,formset=True)
-            message += generate_form_errors(exporting_expense_formset,formset=True)
             
             response_data = {
                 "status": "false",
@@ -761,15 +714,10 @@ def edit_exporting(request,pk):
         exporting_items_formset = ExportingItemsFormset(queryset=exportingd_items,
                                             prefix='exporting_items_formset',
                                             instance=export_instance)
-        exporting_expense_formset = ExpencesFormset(queryset=expences, 
-                                                    prefix='exporting_expense_formset', 
-                                                    instance=export_instance)
-        
 
         context = {
             'exporting_form': exporting_form,
             'exporting_items_formset': exporting_items_formset,
-            'exporting_expense_formset': exporting_expense_formset,
             
             'message': message,
             'page_name' : 'edit exporting',
@@ -780,7 +728,7 @@ def edit_exporting(request,pk):
         return render(request, 'admin_panel/pages/export/exporting/create.html', context)
     
 @login_required
-@role_required(['superadmin','core_team','office_executive'])
+@role_required(['superadmin','core_team','director'])
 def delete_exporting(request, pk):
     """
     exporting deletion, it only mark as is deleted field to true

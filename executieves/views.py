@@ -22,7 +22,7 @@ from main.functions import encrypt_message, generate_form_errors, get_auto_id, p
 
 # Create your views here.
 @login_required
-@role_required(['superadmin','core_team'])
+@role_required(['superadmin','core_team','director'])
 def executive_info(request,pk):
     """
     Executive info
@@ -41,7 +41,7 @@ def executive_info(request,pk):
     return render(request, 'admin_panel/pages/executive/info.html', context)
 
 @login_required
-@role_required(['superadmin','core_team'])
+@role_required(['superadmin','core_team','director'])
 def executive_list(request):
     """
     Executive listings
@@ -72,7 +72,7 @@ def executive_list(request):
     return render(request, 'admin_panel/pages/executive/list.html', context)
 
 @login_required
-@role_required(['superadmin','core_team'])
+@role_required(['superadmin','core_team','director'])
 def create_executive(request):
     """
     create operation of Executive
@@ -149,7 +149,7 @@ def create_executive(request):
         return render(request, 'admin_panel/pages/executive/create.html',context)
     
 @login_required
-@role_required(['superadmin','core_team'])
+@role_required(['superadmin','core_team','director'])
 def edit_executive(request,pk):
     """
     edit operation of investor
@@ -207,7 +207,7 @@ def edit_executive(request,pk):
         return render(request, 'admin_panel/pages/executive/create.html',context)
 
 @login_required
-@role_required(['superadmin','core_team'])
+@role_required(['superadmin','core_team','director'])
 def delete_executive(request, pk):
     """
     Executive deletion, it only mark as is deleted field to true

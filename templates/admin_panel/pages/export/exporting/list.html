@@ -33,9 +33,6 @@
                                             <th style="text-align:center !important;">Courier Partner</th>
                                             <th style="text-align:center !important;">Current Status</th>
                                             <th style="text-align:right !important;">QTY</th>
-                                            <th style="text-align:right !important;">Amount</th>
-                                            <th style="text-align:right !important;">Expence</th>
-                                            <th style="text-align:right !important;">Grand Total</th>
                                             <th style="text-align:right !important;">Action</th>
                                         </tr>
                                     </thead>
@@ -61,9 +58,6 @@
                                                 {% endif %}
                                             </td>
                                             <td class="text-sm" style="text-align:right !important;">{{ instance.total_qty }}</td>
-                                            <td class="text-sm" style="text-align:right !important;">{{ instance.items_total_amount }}</td>
-                                            <td class="text-sm" style="text-align:right !important;">{{ instance.items_total_expense }}</td>
-                                            <td class="text-sm" style="text-align:right !important;">{{ instance.sub_total }}</td>
                                             <td style="text-align:right !important;">
                                                 <a href="{% url 'exporting:exporting' pk=instance.pk %}" data-bs-toggle="tooltip" data-bs-original-title="Preview">
                                                     <i class="fas fa-eye text-secondary" aria-hidden="true"></i>

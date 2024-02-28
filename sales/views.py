@@ -7,42 +7,30 @@ import random
 #django
 from django.urls import reverse
 from django.db.models import Q, Sum
-from django.http import HttpResponse
 from django.db import transaction, IntegrityError
 from django.contrib.auth.models import User,Group
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.contrib.auth.decorators import login_required
 from django.forms import formset_factory, inlineformset_factory
+from profit.views import calculate_profit
 # rest framework
 from rest_framework import status
-from sales.forms import SalesExpenseForm, SalesForm, SalesItemsForm
 # local
-from sales.models import Sales, SalesExpenses, SalesItems, SalesStock
+from profit.models import *
 from main.decorators import role_required
-from main.functions import generate_form_errors, get_auto_id, get_current_role, has_group
 from sales.serializers import SalesStockSerializer
+from sales.forms import SalesExpenseForm, SalesForm, SalesItemsForm
+from sales.models import Sales, SalesExpenses, SalesItems, SalesStock
+from main.functions import generate_form_errors, get_auto_id, get_current_role, has_group
 
 # Create your views here.
-def sales_stocks(request):
-    country_pk = request.GET.get("country")
-    
-    if (instances:=SalesStock.objects.filter(country=country_pk,is_deleted=False)).exists():
-        serializer = SalesStockSerializer(instances, context={"request": request})
-        
-        status_code = status.HTTP_200_OK
-        response_data = {
-            "status": "true",
-            "stock": serializer,
-        }
-    else:
-        status_code = status.HTTP_404_NOT_FOUND
-        response_data = {
-            "status": "false",
-            "title": "Failed",
-            "message": "item not found",
-        }
+def get_sales_product_items(request):
+    country_id = request.GET.get('country_id')
+    product_items = SalesStock.objects.filter(qty__gt=0,country_id=country_id)
+    data = [{'id': item.id, 'name': item.purchase_item.name} for item in product_items]
 
-    return HttpResponse(json.dumps(response_data),status=status_code, content_type="application/json")
+    return JsonResponse(data, safe=False)
 
 def sales_item_qty(request):
     item_pk = request.GET.get("item_pk")
@@ -67,7 +55,7 @@ def sales_item_qty(request):
     return HttpResponse(json.dumps(response_data),status=status_code, content_type="application/json")
 
 @login_required
-@role_required(['superadmin','core_team','office_executive'])
+@role_required(['superadmin','core_team','director'])
 def sales_stock(request):
     """
     Sales Stock
@@ -185,70 +173,76 @@ def create_sales(request):
             auto_id = get_auto_id(Sales)
             sales_id = "IEEIS" + str(auto_id).zfill(3)    
             
-            # try:
-            #     with transaction.atomic():
+            try:
+                with transaction.atomic():
+                    inr_exchange_rate = ExchangeRate.objects.filter(country=form.cleaned_data['country'],is_active=True).latest('-date_added').rate_to_inr
+                            
+                    if form.is_valid():
+                        sales_data = form.save(commit=False)
+                        sales_data.auto_id = get_auto_id(Sales)
+                        sales_data.creator = request.user
+                        sales_data.sales_staff = request.user
+                        sales_data.sales_id = sales_id
+                        sales_data.invoice_no = invoice_number
+                        sales_data.exchange_rate = inr_exchange_rate
+                        sales_data.save()
                     
-            if form.is_valid():
-                sales_data = form.save(commit=False)
-                sales_data.auto_id = get_auto_id(Sales)
-                sales_data.creator = request.user
-                sales_data.sales_staff = request.user
-                sales_data.sales_id = sales_id
-                sales_data.invoice_no = invoice_number
-                sales_data.save()
+                    for form in sales_items_formset:
+                        item_data = form.save(commit=False)
+                        item_data.auto_id = get_auto_id(SalesItems)
+                        item_data.creator = request.user
+                        item_data.sales = sales_data
+                        item_data.amount_in_inr = form.cleaned_data['amount'] * inr_exchange_rate
+                        item_data.save()
+                        
+                        if (stock:=SalesStock.objects.filter(country=sales_data.country,purchase_item=item_data.sales_stock.purchase_item)).exists():
+                            stock = stock.first()
+                            stock.qty -= item_data.qty
+                            stock.save()
+                        else:
+                            stock = SalesStock.objects.create(
+                                auto_id = get_auto_id(SalesStock),
+                                creator = request.user,
+                                date_updated = datetime.datetime.today(),
+                                updater = request.user,
+                                country = sales_data.country,
+                                purchase_item = item_data.sales_stock.purchase_item,
+                                qty = item_data.qty,
+                            )
+                    
+                    for form in sales_expense_formset:
+                        expense_data = form.save(commit=False)
+                        expense_data.auto_id = get_auto_id(SalesExpenses)
+                        expense_data.creator = request.user
+                        expense_data.sales = sales_data
+                        expense_data.amount_in_inr = form.cleaned_data['amount'] * inr_exchange_rate
+                        expense_data.save()
+                    
+                    calculate_profit(sales_data.date)
+                    
+                    response_data = {
+                        "status": "true",
+                        "title": "Successfully Created",
+                        "message": "Sales created successfully.",
+                        'redirect': 'true',
+                        "redirect_url": reverse('sales:sales_list')
+                    }
             
-            for form in sales_items_formset:
-                item_data = form.save(commit=False)
-                item_data.auto_id = get_auto_id(SalesItems)
-                item_data.creator = request.user
-                item_data.sales = sales_data
-                item_data.save()
-                
-                if (stock:=SalesStock.objects.filter(country=sales_data.country,purchase_item=item_data.sales_stock.purchase_item)).exists():
-                    stock = stock.first()
-                    stock.qty -= item_data.qty
-                    stock.save()
-                else:
-                    stock = SalesStock.objects.create(
-                        auto_id = get_auto_id(SalesStock),
-                        creator = request.user,
-                        date_updated = datetime.datetime.today(),
-                        updater = request.user,
-                        country = sales_data.country,
-                        purchase_item = item_data.sales_stock.purchase_item,
-                        qty = item_data.qty,
-                    )
-            
-            for form in sales_expense_formset:
-                expense_data = form.save(commit=False)
-                expense_data.auto_id = get_auto_id(SalesExpenses)
-                expense_data.creator = request.user
-                expense_data.sales = sales_data
-                expense_data.save()
-                
-            response_data = {
-                "status": "true",
-                "title": "Successfully Created",
-                "message": "Product created successfully.",
-                'redirect': 'true',
-                "redirect_url": reverse('sales:sales_list')
-            }
-            
-            # except IntegrityError as e:
-            #     # Handle database integrity error
-            #     response_data = {
-            #         "status": "false",
-            #         "title": "Failed",
-            #         "message": "Integrity error occurred. Please check your data.",
-            #     }
+            except IntegrityError as e:
+                # Handle database integrity error
+                response_data = {
+                    "status": "false",
+                    "title": "Failed",
+                    "message": str(e),
+                }
 
-            # except Exception as e:
-            #     # Handle other exceptions
-            #     response_data = {
-            #         "status": "false",
-            #         "title": "Failed",
-            #         "message": str(e),
-            #     }
+            except Exception as e:
+                # Handle other exceptions
+                response_data = {
+                    "status": "false",
+                    "title": "Failed",
+                    "message": str(e),
+                }
         else:
             message = generate_form_errors(form,formset=False)
             message += generate_form_errors(sales_items_formset,formset=True)
@@ -282,7 +276,7 @@ def create_sales(request):
         return render(request,'admin_panel/pages/sales/sales/create.html',context)
 
 @login_required
-@role_required(['superadmin','core_team','office_executive'])
+@role_required(['superadmin','core_team','director'])
 def edit_sales(request,pk):
     """
     edit operation of sales
@@ -339,9 +333,12 @@ def edit_sales(request,pk):
             data.date = request.POST.get('date')
             data.save()
             
+            inr_exchange_rate = ExchangeRate.objects.filter(country=data.country,is_active=True).latest('-date_added').rate_to_inr
+            
             for form in sales_items_formset:
                 if form not in sales_items_formset.deleted_forms:
                     i_data = form.save(commit=False)
+                    i_data.amount_in_inr = form.cleaned_data['amount'] * inr_exchange_rate
                     if not i_data.auto_id :
                         i_data.sales = sales_instance
                         i_data.auto_id = get_auto_id(SalesItems)
@@ -362,6 +359,8 @@ def edit_sales(request,pk):
 
             for f in sales_expense_formset.deleted_forms:
                 f.instance.delete()
+                
+            calculate_profit(data.date)
                 
             response_data = {
                 "status": "true",
@@ -409,7 +408,7 @@ def edit_sales(request,pk):
         return render(request, 'admin_panel/pages/sales/sales/create.html', context)
     
 @login_required
-@role_required(['superadmin','core_team','office_executive'])
+@role_required(['superadmin','core_team','director'])
 def delete_sales(request, pk):
     """
     sales deletion, it only mark as is deleted field to true
@@ -466,7 +465,7 @@ def delete_sales(request, pk):
     response_data = {
         "status": "true",
         "title": "Successfully Deleted",
-        "message": "Sales Successfully Deleted.",
+        "message": "Sale Successfully Deleted.",
         "redirect": "true",
         "redirect_url": reverse('sales:sales_list'),
     }

@@ -4,6 +4,7 @@ from . import views
 app_name = 'sales'
 
 urlpatterns = [  
+    re_path(r'get-sales-product-items/$', views.get_sales_product_items, name='get_sales_product_items'),
     re_path(r'item-qty/$', views.sales_item_qty, name='sales_item_qty'),
     
     re_path(r'^info/(?P<pk>.*)/$', views.sales_info, name='sales_info'),

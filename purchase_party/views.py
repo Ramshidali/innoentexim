@@ -18,7 +18,7 @@ from main.functions import encrypt_message, generate_form_errors, get_auto_id, h
 
 # Create your views here.
 @login_required
-@role_required(['superadmin','core_team'])
+@role_required(['superadmin','core_team','director'])
 def purchase_party_info(request,pk):
     """
     Purchase Party info
@@ -38,7 +38,7 @@ def purchase_party_info(request,pk):
     return render(request, 'admin_panel/pages/purchase_party/info.html', context)
 
 @login_required
-@role_required(['superadmin','core_team'])
+@role_required(['superadmin','core_team','director'])
 def purchase_party_list(request):
     """
     Purchase Party listings
@@ -71,7 +71,7 @@ def purchase_party_list(request):
     return render(request, 'admin_panel/pages/purchase_party/list.html', context)
 
 @login_required
-@role_required(['superadmin','core_team'])
+@role_required(['superadmin','core_team','director'])
 def create_purchase_party(request):
     """
     create operation of Purchase Party
@@ -165,7 +165,7 @@ def create_purchase_party(request):
         return render(request, 'admin_panel/pages/purchase_party/create.html',context)
     
 @login_required
-@role_required(['superadmin','core_team'])
+@role_required(['superadmin','core_team','director'])
 def edit_purchase_party(request,pk):
     """
     edit operation of purchase_party
@@ -224,7 +224,7 @@ def edit_purchase_party(request,pk):
         return render(request, 'admin_panel/pages/purchase_party/create.html',context)
 
 @login_required
-@role_required(['superadmin','core_team'])
+@role_required(['superadmin','core_team','director'])
 def delete_purchase_party(request, pk):
     """
     PurchaseParty deletion, it only mark as is deleted field to true

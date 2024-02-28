@@ -187,7 +187,7 @@ def delete_department(request, pk):
     return HttpResponse(json.dumps(response_data), content_type='application/javascript')
 
 @login_required
-@role_required(['superadmin'])
+@role_required(['superadmin','core_team'])
 def directors_info(request,pk):
     """
     Director info
@@ -214,7 +214,7 @@ def directors_info(request,pk):
     return render(request, 'admin_panel/pages/directors/info.html', context)
 
 @login_required
-@role_required(['superadmin'])
+@role_required(['superadmin','core_team'])
 def directors_list(request):
     """
     Directors listings
@@ -248,7 +248,7 @@ def directors_list(request):
     return render(request, 'admin_panel/pages/directors/list.html', context)
 
 @login_required
-@role_required(['superadmin'])
+@role_required(['superadmin','core_team'])
 def create_director(request):
     """
     create operation of Director
@@ -310,7 +310,7 @@ def create_director(request):
         return render(request, 'admin_panel/pages/directors/create.html',context)
     
 @login_required
-@role_required(['superadmin'])
+@role_required(['superadmin','core_team'])
 def edit_director(request,pk):
     """
     edit operation of director
@@ -367,7 +367,7 @@ def edit_director(request,pk):
         return render(request, 'admin_panel/pages/directors/create.html',context)
 
 @login_required
-@role_required(['superadmin'])
+@role_required(['superadmin','core_team'])
 def delete_director(request, pk):
     """
     Director deletion, it only mark as is deleted field to true

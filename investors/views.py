@@ -22,7 +22,7 @@ from main.functions import encrypt_message, generate_form_errors, get_auto_id, p
 
 # Create your views here.
 @login_required
-@role_required(['superadmin','core_team'])
+@role_required(['superadmin','core_team','director','investor'])
 def investors_info(request,pk):
     """
     Investor info
@@ -40,7 +40,7 @@ def investors_info(request,pk):
     return render(request, 'admin_panel/pages/investors/info.html', context)
 
 @login_required
-@role_required(['superadmin','core_team'])
+@role_required(['superadmin','core_team','director','investor'])
 def investors_list(request):
     """
     Investors listings
@@ -71,7 +71,7 @@ def investors_list(request):
     return render(request, 'admin_panel/pages/investors/list.html', context)
 
 @login_required
-@role_required(['superadmin','core_team'])
+@role_required(['superadmin','core_team','director','investor'])
 def create_investor(request):
     """
     create operation of Investors
@@ -148,7 +148,7 @@ def create_investor(request):
         return render(request, 'admin_panel/pages/investors/create.html',context)
     
 @login_required
-@role_required(['superadmin','core_team'])
+@role_required(['superadmin','core_team','director','investor'])
 def edit_investor(request,pk):
     """
     edit operation of investor
@@ -206,7 +206,7 @@ def edit_investor(request,pk):
         return render(request, 'admin_panel/pages/investors/create.html',context)
 
 @login_required
-@role_required(['superadmin','core_team'])
+@role_required(['superadmin','core_team','director','investor'])
 def delete_investor(request, pk):
     """
     Investors deletion, it only mark as is deleted field to true

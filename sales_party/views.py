@@ -18,7 +18,7 @@ from main.functions import encrypt_message, generate_form_errors, get_auto_id, h
 
 # Create your views here.
 @login_required
-@role_required(['superadmin','core_team'])
+@role_required(['superadmin','core_team','director'])
 def sales_party_info(request,pk):
     """
     Sales Party info
@@ -39,7 +39,7 @@ def sales_party_info(request,pk):
     return render(request, 'admin_panel/pages/sales_party/info.html', context)
 
 @login_required
-@role_required(['superadmin','core_team'])
+@role_required(['superadmin','core_team','director'])
 def sales_party_list(request):
     """
     Sales Party listings
@@ -76,7 +76,7 @@ def sales_party_list(request):
     return render(request, 'admin_panel/pages/sales_party/list.html', context)
 
 @login_required
-@role_required(['superadmin','core_team'])
+@role_required(['superadmin','core_team','director'])
 def create_sales_party(request):
     """
     create operation of Sales Party
@@ -187,7 +187,7 @@ def create_sales_party(request):
         return render(request, 'admin_panel/pages/sales_party/create.html',context)
     
 @login_required
-@role_required(['superadmin','core_team'])
+@role_required(['superadmin','core_team','director'])
 def edit_sales_party(request,pk):
     """
     edit operation of sales_party
@@ -246,7 +246,7 @@ def edit_sales_party(request,pk):
         return render(request, 'admin_panel/pages/sales_party/create.html',context)
 
 @login_required
-@role_required(['superadmin','core_team'])
+@role_required(['superadmin','core_team','director'])
 def delete_sales_party(request, pk):
     """
     SalesParty deletion, it only mark as is deleted field to true

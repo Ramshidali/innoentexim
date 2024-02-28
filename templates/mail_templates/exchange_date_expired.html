@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+    <body style="font-size: 20px;line-height: 30px;margin: 0;padding: 0;">
+        <div class="container" style="background-color: #daedff;padding: 25px;width: 800px;margin: 0 auto;">
+            <div class="content" style="background-color: #fff;padding: 80px 25px 25px 30px;">
+                <p style="text-transform: capitalize;">Dear Admin,</p>
+                <p><span class="w-cmpny-name" style="font-weight: bold;">Innoent Exiem</span> Reminder.</p>
+                <p>The Exchange Rate <span class="w-cmpny-name" style="font-weight: bold; color:blue;"> {{data.currency}} </span> to INR: {{data.rate_to_inr}} is date is <span class="w-cmpny-name" style="font-weight: bold; color:red;">Expired Today</span></p>
+                <p>Date {{data.end_date|date:"d-M-Y"}}</p>
+                <p>Please check new rate on google and update it.</p>
+                <p><a href="{{base_url}}{% url 'profit:edit_exchange_rate' pk=data.pk %}">Update Date</a></p>
+                <div class="enquiry-details" style="border-top: 1px solid black;text-align: center;">
+                    <p>If you have any queries, call us at +91 xxxxxxxxxx, +91 xxxxxxxxxx, or email us at info@example.com</p>
+                </div>
+            </div>
+            <p class="declaration" style="text-align: center;font-size:16px">You are receiving this email because this e-mail address was used for reminder on Innoentexiem.</p>
+            <p class="copyrights" style="text-align: center;font-size: 18px;">Copyright @ 2024 INNOENTEXIEM</p>
+        </div>
+    </body>
+</html>

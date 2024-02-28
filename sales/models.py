@@ -28,6 +28,7 @@ class Sales(BaseModel):
     invoice_no = models.CharField(max_length=200)
     sales_id = models.CharField(max_length=100)
     date = models.DateField(default=None, null=True, blank=True)
+    exchange_rate = models.DecimalField(max_digits=10, decimal_places=2)
     
     country = models.ForeignKey(ExportingCountry,on_delete=models.CASCADE)
     sales_staff = models.ForeignKey("auth.User",on_delete=models.CASCADE,related_name="sales_staff")
@@ -80,6 +81,15 @@ class Sales(BaseModel):
             
         return total
     
+    def items_total_inr_amount(self):
+        total = 0
+        # Calculate the sub-total for SalesItems
+        sales_items = SalesItems.objects.filter(sales=self)
+        for item in sales_items:
+            total += item.amount_in_inr
+            
+        return total
+    
     def items_per_kg_amount(self):
         total = 0
         # Calculate the sub-total for SalesItems
@@ -97,23 +107,34 @@ class Sales(BaseModel):
 
         return total
     
+    def expenses_items_total_inr_amount(self):
+        total = 0
+        sales_expenses = SalesExpenses.objects.filter(sales=self)
+        for expense in sales_expenses:
+            total += expense.amount_in_inr
+            
+        return total
+    
     def exchange_sub_total(self):
         total = 0
         # Calculate the sub-total for SalesItems
         sales_items = SalesItems.objects.filter(sales=self)
         for item in sales_items:
-            total += item.amount
+            total += item.amount_in_inr
 
         # Calculate the sub-total for SalesMoreExpense
         sales_expenses = SalesExpenses.objects.filter(sales=self)
         for expense in sales_expenses:
-            total += expense.amount
+            total += expense.amount_in_inr
+            
+        return total
         
     
 class SalesItems(BaseModel):
     qty = models.DecimalField(max_digits=10, decimal_places=2)
     per_kg_amount = models.DecimalField(max_digits=10, decimal_places=2)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+    amount_in_inr = models.DecimalField(max_digits=10, decimal_places=2)
     
     sales = models.ForeignKey(Sales, on_delete=models.CASCADE)
     sales_stock = models.ForeignKey(SalesStock, on_delete=models.CASCADE)
@@ -129,6 +150,7 @@ class SalesItems(BaseModel):
 class SalesExpenses(BaseModel):
     title = models.CharField(max_length=200)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+    amount_in_inr = models.DecimalField(max_digits=10, decimal_places=2)
     
     sales = models.ForeignKey(Sales,on_delete=models.CASCADE)
     

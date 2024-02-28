@@ -18,7 +18,7 @@ from main.functions import generate_form_errors, get_auto_id
 
 # Create your views here.
 @login_required
-@role_required(['superadmin'])
+@role_required(['superadmin','core_team','director'])
 def other_expence_type_list(request):
     """
     ExpenceTypes listings
@@ -52,7 +52,7 @@ def other_expence_type_list(request):
     return render(request, 'admin_panel/pages/other_expences/types/list.html', context)
 
 @login_required
-@role_required(['superadmin'])
+@role_required(['superadmin','core_team','director'])
 def create_other_expence_type(request):
     """
     create operation of ExpenceTypes
@@ -105,7 +105,7 @@ def create_other_expence_type(request):
         return render(request, 'admin_panel/pages/other_expences/types/create.html',context)
     
 @login_required
-@role_required(['superadmin'])
+@role_required(['superadmin','core_team','director'])
 def edit_other_expence_type(request,pk):
     """
     edit operation of other_expences
@@ -161,7 +161,7 @@ def edit_other_expence_type(request,pk):
         return render(request, 'admin_panel/pages/other_expences/types/create.html',context)
 
 @login_required
-@role_required(['superadmin'])
+@role_required(['superadmin','core_team','director'])
 def delete_other_expence_type(request, pk):
     """
     ExpenceTypes deletion, it only mark as is deleted field to true
@@ -183,7 +183,7 @@ def delete_other_expence_type(request, pk):
 
 
 @login_required
-@role_required(['superadmin'])
+@role_required(['superadmin','core_team','director'])
 def other_expence_list(request):
     """
     OtherExpences listings
@@ -220,7 +220,7 @@ def other_expence_list(request):
     return render(request, 'admin_panel/pages/other_expences/list.html', context)
 
 @login_required
-@role_required(['superadmin'])
+@role_required(['superadmin','core_team','director'])
 def create_other_expence(request):
     """
     create operation of Other Expence
@@ -273,7 +273,7 @@ def create_other_expence(request):
         return render(request, 'admin_panel/pages/other_expences/create.html',context)
     
 @login_required
-@role_required(['superadmin'])
+@role_required(['superadmin','core_team','director'])
 def edit_other_expence(request,pk):
     """
     edit operation of other_expences
@@ -329,7 +329,7 @@ def edit_other_expence(request,pk):
         return render(request, 'admin_panel/pages/other_expences/create.html',context)
 
 @login_required
-@role_required(['superadmin'])
+@role_required(['superadmin','core_team','director'])
 def delete_other_expence(request, pk):
     """
     OtherExpences deletion, it only mark as is deleted field to true

@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     
     'main',
     'sales',
+    'profit',
     'purchase',
     'coreteam',
     'investors',
@@ -141,12 +142,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = 'mrm763214@gmail.com'
-EMAIL_HOST_PASSWORD = 'myvcfwxgibsxcdzu'
-EMAIL_PORT = 587
-DEFAULT_FROM_EMAIL = 'mrm <mrm763214@gmail.com>' 
-DEFAULT_BCC_EMAIL = ''
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+EMAIL_PORT = config('EMAIL_PORT')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
+DEFAULT_BCC_EMAIL = config('DEFAULT_BCC_EMAIL')
 
-DEFAULT_REPLY_TO_EMAIL = 'mrm763214@gmail.com'
-SERVER_EMAIL = 'mrm763214@gmail.com'
-ADMIN_EMAIL = 'mrm763214@gmail.com'
+DEFAULT_REPLY_TO_EMAIL = config('DEFAULT_REPLY_TO_EMAIL')
+SERVER_EMAIL = config('SERVER_EMAIL')
+ADMIN_EMAIL = config('ADMIN_EMAIL')

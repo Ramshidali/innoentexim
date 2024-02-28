@@ -169,40 +169,60 @@
         });
         
     });
-</script>
-<script>
-    $(".sales-item").change(function(){
-        var itemValue = $(this).val();
-        var digitValue = $(this).attr("id");
-        var digitValue = digitValue.match(/\d+/);
 
-        if (digitValue !== null) {
-            var digitValue = digitValue[0];
-        }
-
-        var country = $('#id_country').val();
-        var url = "{% url 'sales:sales_item_qty' %}"
-
-        $.ajax({
-            type: 'GET',
-            url: url,
-            dataType: 'json',
-            data: {
-                'item_pk': itemValue,
-                'country': country,
-            },
-    
-            success: function (data) {
-                var qty = data['qty'];
-                $("#id_sales_items_formset-"+digitValue+"-qty").val(qty);
-            },
-    
-            error: function (data) {
-                var title = data["title"];
-                var errorMessagesStr = data["responseJSON"]["message"];
-            },
+    $(document).ready(function () {
+        // Script to handle changing options of the sales-item select field
+        $('#id_country').change(function () {
+            var countryId = $(this).val();
+            var url = "{% url 'sales:get_sales_product_items' %}";
+            $.ajax({
+                url: url,
+                data: {'country_id': countryId},
+                dataType: 'json',
+                success: function (data) {
+                    var options = '<option value="">Select</option>'; // Initialize options variable
+                    $.each(data, function (index, item) {
+                        options += '<option value="' + item.id + '">' + item.name + '</option>'; // Append each option
+                    });
+                    $('.sales-item').html(options); // Replace all options in the select field
+                }
+            });
         });
 
+        // Script to handle updating the qty field
+        $(".sales-item").change(function(){
+            var itemValue = $(this).val();
+            var digitValue = $(this).attr("id");
+            digitValue = digitValue.match(/\d+/);
+
+            if (digitValue !== null) {
+                digitValue = digitValue[0];
+            }
+
+            var country = $('#id_country').val();
+            var url = "{% url 'sales:sales_item_qty' %}";
+
+            $.ajax({
+                type: 'GET',
+                url: url,
+                dataType: 'json',
+                data: {
+                    'item_pk': itemValue,
+                    'country': country,
+                },
+
+                success: function (data) {
+                    var qty = data['qty'];
+                    $("#id_sales_items_formset-" + digitValue + "-qty").val(qty);
+                },
+
+                error: function (data) {
+                    var title = data["title"];
+                    var errorMessagesStr = data["responseJSON"]["message"];
+                },
+            });
+
+        });
     });
 
     $('.amount_per_kg').keyup(function(){
