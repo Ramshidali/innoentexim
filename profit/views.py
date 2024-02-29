@@ -58,7 +58,7 @@ def calculate_profit(issued_date):
     instance.profit = profit
     instance.save()
     
-    print(profit)
+    # print(profit)
     return profit
 
 @login_required
@@ -88,11 +88,16 @@ def create_exchange_rate(request):
     message = ''
     if request.method == 'POST':
         form = ExchangeRateForm(request.POST)
+        now = timezone.now()
         
         if form.is_valid() :
             data = form.save(commit=False)
             data.auto_id = get_auto_id(ExchangeRate)
             data.creator = request.user
+            if data.start_date <= now <= data.end_date:
+                data.is_active = True
+            else:
+                data.is_active = False
             data.save()
                     
             response_data = {
@@ -142,12 +147,17 @@ def edit_exchange_rate(request,pk):
     message = ''
     if request.method == 'POST':
         form = ExchangeRateForm(request.POST,instance=instance)
+        now = timezone.now()
         
         if form.is_valid():
             
             data = form.save(commit=False)
             data.date_updated = datetime.today()
             data.updater = request.user
+            if data.start_date <= now <= data.end_date:
+                data.is_active = True
+            else:
+                data.is_active = False
             data.save()
                     
             response_data = {

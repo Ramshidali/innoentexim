@@ -82,7 +82,7 @@ def sales_stock(request):
     return render(request, 'admin_panel/pages/sales/stock/list.html', context)
 
 @login_required
-@role_required(['superadmin','core_team'])
+@role_required(['superadmin','core_team','director'])
 def sales_info(request,pk):
     """
     Sale Info
@@ -101,7 +101,7 @@ def sales_info(request,pk):
     return render(request, 'admin_panel/pages/sales/sales/info.html', context)
 
 @login_required
-@role_required(['superadmin','core_team'])
+@role_required(['superadmin','core_team','director'])
 def sales_list(request):
     """
     Sales List
@@ -154,7 +154,7 @@ def sales_list(request):
     return render(request, 'admin_panel/pages/sales/sales/list.html', context)
 
 @login_required
-@role_required(['superadmin','core_team'])
+@role_required(['superadmin','core_team','director'])
 def create_sales(request):
     ItemsFormset = formset_factory(SalesItemsForm, extra=2)
     ExpensesFormset = formset_factory(SalesExpenseForm, extra=2)

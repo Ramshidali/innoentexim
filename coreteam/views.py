@@ -207,7 +207,7 @@ def core_team(request,pk):
     return render(request, 'admin_panel/pages/core_team/teams/info.html', context)
 
 @login_required
-@role_required(['superadmin'])
+@role_required(['superadmin','core_team'])
 def core_team_list(request):
     """
     CoreTeam listings
@@ -238,7 +238,7 @@ def core_team_list(request):
     return render(request, 'admin_panel/pages/core_team/teams/list.html', context)
 
 @login_required
-@role_required(['superadmin'])
+@role_required(['superadmin','core_team'])
 def create_core_team(request):
     """
     create operation of CoreTeam
@@ -315,7 +315,7 @@ def create_core_team(request):
         return render(request, 'admin_panel/pages/core_team/teams/create.html',context)
     
 @login_required
-@role_required(['superadmin'])
+@role_required(['superadmin','core_team'])
 def edit_core_team(request,pk):
     """
     edit operation of core_team
@@ -373,7 +373,7 @@ def edit_core_team(request,pk):
         return render(request, 'admin_panel/pages/core_team/teams/create.html',context)
 
 @login_required
-@role_required(['superadmin'])
+@role_required(['superadmin','core_team'])
 def delete_core_team(request, pk):
     """
     CoreTeam deletion, it only mark as is deleted field to true
