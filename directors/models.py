@@ -25,7 +25,7 @@ class Departments(BaseModel):
         return str(self.name)
 
 class Directors(BaseModel):
-    user = models.OneToOneField(User,limit_choices_to={'is_superuser': False},on_delete=models.CASCADE)
+    user = models.OneToOneField(User,limit_choices_to={'is_superuser': False, 'groups__name__in': ["core_team", "investor"]},on_delete=models.CASCADE)
     department = models.ForeignKey(Departments,on_delete=models.CASCADE,blank=True,null=True)
     
     class Meta:

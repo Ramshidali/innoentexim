@@ -16,6 +16,7 @@ class Investors(BaseModel):
     date_of_birth = models.DateField()
     address = models.TextField()
     investment_amount = models.DecimalField(default=0, max_digits=10, decimal_places=2)
+    share_persentage = models.IntegerField(default=0)
     password = models.CharField(max_length=256,null=True,blank=True)
     state = models.CharField(max_length=200)
     country = models.CharField(max_length=200)

@@ -1,0 +1,91 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+    
+                <div class="card-header pb-0">
+                    <div class="d-lg-flex">
+                        <div>
+                            <h5 class="mb-0">Dialy Profit</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body px-0 pb-0">
+                    <div class="table-responsive">
+                        <div class="dataTable-wrapper dataTable-loading no-footer sortable searchable fixed-columns">
+                            <div class="dataTable-container">
+                                <table class="table table-flush dataTable-table" id="products-list">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th style="width: 2;text-align:center !important;">#</th>
+                                            <th style="text-align:center !important;">Date</th>
+                                            <th style="text-align:center !important;">Purchase</th>
+                                            <th style="text-align:center !important;">Purchase Expense</th>
+                                            <th style="text-align:center !important;">Sales Expense</th>
+                                            <th style="text-align:center !important;">Total Expenses</th>
+                                            <th style="text-align:center !important;">Sales</th>
+                                            <th style="text-align:center !important;">Profit</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% load el_pagination_tags %}
+                                        {% paginate 20 instances %}
+                                        {% for instance in instances %}
+                                        <tr>
+                                            <td class="text-sm text-center" style="">{{ forloop.counter }}</td>
+                                            <td class="text-sm text-center" >{{ instance.date_added|date:"d-M-Y" }}</td>
+                                            <td class="text-sm text-end">{{ instance.purchase }}</td>
+                                            <td class="text-sm text-end">{{ instance.purchase_expenses }}</td>
+                                            <td class="text-sm text-end">{{ instance.sales_expenses }}</td>
+                                            <td class="text-sm text-end">{{ instance.total_expenses }}</td>
+                                            <td class="text-sm text-end">{{ instance.sales }}</td>
+                                            {% if instance.profit > 0 %}
+                                            <td class="text-sm text-end text-success"><i class="fa fa-arrow-up text-success" aria-hidden="true"></i> {{ instance.profit }}</td>
+                                            {% else %}
+                                            <td class="text-sm text-end text-danger"><i class="fa fa-arrow-down text-danger" aria-hidden="true"></i> {{ instance.profit }}</td>
+                                            {% endif %}
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {% comment %} <div class="clearfix"></div>
+                            <div class="row pagi my-3">
+                                <div class="col-sm-6 col-xs-6 text-left my-pagina">{% show_pages %}</div>
+                                <div class="col-sm-6 col-xs-6 text-right tot my-pagination align-items-center">
+                                    <div class="m-t-10">
+                                        Showing {{title}}
+                                        <span class="current_page_index">{{ pages.current_start_index }}</span> - <span
+                                        class="current_end_status"></span> of <span
+                                        class="total_count"></span>
+                                    </div>
+                                </div>
+                            </div> {% endcomment %}
+                            
+                            {% get_pages %}
+                            <div class="dataTable-bottom">
+                                <div class="dataTable-info">Showing {{ pages.current_start_index }} to {{ pages.current_end_index }} of {{ pages.total_count }} entries</div>
+                                <nav class="dataTable-pagination">
+                                    <ul class="dataTable-pagination-list">
+                                        <li class="pager"><a href="#" data-page="1">‹</a></li>
+                                        <li class="active"><a href="#" data-page="1">1</a></li>
+                                        <li class=""><a href="#" data-page="2">2</a></li>
+                                        <li class=""><a href="#" data-page="3">3</a></li>
+                                        <li class="pager"><a href="#" data-page="2">›</a></li>
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {%include 'admin_panel/includes/footer.html' %}
+</div>
+{% endblock content %}

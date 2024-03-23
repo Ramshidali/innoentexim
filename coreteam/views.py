@@ -16,6 +16,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from dal import autocomplete
 #local
 from main.decorators import role_required
+from profit.models import MyProfit
 from . models import CoreTeam
 from . forms import CoreTeamEditForm, CoreTeamForm
 from main.functions import encrypt_message, generate_form_errors, get_auto_id, paginate, randomnumber, send_email
@@ -197,9 +198,12 @@ def core_team(request,pk):
     :return: CoreTeam info view
     """
     instance = CoreTeam.objects.get(pk=pk,is_deleted=False)
+    profits = MyProfit.objects.filter(user=instance.user)[:8]
 
     context = {
         'instance': instance,
+        'profits': profits,
+
         'page_name' : 'Core Team',
         'page_title' : 'Core Team',
     }

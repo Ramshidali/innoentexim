@@ -32,6 +32,8 @@ class CoreTeam(BaseModel):
     state = models.CharField(max_length=200)
     country = models.CharField(max_length=200)
     zip = models.CharField(max_length=200)
+    investment_amount = models.DecimalField(default=0, max_digits=10, decimal_places=2)
+    share_persentage = models.IntegerField(default=0)
     
     image = VersatileImageField('Image', upload_to="core_team/profile_pic", blank=True, null=True)
     

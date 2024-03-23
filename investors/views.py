@@ -16,6 +16,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from dal import autocomplete
 #local
 from main.decorators import role_required
+from profit.models import MyProfit
 from . models import Investors
 from . forms import InvestorsForm, InvestorsEditForm
 from main.functions import encrypt_message, generate_form_errors, get_auto_id, paginate, randomnumber, send_email
@@ -30,9 +31,12 @@ def investors_info(request,pk):
     :return: Investor info view
     """
     instance = Investors.objects.get(pk=pk,is_deleted=False)
+    profits = MyProfit.objects.filter(user=instance.user)[:8]
 
     context = {
         'instance': instance,
+        'profits': profits,
+        
         'page_name' : 'Investors Info',
         'page_title' : 'Investors Info',
     }

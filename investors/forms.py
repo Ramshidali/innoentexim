@@ -11,7 +11,7 @@ class InvestorsForm(forms.ModelForm):
 
     class Meta:
         model = Investors
-        fields = ['first_name','last_name','email','phone','date_of_birth','state','country','image','address','investment_amount','zip','password','re_password']
+        fields = ['first_name','last_name','email','phone','date_of_birth','state','country','image','address','investment_amount','share_persentage','zip','password','re_password']
 
         widgets = {
             'first_name': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter First Name'}), 
@@ -19,6 +19,7 @@ class InvestorsForm(forms.ModelForm):
             'email': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Email'}), 
             'phone': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Phone Number'}), 
             'investment_amount': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Investment Amount'}), 
+            'share_persentage': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Share Persentage'}), 
             'date_of_birth': TextInput(attrs={'class': 'required form-control','id':'date_of_birth','name':'birthday','placeholder' : 'Enter Date of Birth'}), 
             'state': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter State'}), 
             'country': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Country'}), 
@@ -58,14 +59,15 @@ class InvestorsEditForm(forms.ModelForm):
 
     class Meta:
         model = Investors
-        fields = ['first_name','last_name','email','phone','date_of_birth','state','country','image','address','investment_amount','zip']
+        fields = ['first_name','last_name','email','phone','date_of_birth','state','country','image','address','investment_amount','share_persentage','zip']
 
         widgets = {
             'first_name': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter First Name'}), 
             'last_name': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Last Name'}), 
             'email': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Email'}), 
             'phone': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Phone Number'}), 
-            'investment_amount': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Investment Amount'}), 
+            'investment_amount': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Investment Amount'}),
+            'share_persentage': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Share Persentage'}), 
             'date_of_birth': TextInput(attrs={'class': 'required form-control','id':'date_of_birth','name':'birthday','placeholder' : 'Enter Date of Birth'}), 
             'state': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter State'}), 
             'country': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Country'}), 

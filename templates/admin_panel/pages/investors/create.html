@@ -34,16 +34,6 @@
                                             {{form.phone}}
                                         </div>
                                     </div>
-                                    <div class="row mt-3">
-                                        <div class="col-12 col-sm-6 mt-3 mt-sm-0">
-                                            <label>Date of Birth</label>
-                                            {{form.date_of_birth}}
-                                        </div>
-                                        <div class="col-12 col-sm-6 mt-3 mt-sm-0">
-                                            <label>Investment Amount</label>
-                                            {{form.investment_amount}}
-                                        </div>
-                                    </div>
                                     {% if form.password or form.re_password %}
                                     <div class="row mt-3">
                                         <div class="col-12 col-sm-6">
@@ -55,6 +45,26 @@
                                             {{form.re_password}}
                                     </div>
                                     {% endif %}
+                                    <div class="row mt-3">
+                                        <div class="col-12 col-sm-6">
+                                            <label>Investment Amount</label>
+                                            {{form.investment_amount}}
+                                        </div>
+                                        <div class="col-12 col-sm-6 mt-3 mt-sm-0">
+                                            <label>Share(%)</label>
+                                            {{form.share_persentage}}
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-12 col-sm-6 mt-3 mt-sm-0">
+                                            <label>Date of Birth</label>
+                                            {{form.date_of_birth}}
+                                        </div>
+                                        <div class="col-6 mt-sm-0">
+                                            <label>Zip</label>
+                                            {{form.zip}}
+                                        </div>
+                                    </div>
                                     <div class="row mt-3">
                                         <div class="col-12 col-sm-6 mt-3 mt-sm-0">
                                             <label>State</label>
@@ -72,10 +82,6 @@
                                         </div>
                                     </div>
                                     <div class="row">
-                                        <div class="col-6 mt-sm-0">
-                                            <label>Zip</label>
-                                            {{form.zip}}
-                                        </div>
                                         <div class="col-6 mt-sm-0">
                                             <label>Image</label>
                                             {{form.image}}

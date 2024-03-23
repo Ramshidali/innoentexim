@@ -11,5 +11,7 @@ urlpatterns = [
     re_path(r'^edit/(?P<pk>.*)/$', views.edit_exchange_rate, name='edit_exchange_rate'),
     re_path(r'^delete/(?P<pk>.*)/$', views.delete_exchange_rate, name='delete_exchange_rate'),
     
-    path('profit-list/', views.profits, name='profits'),
+    path('dialy-profit-list/', views.dialy_profits, name='dialy_profits'),
+    path('monthly-profit-list/', views.monthly_profits, name='monthly_profits'),
+    path('my-profit-list/', views.users_profits, name='users_profits'),
 ]

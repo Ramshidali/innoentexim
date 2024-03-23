@@ -1,7 +1,7 @@
 import io
 import json
 import datetime
-from datetime import datetime
+from datetime import datetime,timedelta
 #django
 from django.urls import reverse
 from django.db.models import Q, Sum
@@ -12,6 +12,7 @@ from django.shortcuts import get_object_or_404, render
 from django.contrib.auth.decorators import login_required
 from django.forms import formset_factory, inlineformset_factory
 # rest framework
+from other_expences.models import OtherExpences
 from rest_framework import status
 # local
 from main.decorators import role_required
@@ -54,13 +55,91 @@ def calculate_profit(issued_date):
     instance.purchase_expenses = purchase_expense_total
     instance.sales = sales_total
     instance.sales_expenses = sales_expense_total
-    instance.total_expenses = purchase_total + sales_expense_total
+    instance.total_expenses = purchase_total + purchase_expense_total +sales_expense_total
     instance.profit = profit
     instance.save()
-    
     # print(profit)
-    return profit
+    # return profit
 
+    if profit < instance.total_expenses:
+        balance_profit(issued_date)
+
+def balance_profit(issued_date):
+    # Get the first day of the current month
+    instance, created = DialyProfit.objects.get_or_create(date_added__date=issued_date)
+    first_day_of_month = issued_date.replace(day=1)
+
+    # Get the last day of the previous month
+    last_day_of_previous_month = first_day_of_month - timedelta(days=1)
+
+    # Get profits of the previous month
+    previous_month_profits = DialyProfit.objects.filter(
+        date_added__year=last_day_of_previous_month.year,
+        date_added__month=last_day_of_previous_month.month
+    ).order_by('-date_added')
+
+    # Iterate over profits and try to balance profit
+    for prev_instance in previous_month_profits:
+        if prev_instance.profit > 0:  # Ensure profit is not a loss
+            remaining_profit = prev_instance.profit - prev_instance.total_expenses
+            shortfall = instance.total_expenses - instance.profit
+            amount_to_balance = min(shortfall, remaining_profit)
+            prev_instance.profit -= amount_to_balance
+            instance.profit += amount_to_balance
+            prev_instance.save()
+            instance.save()
+            break  # Stop when profit is balanced
+        
+def calculate_monthly_profit(year, month):
+    # Get the first and last date of the month
+    first_day_of_month = datetime(year, month, 1)
+    next_month = first_day_of_month.replace(day=28) + timedelta(days=4)  # Ensure it's past the end of the month
+    last_day_of_month = next_month - timedelta(days=next_month.day)
+
+    # Calculate the monthly profit from DialyProfit model
+    monthly_profit = DialyProfit.objects.filter(
+        date_added__date__gte=first_day_of_month,
+        date_added__date__lte=last_day_of_month
+    ).aggregate(monthly_profit=Sum('profit'))['monthly_profit'] or 0
+
+    # Subtract other expenses for the same month
+    other_expenses = OtherExpences.objects.filter(
+        date_added__year=year,
+        date_added__month=month
+    ).aggregate(total_expenses=Sum('amount'))['total_expenses'] or 0
+
+    # Calculate final monthly profit
+    final_monthly_profit = monthly_profit - other_expenses
+
+    # Save the calculated monthly profit to MonthlyProfit model
+    monthly_profit_instance, created = MonthlyProfit.objects.get_or_create(year=year, month=month)
+    monthly_profit_instance.other_expences = other_expenses
+    monthly_profit_instance.total_revenue = monthly_profit
+    monthly_profit_instance.profit = final_monthly_profit
+    monthly_profit_instance.save()
+
+def distribute_profits(year, month):
+    monthly_profit = MonthlyProfit.objects.get(year=year, month=month)
+    
+    core_team_users = User.objects.filter(groups__name='core_team')
+    investor_users = User.objects.filter(groups__name='investor')
+    
+    for core_team in core_team_users:
+        instance = CoreTeam.objects.get(user=core_team,is_deleted=False)
+        my_profit = monthly_profit.profit * instance.share_persentage / 100
+        
+        profit_instance, created = MyProfit.objects.get_or_create(year=year, month=month, user=core_team)
+        profit_instance.profit = my_profit
+        profit_instance.save()
+        
+    for investor in investor_users:
+        instance = Investors.objects.get(user=investor,is_deleted=False)
+        my_profit = monthly_profit.profit * instance.share_persentage / 100
+        
+        profit_instance, created = MyProfit.objects.get_or_create(year=year, month=month, user=investor)
+        profit_instance.profit = my_profit
+        profit_instance.save()
+        
 @login_required
 @role_required(['superadmin','core_team','director'])
 def exchange_rates(request):
@@ -242,7 +321,7 @@ def delete_exchange_rate(request, pk):
 
 @login_required
 @role_required(['superadmin','core_team','director'])
-def profits(request):
+def dialy_profits(request):
     """
     Profits
     :param request:
@@ -252,10 +331,57 @@ def profits(request):
     
     context = {
         'instances': instances,
-        'page_name' : 'Profit List',
-        'page_title' : 'Profit List',
+        
+        'page_name' : 'Dialy Profit List',
+        'page_title' : 'Dialy Profit List',
         'is_profit' : True,
-        'is_profit_page': True,
+        'is_dialy_profit_page': True,
     }
 
-    return render(request, 'admin_panel/pages/profit/list.html', context)
+    return render(request, 'admin_panel/pages/profit/dialy_list.html', context)
+
+@login_required
+@role_required(['superadmin','core_team','director'])
+def monthly_profits(request):
+    """
+    Profits
+    :param request:
+    :return: Profit List
+    """
+    instances = MonthlyProfit.objects.all().order_by("-date_added")
+    
+    
+    context = {
+        'instances': instances,
+        
+        'page_name' : 'Monthly Profit List',
+        'page_title' : 'Monthly Profit List',
+        'is_profit' : True,
+        'is_monthly_profit_page': True,
+    }
+
+    return render(request, 'admin_panel/pages/profit/monthly_list.html', context)
+
+@login_required
+@role_required(['superadmin','core_team','director','investor'])
+def users_profits(request):
+    """
+    Profits
+    :param request:
+    :return: Profit List
+    """
+    instances = MyProfit.objects.all()
+    
+    if request.user.groups.filter(name__in=['core_team','investor']).exists():
+        instances = instances.filter(user=request.user)
+    
+    context = {
+        'instances': instances.order_by("-date_added"),
+        
+        'page_name' : 'My Profit List',
+        'page_title' : 'My Profit List',
+        'is_profit' : True,
+        'is_my_profit_page': True,
+    }
+
+    return render(request, 'admin_panel/pages/profit/my_list.html', context)
