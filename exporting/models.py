@@ -115,7 +115,7 @@ class ExportItem(BaseModel):
         verbose_name_plural = ('Export Materials')
 
     def __str__(self):
-        return f'{self.qty} {self.amount}'
+        return f'{self.qty}'
     
 class ExportStatus(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
