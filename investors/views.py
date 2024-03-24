@@ -39,6 +39,7 @@ def investors_info(request,pk):
         
         'page_name' : 'Investors Info',
         'page_title' : 'Investors Info',
+        'is_investors': True,
     }
 
     return render(request, 'admin_panel/pages/investors/info.html', context)
