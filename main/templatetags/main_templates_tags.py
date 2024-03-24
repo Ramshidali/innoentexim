@@ -13,7 +13,7 @@ def get_have_group(user_id, group_name):
     status = False
     try:
         user = User.objects.get(pk=user_id)
-        if user.groups.filter(name=group_name).exists():
+        if user.is_superuser or user.groups.filter(name=group_name).exists():
             status = True
     except User.DoesNotExist:
         pass
