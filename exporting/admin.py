@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from exporting.models import ExportStatus
+from exporting.models import *
 
 # Register your models here.
 class ExportStatusAdmin(admin.ModelAdmin):
@@ -15,3 +15,5 @@ class ExportStatusAdmin(admin.ModelAdmin):
         return obj.export.exporting_id
     
 admin.site.register(ExportStatus,ExportStatusAdmin)
+admin.site.register(CourierPartner)
+admin.site.register(Exporting)
