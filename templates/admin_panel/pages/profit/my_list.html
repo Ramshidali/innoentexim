@@ -1,6 +1,7 @@
 {% extends 'admin_panel/base.html' %}
 {% load static %}
 {% load profit_templates_tags %}
+{% load main_templates_tags %}
 
 {% block content %}
 <div class="container-fluid py-4">
@@ -13,6 +14,37 @@
                         <div>
                             <h5 class="mb-0">My Profit</h5>
                         </div>
+                        <div class="ms-auto my-auto mt-lg-0 mt-4">
+                            <div class="ms-auto my-auto d-flex ">
+                                <a href="{% url 'profit:print_my_profits' %}" class="btn btn-outline-warning btn-sm mb-0 mx-1 d-flex align-items-center" target="_blank"><i class="ri-printer-line" style="font-size:12px;"></i>&nbsp; Print</a>
+                                <a href="{% url 'profit:export_my_profits' %}" class="btn btn-outline-dark btn-sm mb-0 mx-1"><i class="ri-upload-line" style="font-size:12px;"></i>&nbsp; Export</a>
+                                <div class="dropdown">
+                                    <button class="btn bg-gradient-info dropdown-toggle btn-sm mb-0" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false"><i class="ri-filter-line" style="font-size:12px;"></i>&nbsp; Filter</button>
+                                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton" style="">
+                                        <form action="." method="GET" class="px-4 py-3">
+                                            <div class="form-group">
+                                                <label for="inputField">Select Date</label>
+                                                <input type="text" id="reportrange" class="form-control" name="date_range" value="{% if not filter_data.date_range %}{{first_date_formatted}} - {{last_date_formatted}}{% else %}{{filter_data.date_range}}{% endif %}" style="display: inline;width: max-content;">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="inputField">User</label>
+                                                <select class="form-control" name="investor_pk">
+                                                    {% get_investors as investors %}
+                                                    <option value="">All</option>
+                                                    {% for i in investors %}
+                                                    <option value="{{i.user.pk}}" {% if filter_data.investor_pk|stringformat:"s" == i.user.pk|stringformat:"s" %}selected{% endif %}>{{i.get_fullname}}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">Apply</button>
+                                        </form>
+                                    </div>
+                                </div>
+                                {% if filter_data %}
+                                <a href="." class="btn btn-info btn-sm mb-0 mx-1">Reset</a>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="card-body px-0 pb-0">
@@ -23,6 +55,7 @@
                                     <thead class="thead-light">
                                         <tr>
                                             <th style="width: 2;text-align:center !important;">#</th>
+                                            <th style="text-align:center !important;">Date Added</th>
                                             <th style="text-align:center !important;">Month</th>
                                             <th style="text-align:center !important;">Year</th>
                                             <th style="text-align:left !important;">User</th>
@@ -35,13 +68,18 @@
                                         {% for instance in instances %}
                                         <tr>
                                             <td class="text-sm text-center" style="">{{ forloop.counter }}</td>
+                                            <td class="text-sm text-center" style="">{{ instance.date_added|date }}</td>
                                             <td class="text-sm text-center">
                                                 {% get_month_name instance.month as month_name %}
                                                 {{ month_name }}
                                             </td>
                                             <td class="text-sm text-center">{{ instance.year }}</td>
                                             <td class="text-sm text-start">{{ instance.get_username }}</td>
-                                            <td class="text-sm text-end text-success">{{ instance.profit }}</td>
+                                            {% if instance.profit > 0 %}
+                                            <td class="text-sm text-end text-success"><i class="fa fa-arrow-up text-success" aria-hidden="true"></i> {{ instance.profit }}</td>
+                                            {% else %}
+                                            <td class="text-sm text-end text-danger"><i class="fa fa-arrow-down text-danger" aria-hidden="true"></i> {{ instance.profit }}</td>
+                                            {% endif %}
                                         </tr>
                                         {% endfor %}
                                     </tbody>
@@ -66,11 +104,17 @@
                                 <div class="dataTable-info">Showing {{ pages.current_start_index }} to {{ pages.current_end_index }} of {{ pages.total_count }} entries</div>
                                 <nav class="dataTable-pagination">
                                     <ul class="dataTable-pagination-list">
-                                        <li class="pager"><a href="#" data-page="1">‹</a></li>
-                                        <li class="active"><a href="#" data-page="1">1</a></li>
-                                        <li class=""><a href="#" data-page="2">2</a></li>
-                                        <li class=""><a href="#" data-page="3">3</a></li>
-                                        <li class="pager"><a href="#" data-page="2">›</a></li>
+                                        {% if pages.has_previous %}
+                                        <li class="pager"><a href="#" data-page="{{ pages.previous_page_number }}">‹</a></li>
+                                        {% endif %}
+                                        {% for page_number in pages.paginator.page_range %}
+                                        <li class="{% if page_number == pages.number %}active{% endif %}">
+                                            <a href="#" data-page="{{ page_number }}">{{ page_number }}</a>
+                                        </li>
+                                        {% endfor %}
+                                        {% if pages.has_next %}
+                                        <li class="pager"><a href="#" data-page="{{ pages.next_page_number }}">›</a></li>
+                                        {% endif %}
                                     </ul>
                                 </nav>
                             </div>
@@ -83,3 +127,22 @@
     {%include 'admin_panel/includes/footer.html' %}
 </div>
 {% endblock content %}
+{% block static %}
+{% load static %}
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        var defaultDateRange = "{{ filter_data.date_range }}";
+    
+        if (defaultDateRange) {
+            $('#reportrange').val(defaultDateRange);
+        }
+        $('#reportrange').daterangepicker({
+            autoApply: true,
+            locale: {
+                format: 'MM/DD/YYYY'
+            }
+        });
+    });
+</script>
+{% endblock static %}

@@ -1,0 +1,81 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title>{{page_title}}</title>
+        <link href="{% static 'admin_panel/assets/css/bootstrap.min.css' %}" rel="stylesheet" type="text/css" />
+    </head>
+    <body>
+        <div class="page-wrapper ml-0">
+            <!-- Page Content-->
+            <div class="page-content">
+                <div class="container-fluid">
+                    <!-- Page-Title -->
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="page-title-box">
+                                <div class="row">
+                                    <div class="col">
+                                        <h4 class="page-title">{{page_title}}</h4>
+                                    </div><!--end col-->
+                                    
+                                </div><!--end row-->                                                              
+                            </div><!-- end page-title-box -->
+                        </div><!--end col-->
+                    </div><!--end row-->
+                    <!-- end page title end breadcrumb -->
+        
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="card">
+                                <div class="card-body p-0">
+                                    <div class="table-responsive-sm">
+                                        <table class="table mb-0" style="width:100%;" border="1">
+                                            <thead>
+                                                <tr>
+                                                    <th style="text-align:center !important;">#</th>
+                                                    <th style="text-align:center !important;">Date of Added</th>
+                                                    <th style="text-align:left !important;">Country Name</th>
+                                                    <th style="text-align:center !important;">Currency</th>
+                                                    <th style="text-align:center !important;">Rate in INR</th>
+                                                    <th style="text-align:center !important;">Start Date</th>
+                                                    <th style="text-align:center !important;">End Date</th>
+                                                    <th style="text-align:center !important;">Is Active</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for instance in instances %}
+                                                <tr>
+                                                    <td class="text-sm text-center" style="">{{ forloop.counter }}</td>
+                                                    <td class="text-sm  text-center" >{{ instance.date_added|date:"d-M-Y" }}</td>
+                                                    <td class="text-sm text-left text-capitalize">{{ instance.country.country_name }}</td>
+                                                    <td class="text-sm text-center text-capitalize">{{ instance.currency }}</td>
+                                                    <td class="text-sm text-center">{{ instance.rate_to_inr }}</td>
+                                                    <td class="text-sm text-center">{{ instance.start_date|date:"d-M-Y" }}</td>
+                                                    <td class="text-sm text-center">{{ instance.end_date|date:"d-M-Y" }}</td>
+                                                    <td class="text-sm text-center">{{ instance.is_active }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--end card-->
+                        </div> <!-- end col -->
+                    </div>
+                </div><!-- container -->
+                <!-- end page content -->
+            </div>
+            <!-- end page-wrapper -->
+        </div>
+        {% include 'admin_panel/includes/js.html' %}
+        <script>
+            $(document).ready(function(){
+                window.print();
+            });
+        </script>
+    </body>
+</html>

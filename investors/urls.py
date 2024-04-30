@@ -9,6 +9,8 @@ urlpatterns = [
     re_path(r'^create/$', views.create_investor, name='create_investor'),
     re_path(r'^edit/(?P<pk>.*)/$', views.edit_investor, name='edit_investor'),
     re_path(r'^delete/(?P<pk>.*)/$', views.delete_investor, name='delete_investor'),
+    re_path(r'^print/$', views.print_investors, name='print_investors'),
+    re_path(r'^export/$', views.export_investors, name='export_investors'),
 ]
 
 

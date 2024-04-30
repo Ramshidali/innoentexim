@@ -6,7 +6,7 @@ from datetime import datetime
 import random
 #django
 from django.urls import reverse
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum, Min, Max
 from django.db import transaction, IntegrityError
 from django.contrib.auth.models import User,Group
 from django.http import HttpResponse, JsonResponse
@@ -16,6 +16,9 @@ from django.forms import formset_factory, inlineformset_factory
 from profit.views import calculate_profit
 # rest framework
 from rest_framework import status
+# third
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
 # local
 from profit.models import *
 from main.decorators import role_required
@@ -91,9 +94,11 @@ def sales_info(request,pk):
     """
     
     instance = Sales.objects.get(pk=pk)
+    sales_items = SalesItems.objects.filter(sales=instance,is_deleted=False)
 
     context = {
         'instance': instance,
+        'sales_items': sales_items,
         'page_name' : 'Sale Info',
         'page_title' : 'Sale Info',
     }
@@ -114,10 +119,9 @@ def sales_list(request):
          
     if request.GET.get('date_range'):
         start_date_str, end_date_str = request.GET.get('date_range').split(' - ')
-        start_date = datetime.datetime.strptime(start_date_str, '%m/%d/%Y').date()
-        end_date = datetime.datetime.strptime(end_date_str, '%m/%d/%Y').date()
+        start_date = datetime.strptime(start_date_str, '%m/%d/%Y').date()
+        end_date = datetime.strptime(end_date_str, '%m/%d/%Y').date()
         instances = instances.filter(date__range=[start_date, end_date])
-        
         filter_data['date_range'] = request.GET.get('date_range')
     
     query = request.GET.get("q")
@@ -131,11 +135,17 @@ def sales_list(request):
         title = "Sales List - %s" % query
         filter_data['q'] = query
     
-    # branch = ""
-    # if request.GET.get("branch"):
-    #     branch = request.GET.get("branch")
-    #     instances = instances.filter(branch__pk=branch)
-        
+    first_date_added = instances.aggregate(first_date_added=Min('date'))['first_date_added']
+    last_date_added = instances.aggregate(last_date_added=Max('date'))['last_date_added']
+    
+    first_date_formatted = first_date_added.strftime('%m/%d/%Y') if first_date_added else None
+    last_date_formatted = last_date_added.strftime('%m/%d/%Y') if last_date_added else None
+    
+    country = ""
+    if request.GET.get("sale_country"):
+        country = request.GET.get("sale_country")
+        instances = instances.filter(country__pk=country)
+    
     if request.GET.get("party"):
         party = request.GET.get("party")
         instances = instances.filter(sales_party__pk=party)
@@ -147,6 +157,8 @@ def sales_list(request):
         'page_name' : 'Sales List',
         'page_title' : 'Sales List',
         'filter_data' :filter_data,
+        'first_date_formatted': first_date_formatted,
+        'last_date_formatted': last_date_formatted,
         'is_sales' : True,
         'is_sales_page': True,
     }
@@ -471,3 +483,138 @@ def delete_sales(request, pk):
     }
     
     return HttpResponse(json.dumps(response_data), content_type='application/javascript')
+
+
+@login_required
+@role_required(['superadmin','core_team','director'])
+def print_sales(request):
+    """
+    Sales Print
+    :param request:
+    :return: Sales List Print view
+    """
+    filter_data = {}
+    
+    instances = Sales.objects.filter(is_deleted=False).order_by("-date_added")
+         
+    if request.GET.get('date_range'):
+        start_date_str, end_date_str = request.GET.get('date_range').split(' - ')
+        start_date = datetime.datetime.strptime(start_date_str, '%m/%d/%Y').date()
+        end_date = datetime.datetime.strptime(end_date_str, '%m/%d/%Y').date()
+        instances = instances.filter(date__range=[start_date, end_date])
+        
+        filter_data['date_range'] = request.GET.get('date_range')
+    
+    query = request.GET.get("q")
+    
+    if query:
+
+        instances = instances.filter(
+            Q(invoice_no__icontains=query) |
+            Q(sales_id__icontains=query) 
+        )
+        title = "Sales Print - %s" % query
+        filter_data['q'] = query
+    
+        
+    if request.GET.get("party"):
+        party = request.GET.get("party")
+        instances = instances.filter(sales_party__pk=party)
+        filter_data['party'] = request.GET.get("party")
+        
+    # print(branch)
+    context = {
+        'instances': instances,
+        'page_name' : 'Sales Print',
+        'page_title' : 'Sales Print',
+        'filter_data' :filter_data,
+        'is_sales' : True,
+        'is_sales_page': True,
+    }
+
+    return render(request, 'admin_panel/pages/sales/sales/print.html', context)
+
+def export_sales(request):
+    filter_data = {}
+    sales_pk = request.GET.get("sales_pk")
+
+    sales = Sales.objects.filter(is_deleted=False)
+
+    if sales_pk:
+        sales = sales.filter(pk=sales_pk)
+
+    date_range = request.GET.get('date_range')
+    if date_range:
+        start_date_str, end_date_str = date_range.split(' - ')
+        start_date = datetime.strptime(start_date_str, '%m/%d/%Y').date()
+        end_date = datetime.strptime(end_date_str, '%m/%d/%Y').date()
+        sales = sales.filter(date__range=[start_date, end_date])
+        filter_data['date_range'] = date_range
+    
+    query = request.GET.get("q")
+    if query:
+        sales = sales.filter(
+            Q(sales_id__icontains=query) 
+        )
+        filter_data['q'] = query
+
+    # Create a workbook and a worksheet
+    wb = Workbook()
+    ws = wb.active
+
+    # Define column headers
+    ws.append(['#', 'Date', 'Invoice No', 'Sales ID', 'Country', 'Sales Staff', 'Sales Party', 'Title', 'QTY', 'Amount', 'Amount (INR)', 'Per KG Amount', 'Total Quantity', 'Sub Total', 'Sub Total (INR)', 'Items Total Amount', 'Items Total INR Amount', 'Items Per KG Amount', 'Items Total Expense', 'Expenses Items Total INR Amount', 'Exchange Sub Total'])
+
+    # Iterate through Sales objects
+    for index, sale in enumerate(sales, start=1):
+        # Get all SalesItems for this Sale instance
+        items = sale.salesitems_set.all()
+
+        # Write main sales information
+        ws.append([
+            index,
+            sale.date,
+            sale.invoice_no,
+            sale.sales_id,
+            sale.country.country_name if sale.country else '',
+            sale.sales_staff.username,
+            sale.sales_party.get_fullname() if sale.sales_party else '',
+            '', '', '', '', '',  # Placeholders for item details
+            sale.total_qty(),
+            sale.sub_total(),
+            sale.sub_total_inr(),
+            sale.items_total_amount(),
+            sale.items_total_inr_amount(),
+            sale.items_per_kg_amount(),
+            sale.items_total_expence(),
+            sale.expenses_items_total_inr_amount(),
+            sale.exchange_sub_total(),
+        ])
+
+        # Iterate through SalesItems and write to the worksheet
+        for item_index, item in enumerate(items, start=1):
+            ws.append([
+                '', '', '', '', '', '', '',  # Empty placeholders for the main Sales row details
+                item.sales_stock.purchase_item.name,
+                item.qty,
+                item.amount,
+                item.amount_in_inr,
+                item.per_kg_amount,
+                '', '', '', '', '', '', '', '', '', '',  # Placeholders for the other sales details (already filled for the main Sales row)
+            ])
+
+    # Adjust column widths
+    column_widths = [5, 15, 20, 20, 20, 20, 20,  # Adjust as needed
+                     20, 10, 15, 15, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20]
+    for i, width in enumerate(column_widths, start=1):
+        col_letter = get_column_letter(i)
+        ws.column_dimensions[col_letter].width = width
+
+    output = io.BytesIO()
+    wb.save(output)
+
+    output.seek(0)
+    response = HttpResponse(output.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=sales_data.xlsx'
+
+    return response

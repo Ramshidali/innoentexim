@@ -4,7 +4,7 @@ import datetime
 from datetime import datetime,timedelta
 #django
 from django.urls import reverse
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum,Min,Max
 from django.http import HttpResponse
 from django.db import transaction, IntegrityError
 from django.contrib.auth.models import User,Group
@@ -14,6 +14,9 @@ from django.forms import formset_factory, inlineformset_factory
 # rest framework
 from other_expences.models import OtherExpences
 from rest_framework import status
+# third party
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
 # local
 from main.decorators import role_required
 from main.functions import generate_form_errors, get_auto_id, get_current_role, has_group
@@ -318,6 +321,64 @@ def delete_exchange_rate(request, pk):
 
     return HttpResponse(json.dumps(response_data), content_type='application/javascript')
 
+@login_required
+@role_required(['superadmin','core_team','director'])
+def print_exchange_rates(request):
+    """
+    Print Exchange Rate
+    :param request:
+    :return: Print Exchange Rate List
+    """
+    instances = ExchangeRate.objects.filter(is_deleted=False)
+    
+    context = {
+        'instances': instances,
+        'page_name' : 'Exchange Rate',
+        'page_title' : 'Exchange Rate',
+        'is_exchange_rate' : True,
+        'is_exchange_rates_page': True,
+    }
+
+    return render(request, 'admin_panel/pages/exchange/print.html', context)
+
+def export_exchange_rates(request):
+    # Fetch all Exchange Rates
+    exchange_rates = ExchangeRate.objects.all()
+
+    # Create a workbook and a worksheet
+    wb = Workbook()
+    ws = wb.active
+
+    # Define column headers
+    ws.append(['#', 'Country', 'Currency', 'Rate in INR','Start Date','End Date','Is Active'])
+
+    # Iterate through Exchange Rates and write to the worksheet
+    for index, rate in enumerate(exchange_rates, start=1):
+        ws.append([
+            index,
+            rate.country.country_name if rate.country else '',
+            rate.currency,
+            float(rate.rate_to_inr),  # Convert DecimalField to float
+            rate.start_date.strftime("%Y-%m-%d %H:%M:%S"),  # Convert DateTimeField to string
+            rate.end_date.strftime("%Y-%m-%d %H:%M:%S"),    # Convert DateTimeField to string
+            "Yes" if rate.is_active else "No",  # Convert BooleanField to string
+        ])
+
+    # Adjust column widths
+    column_widths = [5, 30, 15, 20, 20, 20, 10]  # Adjust as needed
+    for i, width in enumerate(column_widths, start=1):
+        col_letter = get_column_letter(i)
+        ws.column_dimensions[col_letter].width = width
+
+    # Prepare the response
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+    response = HttpResponse(output.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=exchange_rates.xlsx'
+
+    return response
+
 
 @login_required
 @role_required(['superadmin','core_team','director'])
@@ -326,6 +387,47 @@ def dialy_profits(request):
     Profits
     :param request:
     :return: Profit List
+    """
+    filter_data = {}
+    
+    instances = DialyProfit.objects.all().order_by("-date_added")
+    
+    date_range = request.GET.get('date_range')
+
+    if date_range:
+        start_date_str, end_date_str = date_range.split(' - ')
+        start_date = datetime.strptime(start_date_str, '%m/%d/%Y').date()
+        end_date = datetime.strptime(end_date_str, '%m/%d/%Y').date()
+        instances = instances.filter(date_added__range=[start_date, end_date])
+        filter_data['date_range'] = date_range
+    
+    first_date_added = instances.aggregate(first_date_added=Min('date_added'))['first_date_added']
+    last_date_added = instances.aggregate(last_date_added=Max('date_added'))['last_date_added']
+    
+    first_date_formatted = first_date_added.strftime('%m/%d/%Y') if first_date_added else None
+    last_date_formatted = last_date_added.strftime('%m/%d/%Y') if last_date_added else None
+    
+    context = {
+        'instances': instances,
+        'first_date_formatted': first_date_formatted,
+        'last_date_formatted': last_date_formatted,
+        'filter_data' :filter_data,
+        
+        'page_name' : 'Dialy Profit List',
+        'page_title' : 'Dialy Profit List',
+        'is_profit' : True,
+        'is_dialy_profit_page': True,
+    }
+
+    return render(request, 'admin_panel/pages/profit/dialy_list.html', context)
+
+@login_required
+@role_required(['superadmin','core_team','director'])
+def print_dialy_profits(request):
+    """
+    Profits print
+    :param request:
+    :return: print Profit List
     """
     instances = DialyProfit.objects.all().order_by("-date_added")
     
@@ -338,7 +440,56 @@ def dialy_profits(request):
         'is_dialy_profit_page': True,
     }
 
-    return render(request, 'admin_panel/pages/profit/dialy_list.html', context)
+    return render(request, 'admin_panel/pages/profit/print_dialy_list.html', context)
+
+@login_required
+@role_required(['superadmin','core_team','director','investor'])
+def export_dialy_profits(request):
+    filter_data = {}
+    profit_pk = request.GET.get("profit_pk")
+
+    dialy_profits = DialyProfit.objects.all()
+
+    if profit_pk:
+        dialy_profits = dialy_profits.filter(pk=profit_pk)
+        
+    date_range = request.GET.get('date_range')
+    if date_range:
+        start_date_str, end_date_str = date_range.split(' - ')
+        start_date = datetime.strptime(start_date_str, '%m/%d/%Y').date()
+        end_date = datetime.strptime(end_date_str, '%m/%d/%Y').date()
+        dialy_profits = dialy_profits.filter(date_added__range=[start_date, end_date])
+        filter_data['date_range'] = date_range
+    
+    # Create a workbook and a worksheet
+    wb = Workbook()
+    ws = wb.active
+
+    # Define column headers
+    ws.append(['Date','purchase','purchase_expenses','sales','sales_expenses','total_expenses','profit'])
+
+    # Fetch and write data to Excel
+    for profit in dialy_profits:
+        ws.append([
+            profit.date_added.date(),
+            profit.purchase,
+            profit.purchase_expenses,
+            profit.sales,
+            profit.sales_expenses,
+            profit.total_expenses,
+            profit.profit
+        ])
+
+    # Prepare response
+    output = io.BytesIO()
+    wb.save(output)
+
+    output.seek(0)
+    response = HttpResponse(output.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=dialy_profits_data.xlsx'
+
+    return response
+
 
 @login_required
 @role_required(['superadmin','core_team','director'])
@@ -347,6 +498,47 @@ def monthly_profits(request):
     Profits
     :param request:
     :return: Profit List
+    """
+    filter_data = {}
+    
+    instances = MonthlyProfit.objects.all().order_by("-date_added")
+    
+    date_range = request.GET.get('date_range')
+
+    if date_range:
+        start_date_str, end_date_str = date_range.split(' - ')
+        start_date = datetime.strptime(start_date_str, '%m/%d/%Y').date()
+        end_date = datetime.strptime(end_date_str, '%m/%d/%Y').date()
+        instances = instances.filter(date_added__range=[start_date, end_date])
+        filter_data['date_range'] = date_range
+    
+    first_date_added = instances.aggregate(first_date_added=Min('date_added'))['first_date_added']
+    last_date_added = instances.aggregate(last_date_added=Max('date_added'))['last_date_added']
+    
+    first_date_formatted = first_date_added.strftime('%m/%d/%Y') if first_date_added else None
+    last_date_formatted = last_date_added.strftime('%m/%d/%Y') if last_date_added else None
+    
+    context = {
+        'instances': instances,
+        'first_date_formatted': first_date_formatted,
+        'last_date_formatted': last_date_formatted,
+        'filter_data' :filter_data,
+        
+        'page_name' : 'Monthly Profit List',
+        'page_title' : 'Monthly Profit List',
+        'is_profit' : True,
+        'is_monthly_profit_page': True,
+    }
+
+    return render(request, 'admin_panel/pages/profit/monthly_list.html', context)
+
+@login_required
+@role_required(['superadmin','core_team','director'])
+def print_monthly_profits(request):
+    """
+    Profits
+    :param request:
+    :return: Print Profit List
     """
     instances = MonthlyProfit.objects.all().order_by("-date_added")
     
@@ -360,7 +552,54 @@ def monthly_profits(request):
         'is_monthly_profit_page': True,
     }
 
-    return render(request, 'admin_panel/pages/profit/monthly_list.html', context)
+    return render(request, 'admin_panel/pages/profit/print_monthly_list.html', context)
+
+@login_required
+@role_required(['superadmin','core_team','director','investor'])
+def export_monthly_profits(request):
+    filter_data = {}
+    profit_pk = request.GET.get("profit_pk")
+
+    monthly_profits = MonthlyProfit.objects.all()
+
+    if profit_pk:
+        monthly_profits = monthly_profits.filter(pk=profit_pk)
+        
+    date_range = request.GET.get('date_range')
+    if date_range:
+        start_date_str, end_date_str = date_range.split(' - ')
+        start_date = datetime.strptime(start_date_str, '%m/%d/%Y').date()
+        end_date = datetime.strptime(end_date_str, '%m/%d/%Y').date()
+        monthly_profits = monthly_profits.filter(date_added__range=[start_date, end_date])
+        filter_data['date_range'] = date_range
+    
+    # Create a workbook and a worksheet
+    wb = Workbook()
+    ws = wb.active
+
+    # Define column headers
+    ws.append(['Date Added','Year','Month','Total Revenue','Other Expences','Profit'])
+
+    # Fetch and write data to Excel
+    for profit in monthly_profits:
+        ws.append([
+            profit.date_added.date(),
+            profit.year,
+            profit.month,
+            profit.total_revenue,
+            profit.other_expences,
+            profit.profit
+        ])
+
+    # Prepare response
+    output = io.BytesIO()
+    wb.save(output)
+
+    output.seek(0)
+    response = HttpResponse(output.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=monthly_profits_data.xlsx'
+
+    return response
 
 @login_required
 @role_required(['superadmin','core_team','director','investor'])
@@ -370,13 +609,37 @@ def users_profits(request):
     :param request:
     :return: Profit List
     """
+    filter_data = {}
+    
     instances = MyProfit.objects.all()
     
     if request.user.groups.filter(name__in=['core_team','investor']).exists():
         instances = instances.filter(user=request.user)
+        
+    date_range = request.GET.get('date_range')
+
+    if date_range:
+        start_date_str, end_date_str = date_range.split(' - ')
+        start_date = datetime.strptime(start_date_str, '%m/%d/%Y').date()
+        end_date = datetime.strptime(end_date_str, '%m/%d/%Y').date()
+        instances = instances.filter(date_added__range=[start_date, end_date])
+        filter_data['date_range'] = date_range
+        
+    if request.GET.get('investor_pk'):
+        instances = instances.filter(user__pk=request.GET.get('investor_pk'))
+        filter_data['investor_pk'] = request.GET.get('investor_pk')
+    
+    first_date_added = MyProfit.objects.aggregate(first_date_added=Min('date_added'))['first_date_added']
+    last_date_added = MyProfit.objects.aggregate(last_date_added=Max('date_added'))['last_date_added']
+    
+    first_date_formatted = first_date_added.strftime('%m/%d/%Y') if first_date_added else None
+    last_date_formatted = last_date_added.strftime('%m/%d/%Y') if last_date_added else None
     
     context = {
         'instances': instances.order_by("-date_added"),
+        'first_date_formatted': first_date_formatted,
+        'last_date_formatted': last_date_formatted,
+        'filter_data' :filter_data,
         
         'page_name' : 'My Profit List',
         'page_title' : 'My Profit List',
@@ -385,3 +648,70 @@ def users_profits(request):
     }
 
     return render(request, 'admin_panel/pages/profit/my_list.html', context)
+
+@login_required
+@role_required(['superadmin','core_team','director'])
+def print_my_profits(request):
+    """
+    Profits
+    :param request:
+    :return: Print Profit List
+    """
+    instances = MyProfit.objects.all().order_by("-date_added")
+    
+    context = {
+        'instances': instances,
+        
+        'page_name' : 'Investers Profit List',
+        'page_title' : 'Investers Profit List',
+        'is_profit' : True,
+        'is_my_profit_page': True,
+    }
+
+    return render(request, 'admin_panel/pages/profit/print_my_list.html', context)
+
+@login_required
+@role_required(['superadmin','core_team','director','investor'])
+def export_my_profits(request):
+    filter_data = {}
+    profit_pk = request.GET.get("profit_pk")
+
+    investors_profits = MyProfit.objects.all()
+
+    if profit_pk:
+        investors_profits = investors_profits.filter(pk=profit_pk)
+        
+    date_range = request.GET.get('date_range')
+    if date_range:
+        start_date_str, end_date_str = date_range.split(' - ')
+        start_date = datetime.strptime(start_date_str, '%m/%d/%Y').date()
+        end_date = datetime.strptime(end_date_str, '%m/%d/%Y').date()
+        investors_profits = investors_profits.filter(date_added__range=[start_date, end_date])
+        filter_data['date_range'] = date_range
+    
+    # Create a workbook and a worksheet
+    wb = Workbook()
+    ws = wb.active
+
+    # Define column headers
+    ws.append(['Date Added','Year','Month','Full Name','Profit'])
+
+    # Fetch and write data to Excel
+    for profit in investors_profits:
+        ws.append([
+            profit.date_added.date(),
+            profit.year,
+            profit.month,
+            profit.get_username(),
+            profit.profit
+        ])
+
+    # Prepare response
+    output = io.BytesIO()
+    wb.save(output)
+
+    output.seek(0)
+    response = HttpResponse(output.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=investors_profits_data.xlsx'
+
+    return response

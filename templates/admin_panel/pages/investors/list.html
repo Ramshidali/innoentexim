@@ -13,8 +13,10 @@
                             <h5 class="mb-0">List View</h5>
                         </div>
                         <div class="ms-auto my-auto mt-lg-0 mt-4">
-                            <div class="ms-auto my-auto">
-                                <a href="{% url 'investors:create_investor' %}" class="btn bg-gradient-primary btn-sm mb-0">+&nbsp; Add</a>
+                            <div class="ms-auto my-auto d-flex ">
+                                <a href="javascript:void('0');" id="print_button" class="btn btn-outline-warning btn-sm mb-0 mx-1"><i class="ri-printer-line" style="font-size:12px;"></i>&nbsp; Print</a>
+                                <a href="javascript:void('0');" id="export_button" class="btn btn-outline-dark btn-sm mb-0 mx-1"><i class="ri-upload-line" style="font-size:12px;"></i>&nbsp; Export</a>
+                                <a href="{% url 'investors:create_investor' %}" class="btn bg-gradient-success btn-sm mb-0 mx-1"><i class="ri-add-line" style="font-size:12px;"></i>&nbsp; Add</a>
                             </div>
                         </div>
                     </div>
@@ -81,11 +83,17 @@
                                 <div class="dataTable-info">Showing {{ pages.current_start_index }} to {{ pages.current_end_index }} of {{ pages.total_count }} entries</div>
                                 <nav class="dataTable-pagination">
                                     <ul class="dataTable-pagination-list">
-                                        <li class="pager"><a href="#" data-page="1">‹</a></li>
-                                        <li class="active"><a href="#" data-page="1">1</a></li>
-                                        <li class=""><a href="#" data-page="2">2</a></li>
-                                        <li class=""><a href="#" data-page="3">3</a></li>
-                                        <li class="pager"><a href="#" data-page="2">›</a></li>
+                                        {% if pages.has_previous %}
+                                        <li class="pager"><a href="#" data-page="{{ pages.previous_page_number }}">‹</a></li>
+                                        {% endif %}
+                                        {% for page_number in pages.paginator.page_range %}
+                                        <li class="{% if page_number == pages.number %}active{% endif %}">
+                                            <a href="#" data-page="{{ page_number }}">{{ page_number }}</a>
+                                        </li>
+                                        {% endfor %}
+                                        {% if pages.has_next %}
+                                        <li class="pager"><a href="#" data-page="{{ pages.next_page_number }}">›</a></li>
+                                        {% endif %}
                                     </ul>
                                 </nav>
                             </div>
@@ -98,3 +106,53 @@
     {%include 'admin_panel/includes/footer.html' %}
 </div>
 {% endblock content %}
+{% block static %}
+{% load static %}
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#export_button').click(function () {  
+            var url = "{% url 'investors:export_investors' %}";
+            const urlParams = new URLSearchParams(window.location.search);
+
+            const q = urlParams.get('q');
+            
+            var hiddenIFrameID = 'hiddenDownloader';
+            var iframe = document.createElement('iframe');
+            iframe.id = hiddenIFrameID;
+            iframe.style.display = 'none';
+            document.body.appendChild(iframe);
+            iframe.src = url + "?";
+            var exportUrl = "";
+            
+            if (q) {
+                exportUrl += "q=" + encodeURIComponent(q) + "&";
+            }
+            if (exportUrl.length > 0) {
+                exportUrl = exportUrl.slice(0, -1);
+            }
+            iframe.src += exportUrl;
+            iframe.onload = function () {
+                console.log("File download completed.");
+            };
+
+        });
+    });
+
+    $(document).ready(function () {
+        $('#print_button').click(function () {
+            var url = "{% url 'investors:print_investors' %}";
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            const q = urlParams.get('q');
+
+            var printUrl = url + "?";
+            if (q) {
+                printUrl += "q=" + encodeURIComponent(q) + "&";
+            }
+            printUrl = printUrl.slice(0, -1);
+            window.open(printUrl, '_blank');
+
+        });
+    });
+</script>    
+{% endblock static %}

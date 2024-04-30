@@ -1,10 +1,11 @@
 #standerd
+import io
 import json
 import datetime
-from django.conf import settings
 #django
 from django.db.models import Q
 from django.urls import reverse
+from django.conf import settings
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.utils.html import strip_tags
@@ -12,8 +13,8 @@ from django.contrib.auth.models import User,Group
 from django.template.loader import render_to_string
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
-
-from dal import autocomplete
+# third party
+from openpyxl import Workbook
 #local
 from main.decorators import role_required
 from profit.models import MyProfit
@@ -60,7 +61,13 @@ def investors_list(request):
     if query:
 
         instances = instances.filter(
-            Q(investor_id__icontains=query) 
+            Q(investor_id__icontains=query) |
+            Q(first_name__icontains=query) |
+            Q(last_name__icontains=query) |
+            Q(email__icontains=query) |
+            Q(phone__icontains=query) |
+            Q(state__icontains=query) |
+            Q(country__icontains=query)
         )
         title = "Investors - %s" % query
         filter_data['q'] = query
@@ -241,3 +248,104 @@ def delete_investor(request, pk):
     }
 
     return HttpResponse(json.dumps(response_data), content_type='application/javascript')
+
+
+@login_required
+@role_required(['superadmin','core_team','director','investor'])
+def print_investors(request):
+    """
+    Investors listings
+    :param request:
+    :return: Investors list view
+    """
+    instances = Investors.objects.filter(is_deleted=False).order_by("-date_added")
+    
+    filter_data = {}
+    query = request.GET.get("q")
+    
+    if query:
+
+        instances = instances.filter(
+            Q(investor_id__icontains=query) |
+            Q(first_name__icontains=query) |
+            Q(last_name__icontains=query) |
+            Q(email__icontains=query) |
+            Q(phone__icontains=query) |
+            Q(state__icontains=query) |
+            Q(country__icontains=query)
+        )
+        title = "Investors - %s" % query
+        filter_data['q'] = query
+
+    context = {
+        'instances': instances,
+        'page_name' : 'Investors',
+        'page_title' : 'Investors',
+        'filter_data' :filter_data,
+        'is_investors' : True,
+    }
+
+    return render(request, 'admin_panel/pages/investors/print.html', context)
+
+@login_required
+@role_required(['superadmin','core_team','director','investor'])
+def export_investors(request):
+    filter_data = {}
+    investor_pk = request.GET.get("investor_pk")
+
+    investors = Investors.objects.filter(is_deleted=False)
+
+    if investor_pk:
+        investors = investors.filter(pk=investor_pk)
+        
+    date_range = request.GET.get('date_range')
+    if date_range:
+        start_date_str, end_date_str = date_range.split(' - ')
+        start_date = datetime.strptime(start_date_str, '%m/%d/%Y').date()
+        end_date = datetime.strptime(end_date_str, '%m/%d/%Y').date()
+        investors = investors.filter(date_of_birth__range=[start_date, end_date])
+        filter_data['date_range'] = date_range
+    
+    query = request.GET.get("q")
+    if query:
+        investors = investors.filter(
+            Q(first_name__icontains=query) |
+            Q(last_name__icontains=query) |
+            Q(email__icontains=query) |
+            Q(phone__icontains=query) 
+        )
+        filter_data['q'] = query
+
+    # Create a workbook and a worksheet
+    wb = Workbook()
+    ws = wb.active
+
+    # Define column headers
+    ws.append(['Investor ID','First Name','Last Name','Email','Phone','Date of Birth','Address','Investment Amount','Share Percentage','State','Country','Zip'])
+
+    # Fetch and write data to Excel
+    for investor in investors:
+        ws.append([
+            investor.investor_id,
+            investor.first_name,
+            investor.last_name,
+            investor.email,
+            investor.phone,
+            investor.date_of_birth,
+            investor.address,
+            investor.investment_amount,
+            investor.share_persentage,
+            investor.state,
+            investor.country,
+            investor.zip
+        ])
+
+    # Prepare response
+    output = io.BytesIO()
+    wb.save(output)
+
+    output.seek(0)
+    response = HttpResponse(output.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=investors_data.xlsx'
+
+    return response

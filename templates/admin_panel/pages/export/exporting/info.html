@@ -4,66 +4,131 @@
 
 {% block content %}
 <div class="container-fluid">
-    <div class="page-header min-height-300 border-radius-xl mt-4" style="background-image: url({% static 'admin_panel/assets/img/curved-images/curved0.jpg' %}); background-position-y: 50%;">
+    <div class="page-header min-height-150 border-radius-xl mt-4" style="background-image: url({% static 'admin_panel/assets/img/curved-images/curved0.jpg' %}); background-position-y: 50%;">
         <span class="mask bg-gradient-primary opacity-6"></span>
     </div>
     <div class="card card-body blur shadow-blur mx-4 mt-n6 overflow-hidden">
         <div class="row gx-4">
-            <div class="col-auto">
-                <div class="avatar avatar-xl position-relative">
-                    <img src="
-                            {% if instance.image %}
-                            {{ instance.image.url }}
-                            {% else %}
-                            {% static 'admin_panel/assets/img/bruce-mars.jpg' %}
-                            {% endif %}
-                        " alt="profile_image" height="80" class="w-100 border-radius-lg shadow-sm">
-                </div>
-            </div>
             <div class="col-auto my-auto">
                 <div class="h-100">
-                    <h5 class="mb-1">{{instance.get_fullname}}</h5>
-                    <p class="mb-0 font-weight-bold text-sm">
-                        {% for group in instance.user.groups.all %}
-                        {{ group.name|format_group_name }}
-                        {% endfor %}
-                    </p>
-                    <span class="badge bg-gradient-info mt-1">{{instance.employee_id}}</span>
+                    <h5 class="mb-1">Exporting ID : {{instance.exporting_id}}</h5>
+                    <p class="mb-0 font-weight-bold text-sm">Export Date : {{ instance.date }}</p>
+                    <p class="mb-0 font-weight-bold text-sm">Current Status : {{ instance.current_status }}</p>
+                    <span class="badge bg-gradient-info mt-1">Exporting Country : {{ instance.exporting_country.country_name }}</span>
+                    <span class="badge bg-gradient-success mt-1">Courier Partner : {{ instance.courier_partner.name }} - {{ instance.courier_partner.employee_id }}</span>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
 <div class="container-fluid">
     <div class="row mt-3">
+
+        <div class="col-lg-3 col-md-6 col-12">
+            <h6 class="mb-3">Track order</h6>
+            <div class="timeline timeline-one-side">
+                {% for e_status in instance.exportstatus_set.all %}
+                <div class="timeline-block mb-3">
+                    <span class="timeline-step">
+                        {% if e_status.status == "010" %}
+                        <i class="ri-server-fill"></i>
+                        {% endif %}
+                        {% if e_status.status == "015" %}
+                        <i class="ri-ship-fill"></i>
+                        {% endif %}
+                        {% if e_status.status == "020" %}
+                        <i class="ri-compass-fill"></i>
+                        {% endif %}
+                        {% if e_status.status == "025" %}
+                        <i class="ri-check-double-line"></i>
+                        {% endif %}
+                    </span>
+                    <div class="timeline-content">
+                        <h6 class="text-dark text-sm font-weight-bold mb-0">{{e_status.get_status_display}}</h6>
+                        <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">{{e_status.date_added}}</p>
+                        <p class="text-secondary font-weight-small text-xs mt-1 mb-0">{{e_status.caption}}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
         
-        <div class="col-12 col-md-6 col-xl-4 mt-md-0 mt-4">
+        <div class="col-lg-9 col-md-6 col-12">
             <div class="card h-100">
                 <div class="card-header pb-0 p-3">
                     <div class="row">
                         <div class="col-md-8 d-flex align-items-center">
-                            <h6 class="mb-0">Information</h6>
+                            <h6 class="mb-0">Items</h6>
                         </div>
                         <div class="col-md-4 text-end">
-                            <a href="javascript:;">
-                                <i class="fas fa-user-edit text-secondary text-sm" data-bs-toggle="tooltip" data-bs-placement="top" aria-hidden="true" aria-label="Edit Profile" data-bs-original-title="Edit Profile"></i><span class="sr-only">Edit Profile</span>
+                            <a href="{% url 'exporting:edit_exporting' pk=instance.pk %}">
+                                <i class="fas fa-user-edit text-secondary text-sm" data-bs-toggle="tooltip" data-bs-placement="top" aria-hidden="true" aria-label="Edit" data-bs-original-title="Edit"></i><span class="sr-only">Edit</span>
                             </a>
                         </div>
                     </div>
                 </div>
                 <div class="card-body p-3">
-                    <p class="text-sm">
-                       {{instance.address}}
-                    </p>
-                    <hr class="horizontal gray-light my-4">
-                    <ul class="list-group">
-                        <li class="list-group-item border-0 ps-0 pt-0 text-sm"><strong class="text-dark">Date of Birth:</strong> &nbsp; {{instance.date_of_birth}}</li>
-                        <li class="list-group-item border-0 ps-0 text-sm"><strong class="text-dark">Mobile:</strong> &nbsp; {{instance.phone}}</li>
-                        <li class="list-group-item border-0 ps-0 text-sm"><strong class="text-dark">Email:</strong> &nbsp; {{instance.email}}</li>
-                        <li class="list-group-item border-0 ps-0 text-sm"><strong class="text-dark">State:</strong> &nbsp; {{instance.state}}</li>
-                        <li class="list-group-item border-0 ps-0 text-sm"><strong class="text-dark">Country:</strong> &nbsp; {{instance.country}}</li>
-                        <li class="list-group-item border-0 ps-0 text-sm"><strong class="text-dark">Zip:</strong> &nbsp; {{instance.zip}}</li>
-                    </ul>
+                    <div class="table-responsive">
+                        <div class="dataTable-wrapper dataTable-loading no-footer sortable searchable fixed-columns">
+                            <div class="dataTable-container">
+                                <table class="table table-flush dataTable-table" id="products-list">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th style="width: 2;text-align:center !important;">#</th>
+                                            <th style="text-align:center !important;">Items</th>
+                                            <th style="text-align:center !important;">Qty</th>
+                                            {% comment %} <th style="text-align:right !important;">Action</th> {% endcomment %}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% load el_pagination_tags %}
+                                        {% paginate 20 items_instances %}
+                                        {% for instance in items_instances %}
+                                        <tr>
+                                            <td class="text-sm" style="text-align:center !important;">{{ forloop.counter }}</td>
+                                            <td class="text-sm" style="text-align:center !important;">{{ instance.purchasestock.purchase_item.name }}</td>
+                                            <td class="text-sm" style="text-align:center !important;">{{ instance.qty }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {% comment %} <div class="clearfix"></div>
+                            <div class="row pagi my-3">
+                                <div class="col-sm-6 col-xs-6 text-left my-pagina">{% show_pages %}</div>
+                                <div class="col-sm-6 col-xs-6 text-right tot my-pagination align-items-center">
+                                    <div class="m-t-10">
+                                        Showing {{title}}
+                                        <span class="current_page_index">{{ pages.current_start_index }}</span> - <span
+                                        class="current_end_status"></span> of <span
+                                        class="total_count"></span>
+                                    </div>
+                                </div>
+                            </div> {% endcomment %}
+                            
+                            {% get_pages %}
+                            <div class="dataTable-bottom">
+                                <div class="dataTable-info">Showing {{ pages.current_start_index }} to {{ pages.current_end_index }} of {{ pages.total_count }} entries</div>
+                                <nav class="dataTable-pagination">
+                                    <ul class="dataTable-pagination-list">
+                                        {% if pages.has_previous %}
+                                        <li class="pager"><a href="#" data-page="{{ pages.previous_page_number }}">‹</a></li>
+                                        {% endif %}
+                                        {% for page_number in pages.paginator.page_range %}
+                                        <li class="{% if page_number == pages.number %}active{% endif %}">
+                                            <a href="#" data-page="{{ page_number }}">{{ page_number }}</a>
+                                        </li>
+                                        {% endfor %}
+                                        {% if pages.has_next %}
+                                        <li class="pager"><a href="#" data-page="{{ pages.next_page_number }}">›</a></li>
+                                        {% endif %}
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

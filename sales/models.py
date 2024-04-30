@@ -63,6 +63,20 @@ class Sales(BaseModel):
 
         return total
     
+    def sub_total_inr(self):
+        total = 0
+        # Calculate the sub-total for SalesItems
+        sales_items = SalesItems.objects.filter(sales=self)
+        for item in sales_items:
+            total += item.amount_in_inr
+
+        # Calculate the sub-total for SalesMoreExpense
+        sales_expenses = SalesExpenses.objects.filter(sales=self)
+        for expense in sales_expenses:
+            total += expense.amount_in_inr
+
+        return total
+    
     def total_qty(self):
         total = 0
         # Calculate the sub-total for SalesItems

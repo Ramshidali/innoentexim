@@ -1,0 +1,134 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block content %}
+
+    <!-- Page Content-->
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- Page-Title -->
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="page-title-box">
+                        <div class="row">
+                            <div class="col">
+                                <h4 class="page-title">{{page_title}}</h4>
+                            </div><!--end col-->
+                        </div><!--end row-->
+                    </div><!-- end page-title-box -->
+                </div><!--end col-->
+            </div><!--end row-->
+            <!-- end page title end breadcrumb -->
+
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-header">
+                            {% if is_upload %}
+                            <h4 class="card-title">{{page_title}}</h4>
+                            {% else %}
+                            <h4 class="card-title">Create</h4>
+                            {% endif %}
+                        </div>
+                        <!--end card-header-->
+                        <div class="card-body">
+                            <form action="." method="POST" enctype="multipart/form-data" class="ajax redirect">
+                                {% csrf_token %}
+
+                                {% for f in form %}
+                                <div class="form-group">
+                                    <label for="projectName">{{f.label}} : </label>
+                                    {{f}}
+                                    <small class="d-block">{{f.help_text}}</small>
+                                </div><!--end form-group-->
+
+                                {% if f.is_active %}
+                                <div class="custom-control custom-switch">
+                                    <label for="projectName">{{f.label}} : </label>
+                                    {{f.is_active}}
+                                </div>
+                                {%endif%}
+                                {%endfor%}
+                                {% if instance.image %}
+                                <div class="col-xl-4">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <img src="{{instance.image.url}}" height="100%" width="100%">
+                                        </div><!--end card-body-->
+                                    </div><!--end card-->
+                                </div><!--end col-->
+                                {%endif%}
+
+                                <button type="submit" id="submit" class="btn btn-soft-primary btn-sm waves-effect waves-light" id="sa-mixin">Submit</button>
+                                <button type="button" onclick="window.history.back()" class="btn btn-soft-danger btn-sm">Cancel</button>
+                            </form>  <!--end form-->
+                        </div>
+                        <!--end card-body-->
+                    </div>
+                    <!--end card-->
+                </div> <!-- end col -->
+            </div>
+        </div><!-- container -->
+
+    </div>
+    <!-- end page content -->
+{% endblock content %}
+
+{% block static %}
+    {% load static %}
+    {{form.media}}
+    <style>
+        .form-control {
+            height: calc(2.5em + .75rem + 2px);
+        }
+        .select2-container--default{
+            width: 100%;
+        }
+        .select2-container .select2-selection--single {
+            height: calc(2.5em + .75rem + 2px);
+        }
+
+        .select2-container--default .select2-selection--single {
+            border: 1px solid #e3ebf6;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 32px;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow b {
+            margin-top: 8px;
+        }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            color: #000;
+        }
+        .select2-container--default .select2-selection--multiple {
+            border: 1px solid #e3ebf6;
+        }
+        .select2-container--default.select2-container--focus .select2-selection--multiple {
+            border: solid rgba(23,97,253,0.5) 1px;
+        }
+    </style>
+    <style>
+        .form-control {
+            height: calc(2.8em + .75rem + 2px);
+        }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            color: #000;
+        }
+        .select2-container--default .select2-selection--multiple {
+            border: 1px solid #e3ebf6;
+        }
+        .select2-container--default.select2-container--focus .select2-selection--multiple {
+            border: solid rgba(23,97,253,0.5) 1px;
+        }
+    </style>
+
+{% endblock  %}
+
+
+
+
+
+
+
+
+

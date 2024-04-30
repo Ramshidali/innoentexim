@@ -98,10 +98,11 @@ class Exporting(BaseModel):
     #     return total
     
     def current_status(self):
-        status = ""
-        status = self.exportstatus_set.latest().get_status_display()
-        
-        return status
+        try:
+            latest_status = self.exportstatus_set.latest()
+            return latest_status.get_status_display()
+        except :
+            return ""
 
 class ExportItem(BaseModel):
     qty = models.PositiveIntegerField()

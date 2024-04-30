@@ -54,15 +54,15 @@ def sales_party_list(request):
     if query:
 
         instances = instances.filter(
-            Q(customer_id__icontains=query)
+            Q(party_id__icontains=query) |
+            Q(first_name__icontains=query) |
+            Q(last_name__icontains=query) |
+            Q(email__icontains=query) |
+            Q(phone__icontains=query) 
         )
         title = "SalesParty - %s" % query
         filter_data['q'] = query
     
-    # if has_group(request.user,'core_team') :
-    #     core_team = CoreTeam.objects.get(email=request.user)
-    #     instances = instances.filter(branch__in=core_team.branch.all())
-
     context = {
         'instances': instances,
         'page_name' : 'Sales Party',

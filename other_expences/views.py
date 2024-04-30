@@ -1,15 +1,19 @@
 #standerd
+import io
 import json
 import datetime
-from django.conf import settings
 #django
-from django.db.models import Q
+from django.db.models import Q, Max, Min
 from django.urls import reverse
+from django.conf import settings
 from django.db.models import Sum
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
+# third party
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
 #local
 from . forms import *
 from . models import *
@@ -190,29 +194,47 @@ def other_expence_list(request):
     :param request:
     :return: OtherExpences list view
     """
-    instances = OtherExpences.objects.filter(is_deleted=False).order_by("-id")
+    instances = OtherExpences.objects.filter(is_deleted=False).order_by("-date_added")
     
-    total_amount = instances.aggregate(total_amount=Sum('amount'))['total_amount'] or 0
     
     filter_data = {}
     query = request.GET.get("q")
     
+    date_range = ""
+    if request.GET.get('date_range'):
+        start_date_str, end_date_str = request.GET.get('date_range').split(' - ')
+        start_date = datetime.datetime.strptime(start_date_str, '%m/%d/%Y').date()
+        end_date = datetime.datetime.strptime(end_date_str, '%m/%d/%Y').date()
+        instances = instances.filter(date_added__range=[start_date, end_date])
+        filter_data['date_range'] = request.GET.get('date_range')
+    
     if query:
 
         instances = instances.filter(
-            Q(auto_id__icontains=query) |
-            Q(name__icontains=query) 
+            Q(expence_type__name__icontains=query) 
         )
-        title = "ExpenceTypes - %s" % query
+        title = "Other Expences Report - %s" % query
         filter_data['q'] = query
+        
+    first_date_added = instances.aggregate(first_date_added=Min('date_added'))['first_date_added']
+    last_date_added = instances.aggregate(last_date_added=Max('date_added'))['last_date_added']
     
+    first_date_formatted = first_date_added.strftime('%m/%d/%Y') if first_date_added else None
+    last_date_formatted = last_date_added.strftime('%m/%d/%Y') if last_date_added else None
+    
+    if request.GET.get("expence_type"):
+        instances = instances.filter(expence_type__pk=request.GET.get("expence_type"))
+        filter_data['expence_type'] = request.GET.get("expence_type")
 
+    total_amount = instances.aggregate(total_amount=Sum('amount'))['total_amount'] or 0
     context = {
         'instances': instances,
         'total_amount': total_amount,
         'page_name' : 'Other Expence',
         'page_title' : 'Other Expence',
         'filter_data' :filter_data,
+        'first_date_formatted': first_date_formatted,
+        'last_date_formatted': last_date_formatted,
         'is_other_expences' : True,
         'is_other_expence_page' : True, 
     }
@@ -348,3 +370,75 @@ def delete_other_expence(request, pk):
     }
 
     return HttpResponse(json.dumps(response_data), content_type='application/javascript')
+
+@login_required
+@role_required(['superadmin','core_team','director'])
+def print_other_expenses(request):
+    """
+    Other Expences Print
+    :param request:
+    :return: Other Expences print view
+    """
+    instances = OtherExpences.objects.filter(is_deleted=False).order_by("-date_added")
+    
+    total_amount = instances.aggregate(total_amount=Sum('amount'))['total_amount'] or 0
+    
+    filter_data = {}
+    query = request.GET.get("q")
+    
+    if query:
+
+        instances = instances.filter(
+            Q(auto_id__icontains=query) |
+            Q(name__icontains=query) 
+        )
+        title = "ExpenceTypes - %s" % query
+        filter_data['q'] = query
+    
+
+    context = {
+        'instances': instances,
+        'total_amount': total_amount,
+        'page_name' : 'Other Expence',
+        'page_title' : 'Other Expence',
+        'filter_data' :filter_data,
+        'is_other_expences' : True,
+        'is_other_expence_page' : True, 
+    }
+
+    return render(request, 'admin_panel/pages/other_expences/print.html', context)
+
+def export_other_expenses(request):
+    # Fetch all other expenses
+    other_expenses = OtherExpences.objects.all()
+
+    # Create a workbook and a worksheet
+    wb = Workbook()
+    ws = wb.active
+
+    # Define column headers
+    ws.append(['#', 'Remark', 'Amount', 'Expense Type'])
+
+    # Iterate through other expenses and write to the worksheet
+    for index, expense in enumerate(other_expenses, start=1):
+        ws.append([
+            index,
+            expense.remark if expense.remark else '',
+            expense.amount,
+            expense.expence_type.name if expense.expence_type else '',
+        ])
+
+    # Adjust column widths
+    column_widths = [5, 30, 15, 20]  # Adjust as needed
+    for i, width in enumerate(column_widths, start=1):
+        col_letter = get_column_letter(i)
+        ws.column_dimensions[col_letter].width = width
+
+    # Prepare the response
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+    response = HttpResponse(output.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=other_expenses.xlsx'
+
+    return response

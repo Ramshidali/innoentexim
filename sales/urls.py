@@ -12,6 +12,8 @@ urlpatterns = [
     re_path(r'^create/$', views.create_sales, name='create_sales'),
     re_path(r'^edit/(?P<pk>.*)/$', views.edit_sales, name='edit_sales'),
     re_path(r'^delete/(?P<pk>.*)/$', views.delete_sales, name='delete_sales'), 
+    re_path(r'^print/$', views.print_sales, name='print_sales'), 
+    re_path(r'^export/$', views.export_sales, name='export_sales'), 
       
     re_path(r'stock/$', views.sales_stock, name='sales_stock'),
 ]

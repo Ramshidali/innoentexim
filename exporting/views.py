@@ -4,8 +4,8 @@ import datetime
 from datetime import datetime
 #django
 from django.urls import reverse
-from django.db.models import Q, Sum
 from django.http import HttpResponse
+from django.db.models import Q, Sum, Min, Max
 from django.db import transaction, IntegrityError
 from django.contrib.auth.models import User,Group
 from django.shortcuts import get_object_or_404, render
@@ -13,6 +13,9 @@ from django.contrib.auth.decorators import login_required
 from django.forms import formset_factory, inlineformset_factory
 # rest framework
 from rest_framework import status
+# third
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
 # local
 from sales.models import SalesStock
 from executieves.models import Executive
@@ -24,7 +27,6 @@ from exporting.forms import CourierPartnerForm, ExportingCountryForm, ExportingF
 
 # Create your views here.
 def product_item_qty(request):
-    print("enter")
     item_pk = request.GET.get("purchase_item")
     
     if (instances:=PurchaseStock.objects.filter(pk=item_pk,is_deleted=False)).exists():
@@ -459,9 +461,11 @@ def exporting(request,pk):
     :return: Exporting Report single view
     """
     instance = Exporting.objects.get(pk=pk,is_deleted=False)
+    items_instances = ExportItem.objects.filter(export=instance,is_deleted=False)
     
     context = {
         'instance': instance,
+        'items_instances': items_instances,
         'page_name' : 'Exporting Report',
         'page_title' : 'Exporting Report',
         'is_exporting' : True,
@@ -497,6 +501,7 @@ def exporting_list(request):
     :return: Exporting Report list view
     """
     
+    filter_data = {}
     instances = Exporting.objects.filter(is_deleted=False).order_by("-date_added")
          
     date_range = ""
@@ -508,8 +513,8 @@ def exporting_list(request):
         start_date = datetime.strptime(start_date_str, '%m/%d/%Y').date()
         end_date = datetime.strptime(end_date_str, '%m/%d/%Y').date()
         instances = instances.filter(date_added__range=[start_date, end_date])
+        filter_data['date_range'] = date_range
     
-    filter_data = {}
     query = request.GET.get("q")
     
     if query:
@@ -520,7 +525,25 @@ def exporting_list(request):
         )
         title = "Exporting Report - %s" % query
         filter_data['q'] = query
+        
+    first_date_added = instances.aggregate(first_date_added=Min('date'))['first_date_added']
+    last_date_added = instances.aggregate(last_date_added=Max('date'))['last_date_added']
     
+    first_date_formatted = first_date_added.strftime('%m/%d/%Y') if first_date_added else None
+    last_date_formatted = last_date_added.strftime('%m/%d/%Y') if last_date_added else None
+    
+    if request.GET.get("country_name"):
+        instances = instances.filter(exporting_country__pk=request.GET.get("country_name"))
+        filter_data['country_name'] = request.GET.get("country_name")
+        
+    if request.GET.get("courier_partner"):
+        instances = instances.filter(courier_partner__pk=request.GET.get("courier_partner"))
+        filter_data['courier_partner'] = request.GET.get("courier_partner")
+        
+    if request.GET.get("courier_status"):
+        courier_status_exports = ExportStatus.objects.filter(status=request.GET.get("courier_status")).values_list("export__pk")
+        instances = instances.filter(pk__in=courier_status_exports)
+        filter_data['courier_status'] = request.GET.get("courier_status")
     
     context = {
         'instances': instances,
@@ -528,7 +551,8 @@ def exporting_list(request):
         'page_name' : 'Exporting Report',
         'page_title' : 'Exporting Report',
         'filter_data' :filter_data,
-        'date_range': date_range,
+        'first_date_formatted': first_date_formatted,
+        'last_date_formatted': last_date_formatted,
         
         'is_exporting' : True,
         'is_exporting_page': True,
@@ -801,12 +825,12 @@ def update_expoting_status(request):
     :param pk:
     :return:
     """
-    print('enter')
+    # print('enter')
     if request.method == 'POST':
-        print('post')
+        # print('post')
         form = ExportingStatusForm(request.POST)
         if form.is_valid():
-            print('valid')
+            # print('valid')
             export = Exporting.objects.get(pk=form.cleaned_data['export_id'])
             
             data = form.save(commit=False)
@@ -851,3 +875,103 @@ def update_expoting_status(request):
             }
 
         return HttpResponse(json.dumps(response_data), content_type='application/javascript')
+    
+@login_required
+@role_required(['superadmin','core_team','director'])
+def print_exporting(request):
+    """
+    Exporting print
+    :param request:
+    :return: Exporting Report print
+    """
+    instances = Exporting.objects.filter(is_deleted=False).order_by("-date_added")
+    total_qty = instances.aggregate(total_qty=Sum('exportitem__qty'))['total_qty'] or 0
+    
+    context = {
+        'instances': instances,
+        'total_qty': total_qty,
+        'page_name' : 'Exporting Report',
+        'page_title' : 'Exporting Report',
+        'is_exporting' : True,
+        'is_exporting_page': True,
+    }
+
+    return render(request, 'admin_panel/pages/export/exporting/print.html', context)
+
+def export_exporting(request):
+    filter_data = {}
+    export_pk = request.GET.get("export_pk")
+
+    exporting = Exporting.objects.filter(is_deleted=False)
+
+    if export_pk:
+        exporting = exporting.filter(pk=export_pk)
+
+    date_range = request.GET.get('date_range')
+    if date_range:
+        start_date_str, end_date_str = date_range.split(' - ')
+        start_date = datetime.strptime(start_date_str, '%m/%d/%Y').date()
+        end_date = datetime.strptime(end_date_str, '%m/%d/%Y').date()
+        exporting = exporting.filter(date__range=[start_date, end_date])
+        filter_data['date_range'] = date_range
+    
+    query = request.GET.get("q")
+    if query:
+        exporting = exporting.filter(
+            Q(exporting_id__icontains=query) 
+        )
+        filter_data['q'] = query
+
+    # Create a workbook and a worksheet
+    wb = Workbook()
+    ws = wb.active
+
+    # Define column headers
+    ws.append(['#', 'Date', 'Exporting ID', 'Exporting Country', 'Courier Partner', 'Title', 'QTY', 'Total Quantity', 'Status'])
+
+    # Iterate through Exporting objects and associated ExportItems
+    for index, export in enumerate(exporting, start=1):
+        courier_partner = export.courier_partner.name if export.courier_partner else ''
+        exporting_country = export.exporting_country.country_name if export.exporting_country else ''
+
+        export_id = export.exporting_id
+
+        # Get all ExportItems for this Exporting instance
+        items = export.exportitem_set.all()
+
+        # Write the Exporting details to the worksheet
+        ws.append([
+            index,
+            export.date,
+            export_id,
+            exporting_country,
+            courier_partner,
+            '',  # Placeholder for Title (will be filled in later)
+            '',  # Placeholder for QTY (will be filled in later)
+            export.total_qty(),
+            export.current_status(),
+        ])
+
+        # Write each ExportItem to the worksheet
+        for item in items:
+            ws.append([
+                '', '', '', '', '',
+                item.purchasestock.purchase_item.name,
+                item.qty,
+                '', '',  # Placeholders for Total Quantity and Status (already filled for the main Exporting row)
+            ])
+
+    # Adjust column widths
+    column_widths = [5, 15, 20, 20, 20, 20, 10, 15, 15]  # Adjust as needed
+    for i, width in enumerate(column_widths, start=1):
+        col_letter = get_column_letter(i)
+        ws.column_dimensions[col_letter].width = width
+
+    output = io.BytesIO()
+    wb.save(output)
+
+    output.seek(0)
+    response = HttpResponse(output.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=exporting_data.xlsx'
+
+    return response

@@ -1,0 +1,103 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title>{{page_title}}</title>
+        <link href="{% static 'admin_panel/assets/css/bootstrap.min.css' %}" rel="stylesheet" type="text/css" />
+    </head>
+    <body>
+        <div class="page-wrapper ml-0">
+            <!-- Page Content-->
+            <div class="page-content">
+                <div class="container-fluid">
+                    <!-- Page-Title -->
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="page-title-box">
+                                <div class="row">
+                                    <div class="col">
+                                        <h4 class="page-title">{{page_title}}</h4>
+                                    </div><!--end col-->
+                                    
+                                </div><!--end row-->                                                              
+                            </div><!-- end page-title-box -->
+                        </div><!--end col-->
+                    </div><!--end row-->
+                    <!-- end page title end breadcrumb -->
+        
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="card">
+                                <div class="card-body p-0">
+                                    <div class="table-responsive-sm">
+                                        <table class="table mb-0" style="width:100%;" border="1">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-center">#</th>
+                                                    <th class="text-center">Date</th>
+                                                    <th class="text-center" style="width:200px;">Exporting ID</th>
+                                                    <th class="text-center">Exporting Country</th>
+                                                    <th class="text-center">Courier Partner</th>
+                                                    <th class="text-center" style="width:450px;">Items</th>
+                                                    <th class="text-center" style="width:100px;">Total Quantity</th>
+                                                    <th class="text-center" style="width:100px;">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for instance in instances %}
+                                                <tr>
+                                                    <td class="text-center">{{ forloop.counter }}</td>
+                                                    <td class="text-center">{{ instance.date|date }}</td>
+                                                    <td class="text-center">{{ instance.exporting_id }}</td>
+                                                    <td class="text-center">{{ instance.exporting_country.country_name }}</td>
+                                                    <td class="text-center">{{ instance.courier_partner.name }}</td>
+                                                    <td class="meterial-row">
+                                                        <table class="table mb-0" style="width:100%;">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>Title</th>
+                                                                    <th>QTY</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {% for item in instance.exportitem_set.all %}
+                                                                <tr>
+                                                                    <td class="capital-field">{{ item.purchasestock.purchase_item.name }}</td>
+                                                                    <td class="capital-field">{{ item.qty }}</td>
+                                                                </tr>
+                                                                {% endfor %}
+                                                            </tbody>
+                                                        </table>
+                                                    </td>
+                                                    <td class="text-center">{{ instance.total_qty }}</td>
+                                                    <td class="text-center">{{ instance.current_status }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                                <tr>
+                                                    <td class="text-right text-bold" colspan="6"><strong>Grand Total</strong></td>
+                                                    <td class="amount-row text-center"><strong>{{total_qty}}</strong></td>
+                                                    <td class="amount-row text-center"></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--end card-->
+                        </div> <!-- end col -->
+                    </div>
+                </div><!-- container -->
+                <!-- end page content -->
+            </div>
+            <!-- end page-wrapper -->
+        </div>
+        {% include 'admin_panel/includes/js.html' %}
+        <script>
+            $(document).ready(function(){
+                window.print();
+            });
+        </script>
+    </body>
+</html>

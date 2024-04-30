@@ -82,11 +82,17 @@
                                 <div class="dataTable-info">Showing {{ pages.current_start_index }} to {{ pages.current_end_index }} of {{ pages.total_count }} entries</div>
                                 <nav class="dataTable-pagination">
                                     <ul class="dataTable-pagination-list">
-                                        <li class="pager"><a href="#" data-page="1">‹</a></li>
-                                        <li class="active"><a href="#" data-page="1">1</a></li>
-                                        <li class=""><a href="#" data-page="2">2</a></li>
-                                        <li class=""><a href="#" data-page="3">3</a></li>
-                                        <li class="pager"><a href="#" data-page="2">›</a></li>
+                                        {% if pages.has_previous %}
+                                        <li class="pager"><a href="#" data-page="{{ pages.previous_page_number }}">‹</a></li>
+                                        {% endif %}
+                                        {% for page_number in pages.paginator.page_range %}
+                                        <li class="{% if page_number == pages.number %}active{% endif %}">
+                                            <a href="#" data-page="{{ page_number }}">{{ page_number }}</a>
+                                        </li>
+                                        {% endfor %}
+                                        {% if pages.has_next %}
+                                        <li class="pager"><a href="#" data-page="{{ pages.next_page_number }}">›</a></li>
+                                        {% endif %}
                                     </ul>
                                 </nav>
                             </div>

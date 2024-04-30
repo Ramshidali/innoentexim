@@ -23,6 +23,8 @@ urlpatterns = [
     re_path(r'^edit-export/(?P<pk>.*)/$', views.edit_exporting, name='edit_exporting'),
     re_path(r'^delete-export/(?P<pk>.*)/$', views.delete_exporting, name='delete_exporting'),   
     re_path(r'^update-export-status/$', views.update_expoting_status, name='update_expoting_status'),   
+    re_path(r'^print-exports/$', views.print_exporting, name='print_exporting'),   
+    re_path(r'^export-exports/$', views.export_exporting, name='export_exporting'),   
 ]
 
 

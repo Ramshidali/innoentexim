@@ -14,8 +14,12 @@ urlpatterns = [
     re_path(r'^create-purchase/$', views.create_purchase, name='create_purchase'),
     re_path(r'^edit-purchase/(?P<pk>.*)/$', views.edit_purchase, name='edit_purchase'),
     re_path(r'^delete-purchase/(?P<pk>.*)/$', views.delete_purchase, name='delete_purchase'), 
-      
+    re_path(r'^print-purchases/$', views.print_purchases, name='print_purchases'), 
+    re_path(r'^export-purchases/$', views.export_purchases, name='export_purchases'), 
+    
     re_path(r'purchase-stock/$', views.purchase_stock, name='purchase_stock'),
+    re_path(r'print-purchase-stock/$', views.print_purchase_stock, name='print_purchase_stock'),
+    re_path(r'export-purchase-stock/$', views.export_purchase_stock, name='export_purchase_stock'),
 ]
 
 

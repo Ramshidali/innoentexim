@@ -12,6 +12,21 @@
                         <div>
                             <h5 class="mb-0">Dialy Profit</h5>
                         </div>
+                        <div class="ms-auto my-auto mt-lg-0 mt-4">
+                            <div class="ms-auto my-auto d-flex align-items-center">
+                                <a href="{% url 'profit:print_dialy_profits' %}" class="btn btn-outline-warning btn-sm mb-0 mx-1 d-flex align-items-center" target="_blank"><i class="ri-printer-line" style="font-size:12px;"></i>&nbsp; Print</a>
+                                <a href="{% url 'profit:export_dialy_profits' %}" class="btn btn-outline-dark btn-sm mb-0 mx-1 d-flex align-items-center"><i class="ri-upload-line" style="font-size:12px;"></i>&nbsp; Export</a>
+                                <form action="." method="GET" class="mb-0 mx-1">
+                                    <div class="form-group mb-0 d-flex">
+                                        <input type="text" id="reportrange" class="form-control px-1 py-0" name="date_range" value="{% if not filter_data.date_range %}{{first_date_formatted}} - {{last_date_formatted}}{% else %}{{filter_data.date_range}}{% endif %}" style="display: inline;width: max-content;">
+                                        <button type="submit" class="btn btn-info btn-sm mb-0 mx-1 d-flex align-items-center"><i class="ri-filter-2-fill" style="font-size:12px;"></i> Filter</button>
+                                    </div>
+                                </form>
+                                {% if filter_data %}
+                                <a href="." class="btn btn-info btn-sm mb-0 mx-1">Reset</a>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="card-body px-0 pb-0">
@@ -72,11 +87,17 @@
                                 <div class="dataTable-info">Showing {{ pages.current_start_index }} to {{ pages.current_end_index }} of {{ pages.total_count }} entries</div>
                                 <nav class="dataTable-pagination">
                                     <ul class="dataTable-pagination-list">
-                                        <li class="pager"><a href="#" data-page="1">‹</a></li>
-                                        <li class="active"><a href="#" data-page="1">1</a></li>
-                                        <li class=""><a href="#" data-page="2">2</a></li>
-                                        <li class=""><a href="#" data-page="3">3</a></li>
-                                        <li class="pager"><a href="#" data-page="2">›</a></li>
+                                        {% if pages.has_previous %}
+                                        <li class="pager"><a href="#" data-page="{{ pages.previous_page_number }}">‹</a></li>
+                                        {% endif %}
+                                        {% for page_number in pages.paginator.page_range %}
+                                        <li class="{% if page_number == pages.number %}active{% endif %}">
+                                            <a href="#" data-page="{{ page_number }}">{{ page_number }}</a>
+                                        </li>
+                                        {% endfor %}
+                                        {% if pages.has_next %}
+                                        <li class="pager"><a href="#" data-page="{{ pages.next_page_number }}">›</a></li>
+                                        {% endif %}
                                     </ul>
                                 </nav>
                             </div>
@@ -89,3 +110,22 @@
     {%include 'admin_panel/includes/footer.html' %}
 </div>
 {% endblock content %}
+{% block static %}
+{% load static %}
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        var defaultDateRange = "{{ filter_data.date_range }}";
+    
+        if (defaultDateRange) {
+            $('#reportrange').val(defaultDateRange);
+        }
+        $('#reportrange').daterangepicker({
+            autoApply: true,
+            locale: {
+                format: 'MM/DD/YYYY'
+            }
+        });
+    });
+</script>
+{% endblock static %}

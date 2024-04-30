@@ -1,6 +1,6 @@
 {% extends 'admin_panel/base.html' %}
 {% load static %}
-
+{% load main_templates_tags %}
 {% block content %}
 <div class="container-fluid py-4">
     <div class="row">
@@ -13,8 +13,55 @@
                             <h5 class="mb-0">List View</h5>
                         </div>
                         <div class="ms-auto my-auto mt-lg-0 mt-4">
-                            <div class="ms-auto my-auto">
-                                <a href="{% url 'exporting:create_exporting' %}" class="btn bg-gradient-primary btn-sm mb-0">+&nbsp; Add</a>
+                            <div class="ms-auto my-auto d-flex ">
+                                <a href="{% url 'exporting:print_exporting' %}" class="btn btn-outline-warning btn-sm mb-0 mx-1" target="_blank"><i class="ri-printer-line" style="font-size:12px;"></i>&nbsp; Print</a>
+                                <a href="{% url 'exporting:export_exporting' %}" class="btn btn-outline-dark btn-sm mb-0 mx-1"><i class="ri-upload-line" style="font-size:12px;"></i>&nbsp; Export</a>
+                                <a href="{% url 'exporting:create_exporting' %}" class="btn bg-gradient-success btn-sm mb-0 mx-1"><i class="ri-add-line" style="font-size:12px;"></i>&nbsp; Add</a>
+                                <div class="dropdown">
+                                    <button class="btn bg-gradient-info dropdown-toggle btn-sm mb-0" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false"><i class="ri-filter-line" style="font-size:12px;"></i>&nbsp; Filter</button>
+                                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton" style="">
+                                        <form action="." method="GET" class="px-4 py-3">
+                                            <div class="form-group">
+                                                <label for="inputField">Select Date</label>
+                                                <input type="text" id="reportrange" class="form-control" name="date_range" value="{% if not filter_data.date_range %}{{first_date_formatted}} - {{last_date_formatted}}{% else %}{{filter_data.date_range}}{% endif %}" style="display: inline;width: max-content;">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="inputField">Purchase Party</label>
+                                                <select class="form-control" name="country_name">
+                                                    {% get_countries as countries %}
+                                                    <option value="">All</option>
+                                                    {% for c in countries %}
+                                                    <option value="{{c.pk}}" {% if filter_data.country_name|stringformat:"s" == c.pk|stringformat:"s" %}selected{% endif %}>{{c.country_name}}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="inputField">Courier Partners</label>
+                                                <select class="form-control" name="courier_partner">
+                                                    {% get_courier_partners as Partners %}
+                                                    <option value="">All</option>
+                                                    {% for c in Partners %}
+                                                    <option value="{{c.pk}}" {% if filter_data.courier_partner|stringformat:"s" == c.pk|stringformat:"s" %}selected{% endif %}>{{c.name}} - {{c.employee_id}}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="inputField">Current Status</label>
+                                                <select class="form-control" name="courier_status">
+                                                    {% get_courier_status as c_status %}
+                                                    <option value="">All</option>
+                                                    {% for c in c_status %}
+                                                        <option value="{{ c.0 }}" {% if filter_data.courier_status == c.0 %}selected{% endif %}>{{ c.1 }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">Apply</button>
+                                        </form>
+                                    </div>
+                                </div>
+                                {% if filter_data %}
+                                <a href="." class="btn btn-info btn-sm mb-0 mx-1">Reset</a>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -47,11 +94,11 @@
                                             <td class="text-sm" style="text-align:center !important;">{{ instance.exporting_country.country_name }}</td>
                                             <td class="text-sm" style="text-align:center !important;">{{ instance.courier_partner.employee_id }}</td>
                                             <td class="text-sm" style="text-align:center !important;">
-                                                {% if instance.current_status == "Pending" %}
+                                                {% if instance.current_status == "pending" %}
                                                 <span class="badge bg-gradient-warning" data-bs-toggle="modal" data-bs-target="#exampleModalMessage" data-unique_id="{{instance.pk}}" onclick="handleButtonClick(this)">{{ instance.current_status }}</span>
-                                                {% elif instance.current_status == "Shipped" %}
+                                                {% elif instance.current_status == "shipped" %}
                                                 <span class="badge bg-gradient-primary" data-bs-toggle="modal" data-bs-target="#exampleModalMessage" data-unique_id="{{instance.pk}}" onclick="handleButtonClick(this)">{{ instance.current_status }}</span>
-                                                {% elif instance.current_status == "Out of Delivery" %}
+                                                {% elif instance.current_status == "out of Delivery" %}
                                                 <span class="badge bg-gradient-info" data-bs-toggle="modal" data-bs-target="#exampleModalMessage" data-unique_id="{{instance.pk}}" onclick="handleButtonClick(this)">{{ instance.current_status }}</span>
                                                 {% elif instance.current_status == "Delived" %}
                                                 <span class="badge bg-gradient-success" data-bs-toggle="modal" data-bs-target="#DelivedModalMessage" data-unique_id="{{instance.pk}}" onclick="handleButtonClick(this)">{{ instance.current_status }}</span>
@@ -74,30 +121,22 @@
                                     </tbody>
                                 </table>
                             </div>
-
-                            {% comment %} <div class="clearfix"></div>
-                            <div class="row pagi my-3">
-                                <div class="col-sm-6 col-xs-6 text-left my-pagina">{% show_pages %}</div>
-                                <div class="col-sm-6 col-xs-6 text-right tot my-pagination align-items-center">
-                                    <div class="m-t-10">
-                                        Showing {{title}}
-                                        <span class="current_page_index">{{ pages.current_start_index }}</span> - <span
-                                        class="current_end_status"></span> of <span
-                                        class="total_count"></span>
-                                    </div>
-                                </div>
-                            </div> {% endcomment %}
-                            
                             {% get_pages %}
                             <div class="dataTable-bottom">
                                 <div class="dataTable-info">Showing {{ pages.current_start_index }} to {{ pages.current_end_index }} of {{ pages.total_count }} entries</div>
                                 <nav class="dataTable-pagination">
                                     <ul class="dataTable-pagination-list">
-                                        <li class="pager"><a href="#" data-page="1">‹</a></li>
-                                        <li class="active"><a href="#" data-page="1">1</a></li>
-                                        <li class=""><a href="#" data-page="2">2</a></li>
-                                        <li class=""><a href="#" data-page="3">3</a></li>
-                                        <li class="pager"><a href="#" data-page="2">›</a></li>
+                                        {% if pages.has_previous %}
+                                        <li class="pager"><a href="#" data-page="{{ pages.previous_page_number }}">‹</a></li>
+                                        {% endif %}
+                                        {% for page_number in pages.paginator.page_range %}
+                                        <li class="{% if page_number == pages.number %}active{% endif %}">
+                                            <a href="#" data-page="{{ page_number }}">{{ page_number }}</a>
+                                        </li>
+                                        {% endfor %}
+                                        {% if pages.has_next %}
+                                        <li class="pager"><a href="#" data-page="{{ pages.next_page_number }}">›</a></li>
+                                        {% endif %}
                                     </ul>
                                 </nav>
                             </div>
@@ -181,5 +220,20 @@
         document.getElementById('exportIdModalField').value = '';
         document.getElementById('exportStatusField').value = '';
       }
-  </script>
+</script>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var defaultDateRange = "{{ filter_data.date_range }}";
+    
+        if (defaultDateRange) {
+            $('#reportrange').val(defaultDateRange);
+        }
+        $('#reportrange').daterangepicker({
+            autoApply: true,
+            locale: {
+                format: 'MM/DD/YYYY'
+            }
+        });
+    });
+</script>
 {% endblock static %}

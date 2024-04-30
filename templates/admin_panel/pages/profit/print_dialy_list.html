@@ -1,0 +1,85 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title>{{page_title}}</title>
+        <link href="{% static 'admin_panel/assets/css/bootstrap.min.css' %}" rel="stylesheet" type="text/css" />
+    </head>
+    <body>
+        <div class="page-wrapper ml-0">
+            <!-- Page Content-->
+            <div class="page-content">
+                <div class="container-fluid">
+                    <!-- Page-Title -->
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="page-title-box">
+                                <div class="row">
+                                    <div class="col">
+                                        <h4 class="page-title">{{page_title}}</h4>
+                                    </div><!--end col-->
+                                    
+                                </div><!--end row-->                                                              
+                            </div><!-- end page-title-box -->
+                        </div><!--end col-->
+                    </div><!--end row-->
+                    <!-- end page title end breadcrumb -->
+        
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="card">
+                                <div class="card-body p-0">
+                                    <div class="table-responsive-sm">
+                                        <table class="table mb-0" style="width:100%;" border="1">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width: 2;text-align:center !important;">#</th>
+                                                    <th style="text-align:center !important;">Date</th>
+                                                    <th style="text-align:center !important;">Purchase</th>
+                                                    <th style="text-align:center !important;">Purchase Expense</th>
+                                                    <th style="text-align:center !important;">Sales Expense</th>
+                                                    <th style="text-align:center !important;">Total Expenses</th>
+                                                    <th style="text-align:center !important;">Sales</th>
+                                                    <th style="text-align:center !important;">Profit</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for instance in instances %}
+                                                <tr>
+                                                    <td class="text-sm text-center" style="">{{ forloop.counter }}</td>
+                                                    <td class="text-sm text-center" >{{ instance.date_added|date:"d-M-Y" }}</td>
+                                                    <td class="text-sm text-end">{{ instance.purchase }}</td>
+                                                    <td class="text-sm text-end">{{ instance.purchase_expenses }}</td>
+                                                    <td class="text-sm text-end">{{ instance.sales_expenses }}</td>
+                                                    <td class="text-sm text-end">{{ instance.total_expenses }}</td>
+                                                    <td class="text-sm text-end">{{ instance.sales }}</td>
+                                                    {% if instance.profit > 0 %}
+                                                    <td class="text-sm text-end text-success"><i class="fa fa-arrow-up text-success" aria-hidden="true"></i> {{ instance.profit }}</td>
+                                                    {% else %}
+                                                    <td class="text-sm text-end text-danger"><i class="fa fa-arrow-down text-danger" aria-hidden="true"></i> {{ instance.profit }}</td>
+                                                    {% endif %}
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--end card-->
+                        </div> <!-- end col -->
+                    </div>
+                </div><!-- container -->
+                <!-- end page content -->
+            </div>
+            <!-- end page-wrapper -->
+        </div>
+        {% include 'admin_panel/includes/js.html' %}
+        <script>
+            $(document).ready(function(){
+                window.print();
+            });
+        </script>
+    </body>
+</html>
