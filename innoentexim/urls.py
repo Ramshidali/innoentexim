@@ -23,6 +23,11 @@ urlpatterns = [
     path('super-admin/purchase-party/',include(('purchase_party.urls'),namespace='purchase_party')), 
     path('super-admin/other-expences/',include(('other_expences.urls'),namespace='other_expences')), 
     
+    # api
+    path('api-auth/', include('rest_framework.urls')),
+    path('api/v1/auth/', include(('api.v1.authentication.urls','authentication'), namespace='api_v1_authentication')),
+    path('api/v1/purchase/', include(('api.v1.purchase.urls','purchase'), namespace='api_v1_purchase')),
+    
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
     re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT})
 ]

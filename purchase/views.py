@@ -313,7 +313,7 @@ def create_purchase(request):
                     
                     if purchase_form.is_valid():
                         purchase_data = purchase_form.save(commit=False)
-                        purchase_data.auto_id = get_auto_id(Purchase)
+                        purchase_data.auto_id = auto_id
                         purchase_data.creator = request.user
                         purchase_data.executive = executive
                         purchase_data.purchase_id = purchase_id
