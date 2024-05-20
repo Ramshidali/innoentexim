@@ -27,6 +27,8 @@ urlpatterns = [
     path('api-auth/', include('rest_framework.urls')),
     path('api/v1/auth/', include(('api.v1.authentication.urls','authentication'), namespace='api_v1_authentication')),
     path('api/v1/purchase/', include(('api.v1.purchase.urls','purchase'), namespace='api_v1_purchase')),
+    path('api/v1/sales/', include(('api.v1.sales.urls','sales'), namespace='api_v1_sales')),
+    path('api/v1/profit/', include(('api.v1.profit.urls','profit'), namespace='api_v1_profit')),
     
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
     re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT})

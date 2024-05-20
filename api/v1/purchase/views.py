@@ -1,13 +1,12 @@
 import requests
 import datetime
 from datetime import datetime
+from decimal import Decimal
 
 from django.contrib.auth.models import User
 from django.db.models import Q, Sum, Min, Max
 from django.shortcuts import get_object_or_404
 
-from executieves.models import Executive
-from purchase_party.models import PurchaseParty
 from rest_framework.decorators import api_view, permission_classes, renderer_classes
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -15,6 +14,8 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework import status
 
 from main.functions import get_auto_id
+from executieves.models import Executive
+from purchase_party.models import PurchaseParty
 from purchase.models import Purchase, PurchaseExpense, PurchaseItems, PurchaseStock, PurchasedItems
 from api.v1.purchase.serializers import PurchaseItemsSerializer, PurchasePartySerializer, PurchaseReportSerializer, PurchaseSerializer
 from api.v1.authentication.functions import generate_serializer_errors, get_user_token
@@ -66,13 +67,16 @@ def purchase_report(request):
     
     instances = Purchase.objects.filter(is_deleted=False)
          
-    date_range = request.GET.get('date_range')
+    start_date = request.GET.get('startDate')
+    end_date = request.GET.get('endDate')
 
-    if date_range:
-        start_date_str, end_date_str = date_range.split(' - ')
-        start_date = datetime.strptime(start_date_str, '%m/%d/%Y').date()
-        end_date = datetime.strptime(end_date_str, '%m/%d/%Y').date()
-        instances = instances.filter(date__range=[start_date, end_date])
+    if start_date or end_date:
+        start_date = datetime.strptime(start_date, '%m/%d/%Y').date()
+        end_date = datetime.strptime(end_date, '%m/%d/%Y').date()
+        instances = instances.filter(date__date__gte=start_date,date__date__lte=end_date)
+        
+    if request.GET.get('partyId'):
+        instances = instances.filter(purchase_party__pk=request.GET.get('partyId'))
     
     if query:
 
@@ -89,7 +93,7 @@ def purchase_report(request):
     first_date_formatted = first_date_added.strftime('%m/%d/%Y') if first_date_added else None
     last_date_formatted = last_date_added.strftime('%m/%d/%Y') if last_date_added else None
     
-    serialized = PurchaseReportSerializer(instances,many=True)
+    serialized = PurchaseReportSerializer(instances.order_by('-date_added'),many=True)
         
     status_code = status.HTTP_200_OK
     response_data = {
@@ -150,7 +154,7 @@ def create_purchase(request):
                 
                 if (update_purchase_stock:=PurchaseStock.objects.filter(purchase_item=purchase_item,is_deleted=False)).exists():
                     stock = PurchaseStock.objects.get(purchase_item=purchase_item,is_deleted=False)
-                    stock.qty += item_data['qty']
+                    stock.qty += Decimal(item_data['qty'])
                     if not update_purchase_stock.filter(purchase=purchase).exists():
                         stock.purchase.add(purchase)
                     stock.save()
@@ -174,7 +178,8 @@ def create_purchase(request):
                     **expense_data)
 
             return Response(purchase_serializer.data, status=status.HTTP_201_CREATED)
-        return Response(purchase_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(purchase_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 # def create_purchase(request):
 #     if request.method == 'POST':
         

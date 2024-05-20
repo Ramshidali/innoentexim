@@ -12,10 +12,14 @@ class PurchaseItemsSerializer(serializers.ModelSerializer):
         fields = ['id','name']
         
 class PurchasePartySerializer(serializers.ModelSerializer):
+    fullname = serializers.SerializerMethodField()
     
     class Meta:
         model = PurchaseParty
-        fields = ['id','employee_id','first_name','last_name','email','phone','date_of_birth','gst_no','address','state','country','zip']
+        fields = ['id','fullname']
+    
+    def get_fullname(self,obj):
+        return obj.get_fullname()
 
 class PurchaseReportSerializer(serializers.ModelSerializer):
     purchase_party_name = serializers.SerializerMethodField()

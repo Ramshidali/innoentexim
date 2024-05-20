@@ -5,6 +5,7 @@ from django.utils.html import strip_tags
 from django.contrib.auth.models import User
 from django.template.loader import render_to_string
 
+from investors.models import Investors
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.decorators import api_view, permission_classes, renderer_classes
 from rest_framework.response import Response
@@ -13,7 +14,7 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework import status
 
 from main.functions import decrypt_message, encrypt_message, get_otp, send_email
-from api.v1.authentication.serializers import ResetPasswordSerializer, UserSerializer, LogInSerializer, UserTokenObtainPairSerializer
+from api.v1.authentication.serializers import InvestorSerializer, ResetPasswordSerializer, UserSerializer, LogInSerializer, UserTokenObtainPairSerializer
 from api.v1.authentication.functions import generate_serializer_errors, get_user_token
 
 
@@ -53,6 +54,7 @@ def login(request):
                 "message": "Login successfully",
                 
             }
+            print(response_data)
             return Response(response_data, status=status.HTTP_200_OK)
         else:
             response_data = {
@@ -82,5 +84,26 @@ def logout(request):
         "StatusCode": 6000,
         "message": "Logout successful",
         
+    }
+    return Response(response_data, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+@renderer_classes((JSONRenderer,))
+def side_profile(request):
+    user = request.user
+    
+    if not user.is_superuser:
+        instance = Investors.objects.get(user=user)
+        serializer = InvestorSerializer(instance,many=False)
+    else:
+        instance = User.objects.get(pk=request.user.id)
+        serializer = UserSerializer(instance,many=False)
+        
+    
+    response_data = {
+        "status": status.HTTP_200_OK,
+        "StatusCode": 6000,
+        "data": serializer.data,
     }
     return Response(response_data, status=status.HTTP_200_OK)

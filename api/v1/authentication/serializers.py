@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+from investors.models import Investors
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from six import text_type
@@ -70,3 +71,34 @@ class ResetPasswordSerializer(serializers.Serializer):
 
         return data
 
+class InvestorSerializer(serializers.ModelSerializer):
+    group_names = serializers.SerializerMethodField()
+    initial = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Investors
+        fields = ['investor_id','first_name','last_name','group_names','initial']
+        
+    def get_group_names(self, obj):
+        group_names = obj.user.groups.all()
+        return [group.name for group in group_names]
+    
+    def get_initial(self,obj):
+        return obj.get_initial().upper()
+        
+class UserSerializer(serializers.Serializer):
+    group_names = serializers.SerializerMethodField()
+    initial = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = User
+        fields = ['firstname','lastname','group_names']
+    
+    def get_group_names(self, obj):
+        group_names = obj.user.groups.all()
+        return [group.name for group in group_names]
+    
+    def get_initial(self,obj):
+        firstname = self.firstname[0] if self.firstname else ''
+        lastname = self.lastname[0] if self.lastname else ''
+        return firstname.upper() + lastname.upper()

@@ -94,8 +94,11 @@ def get_current_role(request):
     is_staff = False
     is_dealer = False
     is_core_team = False
-    is_office_executive = False
-    is_field_executive = False
+    is_investor = False
+    is_executive = False
+    is_director = False
+    is_sales = False
+    is_purchase = False
 
     if request.user.is_authenticated:        
         
@@ -108,11 +111,20 @@ def get_current_role(request):
         if User.objects.filter(id=request.user.id,is_active=True,groups__name="core_team").exists():
             is_core_team = True
             
-        if User.objects.filter(id=request.user.id,is_active=True,groups__name="office_executive").exists():
-            is_office_executive = True
+        if User.objects.filter(id=request.user.id,is_active=True,groups__name="investor").exists():
+            is_investor = True
             
-        if User.objects.filter(id=request.user.id,is_active=True,groups__name="field_executive").exists():
-            is_field_executive = True
+        if User.objects.filter(id=request.user.id,is_active=True,groups__name="executive").exists():
+            is_executive = True
+            
+        if User.objects.filter(id=request.user.id,is_active=True,groups__name="director").exists():
+            is_director = True
+            
+        if User.objects.filter(id=request.user.id,is_active=True,groups__name="sales").exists():
+            is_sales = True
+            
+        if User.objects.filter(id=request.user.id,is_active=True,groups__name="purchase").exists():
+            is_purchase = True
 
     current_role = "user"
     if is_superadmin:
@@ -121,10 +133,16 @@ def get_current_role(request):
         current_role = "staff"
     elif is_core_team:
         current_role = "core_team"
-    elif is_office_executive:
-        current_role = "office_executive"
-    elif is_field_executive:
-        current_role = "field_executive"
+    elif is_investor:
+        current_role = "investor"
+    elif is_executive:
+        current_role = "executive"
+    elif is_director :
+        current_role = "director"
+    elif is_sales :
+        current_role = "sales"
+    elif is_purchase :
+        current_role = "purchase"
                 
     return current_role
 
