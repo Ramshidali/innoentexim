@@ -94,13 +94,13 @@
                                             <td class="text-sm" style="text-align:center !important;">{{ instance.exporting_country.country_name }}</td>
                                             <td class="text-sm" style="text-align:center !important;">{{ instance.courier_partner.employee_id }}</td>
                                             <td class="text-sm" style="text-align:center !important;">
-                                                {% if instance.current_status == "010" %}
+                                                {% if instance.current_status == "Pending" %}
                                                 <span class="badge bg-gradient-warning" data-bs-toggle="modal" data-bs-target="#exampleModalMessage" data-unique_id="{{instance.pk}}" onclick="handleButtonClick(this)">{{ instance.current_status }}</span>
-                                                {% elif instance.current_status == "015" %}
+                                                {% elif instance.current_status == "Shipped" %}
                                                 <span class="badge bg-gradient-primary" data-bs-toggle="modal" data-bs-target="#exampleModalMessage" data-unique_id="{{instance.pk}}" onclick="handleButtonClick(this)">{{ instance.current_status }}</span>
-                                                {% elif instance.current_status == "020" %}
+                                                {% elif instance.current_status == "Out of Delivery" %}
                                                 <span class="badge bg-gradient-info" data-bs-toggle="modal" data-bs-target="#exampleModalMessage" data-unique_id="{{instance.pk}}" onclick="handleButtonClick(this)">{{ instance.current_status }}</span>
-                                                {% elif instance.current_status == "025" %}
+                                                {% elif instance.current_status == "Delived" %}
                                                 <span class="badge bg-gradient-success" data-bs-toggle="modal" data-bs-target="#DelivedModalMessage" data-unique_id="{{instance.pk}}" onclick="handleButtonClick(this)">{{ instance.current_status }}</span>
                                                 {% endif %}
                                             </td>
