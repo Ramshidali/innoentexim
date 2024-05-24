@@ -9,6 +9,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.utils.html import strip_tags
 from django.contrib.auth.models import User,Group
+from django.db import transaction, IntegrityError
 from django.template.loader import render_to_string
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
@@ -85,42 +86,60 @@ def create_executive(request):
         form = ExecutiveForm(request.POST,files=request.FILES)
             
         if form.is_valid():
-            email = form.cleaned_data['email']
-            password = form.cleaned_data['password']
-                
-            user_data = User.objects.create_user(
-                username=email,
-                password=password,
-                is_active=True,
-            )
-            
-            if Group.objects.filter(name="investor").exists():
-                group = Group.objects.get(name="investor")
-            else:
-                group = Group.objects.create(name="investor")
+            try:
+                with transaction.atomic():
+                    email = form.cleaned_data['email']
+                    password = form.cleaned_data['password']
+                        
+                    user_data = User.objects.create_user(
+                        username=email,
+                        password=password,
+                        is_active=True,
+                    )
+                    
+                    if Group.objects.filter(name="investor").exists():
+                        group = Group.objects.get(name="investor")
+                    else:
+                        group = Group.objects.create(name="investor")
 
-            user_data.groups.add(group)
-            
-            auto_id = get_auto_id(Executive)
-            regid = "IEEIE" + str(auto_id).zfill(3)
-            
-            data = form.save(commit=False)
-            data.auto_id = auto_id
-            data.creator = request.user
-            data.date_updated = datetime.datetime.today()
-            data.updater = request.user
-            data.employee_id = regid
-            data.user = user_data
-            data.password = encrypt_message(password)
-            data.save()
-            
-            response_data = {
-                "status": "true",
-                "title": "Successfully Created",
-                "message": "Executive created successfully.",
-                'redirect': 'true',
-                "redirect_url": reverse('executive:executive_list')
-            }
+                    user_data.groups.add(group)
+                    
+                    auto_id = get_auto_id(Executive)
+                    regid = "IEEIE" + str(auto_id).zfill(3)
+                    
+                    data = form.save(commit=False)
+                    data.auto_id = auto_id
+                    data.creator = request.user
+                    data.date_updated = datetime.datetime.today()
+                    data.updater = request.user
+                    data.employee_id = regid
+                    data.user = user_data
+                    data.password = encrypt_message(password)
+                    data.save()
+                    
+                    response_data = {
+                        "status": "true",
+                        "title": "Successfully Created",
+                        "message": "Executive created successfully.",
+                        'redirect': 'true',
+                        "redirect_url": reverse('executive:executive_list')
+                    }
+                    
+            except IntegrityError as e:
+                # Handle database integrity error
+                response_data = {
+                    "status": "false",
+                    "title": "Failed",
+                    "message": str(e),
+                }
+
+            except Exception as e:
+                # Handle other exceptions
+                response_data = {
+                    "status": "false",
+                    "title": "Failed",
+                    "message": str(e),
+                }
         else:
             message =generate_form_errors(form , formset=False)
             response_data = {

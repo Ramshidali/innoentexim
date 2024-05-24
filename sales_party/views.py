@@ -32,7 +32,7 @@ def sales_party_info(request,pk):
         'page_name' : 'Sales Party',
         'page_title' : 'Sales Party',
         
-        'is_sales': True,
+        'is_sales_pages': True,
         'is_sales_party_page': True,
     }
 
@@ -69,7 +69,7 @@ def sales_party_list(request):
         'page_title' : 'Sales Party',
         'filter_data' :filter_data,
         
-        'is_sales': True,
+        'is_sales_pages': True,
         'is_sales_party_page': True,
     }
 
@@ -180,7 +180,7 @@ def create_sales_party(request):
             
             'is_need_datetime_picker': True,
             'is_need_forms': True,
-            'is_sales': True,
+            'is_sales_pages': True,
             'is_sales_party_page': True,
         }
 
@@ -239,7 +239,7 @@ def edit_sales_party(request,pk):
             
             'is_need_datetime_picker': True,
             'is_need_forms': True,
-            'is_sales': True,
+            'is_sales_pages': True,
             'is_sales_party_page': True,
         }
 

@@ -16,26 +16,32 @@ class DepartmentForm(forms.ModelForm):
         
         
 class DirectorForm(forms.ModelForm):
-
+    
     class Meta:
         model = Directors
-        fields = ['user','department']
-
+        fields = ['user', 'department']
         widgets = {
             'user': Select(attrs={'class': 'required form-control'}),
-            'department': Select(attrs={'class': 'required form-control'}), 
+            'department': Select(attrs={'class': 'required form-control'}),
         }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Set the queryset for the user field, excluding usernames ending in '_deleted'
+        self.fields['user'].queryset = User.objects.filter(
+            is_superuser=False,
+            groups__name__in=["investor"]
+        ).exclude(username__endswith='_deleted')
+        
+        # Set the custom label_from_instance method
         self.fields['user'].label_from_instance = self.get_user_label
-
+    
     def get_user_label(self, user):
         if CoreTeam.objects.filter(user=user, is_deleted=False).exists():
             instance = CoreTeam.objects.get(user=user, is_deleted=False)
-            return f"{instance.employee_id}-{instance.first_name} {instance.last_name}"
+            return f"{instance.employee_id} - {instance.first_name} {instance.last_name}"
         elif Investors.objects.filter(user=user, is_deleted=False).exists():
             instance = Investors.objects.get(user=user, is_deleted=False)
-            return f"{instance.investor_id}-{instance.first_name} {instance.last_name}"
+            return f"{instance.investor_id} - {instance.first_name} {instance.last_name}"
         else:
             return user.username

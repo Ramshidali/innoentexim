@@ -10,15 +10,19 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.utils.html import strip_tags
 from django.contrib.auth.models import User,Group
+from django.db import transaction, IntegrityError
 from django.template.loader import render_to_string
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
+#rest framwework section
+from rest_framework import status
+from rest_framework.response import Response
 # third party
 from openpyxl import Workbook
 #local
-from main.decorators import role_required
-from profit.models import MyProfit
 from . models import Investors
+from profit.models import MyProfit
+from main.decorators import role_required
 from . forms import InvestorsForm, InvestorsEditForm
 from main.functions import encrypt_message, generate_form_errors, get_auto_id, paginate, randomnumber, send_email
 
@@ -40,7 +44,7 @@ def investors_info(request,pk):
         
         'page_name' : 'Investors Info',
         'page_title' : 'Investors Info',
-        'is_investors': True,
+        'is_investors_page': True,
     }
 
     return render(request, 'admin_panel/pages/investors/info.html', context)
@@ -77,13 +81,13 @@ def investors_list(request):
         'page_name' : 'Investors',
         'page_title' : 'Investors',
         'filter_data' :filter_data,
-        'is_investors' : True,
+        'is_investors_page' : True,
     }
 
     return render(request, 'admin_panel/pages/investors/list.html', context)
 
 @login_required
-@role_required(['superadmin','core_team','director','investor'])
+@role_required(['superadmin','director'])
 def create_investor(request):
     """
     create operation of Investors
@@ -96,42 +100,60 @@ def create_investor(request):
         form = InvestorsForm(request.POST,files=request.FILES)
             
         if form.is_valid():
-            email = form.cleaned_data['email']
-            password = form.cleaned_data['password']
-                
-            user_data = User.objects.create_user(
-                username=email,
-                password=password,
-                is_active=True,
-            )
-            
-            if Group.objects.filter(name="investor").exists():
-                group = Group.objects.get(name="investor")
-            else:
-                group = Group.objects.create(name="investor")
+            try:
+                with transaction.atomic():
+                    email = form.cleaned_data['email']
+                    password = form.cleaned_data['password']
+                        
+                    user_data = User.objects.create_user(
+                        username=email,
+                        password=password,
+                        is_active=True,
+                    )
+                    
+                    if Group.objects.filter(name="investor").exists():
+                        group = Group.objects.get(name="investor")
+                    else:
+                        group = Group.objects.create(name="investor")
 
-            user_data.groups.add(group)
-            
-            auto_id = get_auto_id(Investors)
-            regid = "IEEII" + str(auto_id).zfill(3)
-            
-            data = form.save(commit=False)
-            data.auto_id = auto_id
-            data.creator = request.user
-            data.date_updated = datetime.datetime.today()
-            data.updater = request.user
-            data.investor_id = regid
-            data.user = user_data
-            data.password = encrypt_message(password)
-            data.save()
-            
-            response_data = {
-                "status": "true",
-                "title": "Successfully Created",
-                "message": "Investors created successfully.",
-                'redirect': 'true',
-                "redirect_url": reverse('investors:investors_list')
-            }
+                    user_data.groups.add(group)
+                    
+                    auto_id = get_auto_id(Investors)
+                    regid = "IEEII" + str(auto_id).zfill(3)
+                    
+                    data = form.save(commit=False)
+                    data.auto_id = auto_id
+                    data.creator = request.user
+                    data.date_updated = datetime.datetime.today()
+                    data.updater = request.user
+                    data.investor_id = regid
+                    data.user = user_data
+                    data.password = encrypt_message(password)
+                    data.save()
+                    
+                    response_data = {
+                        "status": "true",
+                        "title": "Successfully Created",
+                        "message": "Investors created successfully.",
+                        'redirect': 'true',
+                        "redirect_url": reverse('investors:investors_list')
+                    }
+                    
+            except IntegrityError as e:
+                # Handle database integrity error
+                response_data = {
+                    "status": "false",
+                    "title": "Failed",
+                    "message": str(e),
+                }
+
+            except Exception as e:
+                # Handle other exceptions
+                response_data = {
+                    "status": "false",
+                    "title": "Failed",
+                    "message": str(e),
+                }
         else:
             message =generate_form_errors(form , formset=False)
             response_data = {
@@ -154,7 +176,7 @@ def create_investor(request):
             
             'is_need_datetime_picker': True,
             'is_need_forms': True,
-            'is_investors' : True,
+            'is_investors_page' : True,
         }
 
         return render(request, 'admin_panel/pages/investors/create.html',context)
@@ -212,7 +234,7 @@ def edit_investor(request,pk):
             
             'is_need_datetime_picker': True,
             'is_need_forms': True,
-            'is_investors' : True,
+            'is_investors_page' : True,
         }
 
         return render(request, 'admin_panel/pages/investors/create.html',context)
@@ -282,7 +304,7 @@ def print_investors(request):
         'page_name' : 'Investors',
         'page_title' : 'Investors',
         'filter_data' :filter_data,
-        'is_investors' : True,
+        'is_investors_page' : True,
     }
 
     return render(request, 'admin_panel/pages/investors/print.html', context)

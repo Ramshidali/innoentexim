@@ -61,8 +61,10 @@
         </li> {% endcomment %}
         <!--core team end-->
         {% endif %}
+        
+        {% if is_superadmin %}
         <li class="nav-item">
-          <a class="nav-link {% if is_investors %}active{% endif %}" href="{% url 'investors:investors_list' %}"><!--active-->
+          <a class="nav-link {% if is_investors_page %}active{% endif %}" href="{% url 'investors:investors_list' %}"><!--active-->
             <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
               <svg width="12px" height="12px" viewBox="0 0 45 40" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
                 <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
@@ -136,6 +138,8 @@
           
           </div>
         </li>
+        {% endif %}
+        {% if is_superadmin or is_director %}
         <li class="nav-item">
           <a class="nav-link {% if is_executive %}active{% endif %}" href="{% url 'executive:executive_list' %}"><!--active-->
             <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
@@ -155,8 +159,9 @@
             <span class="nav-link-text ms-1">Executives</span>
           </a>
         </li>
+        {% endif %}
         <li class="nav-item">
-          <a data-bs-toggle="collapse" href="#Purchases" class="nav-link {% if is_purchase %}active{% endif %}" aria-controls="Purchases" role="button" aria-expanded="{% if is_purchase %}true{% else %}false{% endif %}">
+          <a data-bs-toggle="collapse" href="#Purchases" class="nav-link {% if is_purchase_pages %}active{% endif %}" aria-controls="Purchases" role="button" aria-expanded="{% if is_purchase_pages %}true{% else %}false{% endif %}">
             <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center d-flex align-items-center justify-content-center  me-2">
               <svg width="12px" height="12px" viewBox="0 0 42 42" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
                 <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
@@ -173,8 +178,9 @@
             </div>
             <span class="nav-link-text ms-1">Purchase</span>
           </a>
-          <div class="collapse {% if is_purchase %}show{% endif %}" id="Purchases" style="">
+          <div class="collapse {% if is_purchase_pages %}show{% endif %}" id="Purchases" style="">
             <ul class="nav ms-4 ps-3">
+              {% if is_superadmin or is_purchase and is_director %}
               <li class="nav-item">
                 <a class="nav-link {% if is_purchase_party %} active {% endif %}" href="{% url 'purchase_party:purchase_party_list' %}">
                   <span class="sidenav-normal"> Purchase Party </span>
@@ -185,6 +191,7 @@
                   <span class="sidenav-normal"> Purchase Items </span>
                 </a>
               </li>
+              {% endif %}
               <li class="nav-item ">
                 <a class="nav-link {% if is_purchase_page %} active {% endif %}" href="{% url 'purchase:purchase_reports' %}">
                   <span class="sidenav-normal"> Purchase </span>
@@ -220,6 +227,7 @@
           </a>
           <div class="collapse {% if is_exporting %}show{% endif %}" id="Exports" style="">
             <ul class="nav ms-4 ps-3">
+              {% if is_superadmin or is_purchase and is_director %}
               <li class="nav-item">
                 <a class="nav-link {% if is_export_countries_page %} active {% endif %}" href="{% url 'exporting:export_countries' %}">
                   <span class="sidenav-normal"> Exporting Countries </span>
@@ -230,6 +238,7 @@
                   <span class="sidenav-normal"> Courier Partners </span>
                 </a>
               </li>
+              {% endif %}
               <li class="nav-item ">
                 <a class="nav-link {% if is_exporting_page %} active {% endif %}" href="{% url 'exporting:exporting_list' %}">
                   <span class="sidenav-normal"> Exporting </span>
@@ -241,7 +250,7 @@
         </li>
         <!--sales section-->
         <li class="nav-item">
-          <a data-bs-toggle="collapse" href="#Sales" class="nav-link {% if is_sales %}active{% endif %}" aria-controls="Sales" role="button" aria-expanded="{% if is_sales %}true{% else %}false{% endif %}">
+          <a data-bs-toggle="collapse" href="#Sales" class="nav-link {% if is_sales_pages %}active{% endif %}" aria-controls="Sales" role="button" aria-expanded="{% if is_sales_pages %}true{% else %}false{% endif %}">
             <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center d-flex align-items-center justify-content-center  me-2">
               <svg width="12px" height="12px" viewBox="0 0 42 42" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
                 <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
@@ -258,18 +267,20 @@
             </div>
             <span class="nav-link-text ms-1">Sales</span>
           </a>
-          <div class="collapse {% if is_sales %}show{% endif %}" id="Sales" style="">
+          <div class="collapse {% if is_sales_pages %}show{% endif %}" id="Sales" style="">
             <ul class="nav ms-4 ps-3">
               <li class="nav-item">
                 <a class="nav-link {% if is_sales_stock_page %} active {% endif %}" href="{% url 'sales:sales_stock' %}">
                   <span class="sidenav-normal"> Sales Stock </span>
                 </a>
               </li>
+              {% if is_superadmin or is_sales and is_director %}
               <li class="nav-item ">
                 <a class="nav-link {% if is_sales_party_page %} active {% endif %}" href="{% url 'sales_party:sales_party_list' %}">
                   <span class="sidenav-normal"> Sales Party </span>
                 </a>
               </li>
+              {% endif %}
               <li class="nav-item ">
                 <a class="nav-link {% if is_sales_page %} active {% endif %}" href="{% url 'sales:sales_list' %}">
                   <span class="sidenav-normal"> Sales </span>
@@ -300,11 +311,13 @@
           </a>
           <div class="collapse {% if is_other_expences %}show{% endif %}" id="OtherExpences" style="">
             <ul class="nav ms-4 ps-3">
+              {% if is_superadmin %}
               <li class="nav-item">
                 <a class="nav-link {% if is_other_expence_type_page %} active {% endif %}" href="{% url 'other_expences:other_expence_type_list' %}">
                   <span class="sidenav-normal"> Expence Types </span>
                 </a>
               </li>
+              {% endif %}
               <li class="nav-item ">
                 <a class="nav-link {% if is_other_expence_page %} active {% endif %}" href="{% url 'other_expences:other_expence_list' %}">
                   <span class="sidenav-normal"> Other Expences </span>
@@ -314,7 +327,7 @@
           
           </div>
         </li>
-
+        {% if is_superadmin %}
         <li class="nav-item">
           <a class="nav-link {% if is_exchange_rate %}active{% endif %}" href="{% url 'profit:exchange_rates' %}"><!--active-->
             <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
@@ -334,7 +347,7 @@
             <span class="nav-link-text ms-1">Exchange Rate</span>
           </a>
         </li>
-
+        {% endif %}
         <li class="nav-item">
           <a data-bs-toggle="collapse" href="#Profit" class="nav-link {% if is_profit %}active{% endif %}" aria-controls="Profit" role="button" aria-expanded="{% if is_profit %}true{% else %}false{% endif %}">
             <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center d-flex align-items-center justify-content-center  me-2">

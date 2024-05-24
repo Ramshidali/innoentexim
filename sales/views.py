@@ -78,7 +78,7 @@ def sales_stock(request):
         'page_title' : 'Sales Stock',
         'filter_data': filter_data,
         
-        'is_sales' : True,
+        'is_sales_pages' : True,
         'is_sales_stock_page': True,
     }
 
@@ -159,7 +159,7 @@ def sales_list(request):
         'filter_data' :filter_data,
         'first_date_formatted': first_date_formatted,
         'last_date_formatted': last_date_formatted,
-        'is_sales' : True,
+        'is_sales_pages' : True,
         'is_sales_page': True,
     }
 
@@ -280,7 +280,7 @@ def create_sales(request):
             
             'page_title': 'Create Sales',
             'url': reverse('sales:create_sales'),
-            'is_sales' : True,
+            'is_sales_pages' : True,
             'is_sales_page': True,
             'is_need_datetime_picker': True,
         }
@@ -413,7 +413,7 @@ def edit_sales(request,pk):
             
             'message': message,
             'page_name' : 'edit sales',
-            'is_sales' : True,
+            'is_sales_pages' : True,
             'is_sales_page': True,        
         }
 
@@ -528,7 +528,7 @@ def print_sales(request):
         'page_name' : 'Sales Print',
         'page_title' : 'Sales Print',
         'filter_data' :filter_data,
-        'is_sales' : True,
+        'is_sales_pages' : True,
         'is_sales_page': True,
     }
 

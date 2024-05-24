@@ -44,6 +44,7 @@ def index(request):
         'todays_sales': todays_sales,
         'sales_data_json': sales_data_list,
         
+        'page_name' : 'Dashboard',
         'page_title' : 'Dashboard | Innoentexim',
         'is_dashboard': True,   
     }

@@ -1,12 +1,13 @@
 {% extends 'admin_panel/base.html' %}
 {% load static %}
+{% load main_templates_tags %}
 {% load purchase_templates_tags %}
 {% block content %}
 <div class="container-fluid py-4">
     <div class="row">
         <div class="col-12">
             <div class="card">
-    
+                
                 <div class="card-header pb-0">
                     <div class="d-lg-flex">
                         <div>
@@ -16,7 +17,10 @@
                             <div class="ms-auto my-auto d-flex ">
                                 <a href="{% url 'purchase:print_purchases' %}" class="btn btn-outline-warning btn-sm mb-0 mx-1" target="_blank"><i class="ri-printer-line" style="font-size:12px;"></i>&nbsp; Print</a>
                                 <a href="{% url 'purchase:export_purchases' %}" class="btn btn-outline-dark btn-sm mb-0 mx-1"><i class="ri-upload-line" style="font-size:12px;"></i>&nbsp; Export</a>
+                                {% get_have_group request.user.id 'purchase' as is_purchase %}
+                                {% if is_purchase %}
                                 <a href="{% url 'purchase:create_purchase' %}" class="btn bg-gradient-success btn-sm mb-0 mx-1"><i class="ri-add-line" style="font-size:12px;"></i>&nbsp; Add</a>
+                                {% endif %}
                                 <div class="dropdown">
                                     <button class="btn bg-gradient-info dropdown-toggle btn-sm mb-0" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false"><i class="ri-filter-line" style="font-size:12px;"></i>&nbsp; Filter</button>
                                     <div class="dropdown-menu" aria-labelledby="dropdownMenuButton" style="">

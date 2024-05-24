@@ -31,7 +31,7 @@ def purchase_party_info(request,pk):
         'instance': instance,
         'page_name' : 'Purchase Party',
         'page_title' : 'Purchase Party',
-        'is_purchase' : True,
+        'is_purchase_pages' : True,
         'is_purchase_party': True,
     }
 
@@ -64,7 +64,7 @@ def purchase_party_list(request):
         'page_name' : 'Purchase Party',
         'page_title' : 'Purchase Party',
         'filter_data' :filter_data,
-        'is_purchase' : True,
+        'is_purchase_pages' : True,
         'is_purchase_party': True,
     }
 
@@ -158,7 +158,7 @@ def create_purchase_party(request):
             
             'is_need_datetime_picker': True,
             'is_need_forms': True,
-            'is_purchase' : True,
+            'is_purchase_pages' : True,
             'is_purchase_party': True,
         }
 
@@ -217,7 +217,7 @@ def edit_purchase_party(request,pk):
             
             'is_need_datetime_picker': True,
             'is_need_forms': True,
-            'is_purchase' : True,
+            'is_purchase_pages' : True,
             'is_purchase_party': True,
         }
 

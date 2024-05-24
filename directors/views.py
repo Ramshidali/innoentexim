@@ -187,7 +187,7 @@ def delete_department(request, pk):
     return HttpResponse(json.dumps(response_data), content_type='application/javascript')
 
 @login_required
-@role_required(['superadmin','core_team','director','investor'])
+@role_required(['superadmin'])
 def directors_info(request,pk):
     """
     Director info
@@ -214,7 +214,7 @@ def directors_info(request,pk):
     return render(request, 'admin_panel/pages/directors/info.html', context)
 
 @login_required
-@role_required(['superadmin','core_team','director','investor'])
+@role_required(['superadmin'])
 def directors_list(request):
     """
     Directors listings
@@ -248,7 +248,7 @@ def directors_list(request):
     return render(request, 'admin_panel/pages/directors/list.html', context)
 
 @login_required
-@role_required(['superadmin','core_team','director','investor'])
+@role_required(['superadmin'])
 def create_director(request):
     """
     create operation of Director
@@ -310,7 +310,7 @@ def create_director(request):
         return render(request, 'admin_panel/pages/directors/create.html',context)
     
 @login_required
-@role_required(['superadmin','core_team','director','investor'])
+@role_required(['superadmin'])
 def edit_director(request,pk):
     """
     edit operation of director
@@ -322,7 +322,7 @@ def edit_director(request,pk):
         
     message = ''
     if request.method == 'POST':
-        form = DepartmentForm(request.POST,files=request.FILES,instance=instance)
+        form = DirectorForm(request.POST,files=request.FILES,instance=instance)
         
         if form.is_valid():
             
@@ -354,7 +354,7 @@ def edit_director(request,pk):
     
     else:
         
-        form = DepartmentForm(instance=instance)
+        form = DirectorForm(instance=instance)
 
         context = {
             'form': form,
@@ -367,7 +367,7 @@ def edit_director(request,pk):
         return render(request, 'admin_panel/pages/directors/create.html',context)
 
 @login_required
-@role_required(['superadmin','core_team','director','investor'])
+@role_required(['superadmin'])
 def delete_director(request, pk):
     """
     Director deletion, it only mark as is deleted field to true

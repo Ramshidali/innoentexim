@@ -36,7 +36,7 @@ def purchase_items(request):
         'instances': instances,
         'page_name' : 'Purchase Items',
         'page_title' : 'Purchase Items',
-        'is_purchase' : True,
+        'is_purchase_pages' : True,
         'is_purchase_items_page': True,
     }
 
@@ -85,7 +85,7 @@ def create_purchase_items(request):
             
             'page_title': 'Create Purchase Items',
             'url': reverse('purchase:create_purchase_items'),
-            'is_purchase' : True,
+            'is_purchase_pages' : True,
             'is_purchase_items_page': True,
         }
         
@@ -141,7 +141,7 @@ def edit_purchase_item(request,pk):
             'page_name' : 'Edit Purchase Items',
             'page_title' : 'Edit Purchase Items',
             'url' : reverse('purchase:create_purchase_items'),
-            'is_purchase' : True,
+            'is_purchase_pages' : True,
             'is_purchase_items_page': True,  
         }
 
@@ -208,7 +208,8 @@ def purchase(request,pk):
         'items_instances': items_instances,
         'page_name' : 'Purchase Report',
         'page_title' : 'Purchase Report',
-        'purchase_page': True,
+        'is_purchase_pages' : True,
+        'is_purchase_page': True,
     }
 
     return render(request, 'admin_panel/pages/purchase/purchases/info.html', context)
@@ -276,7 +277,7 @@ def purchase_reports(request):
         'first_date_formatted': first_date_formatted,
         'last_date_formatted': last_date_formatted,
         
-        'is_purchase' : True,
+        'is_purchase_pages' : True,
         'is_purchase_page': True,
         'is_need_datetime_picker': True,
     }
@@ -400,7 +401,7 @@ def create_purchase(request):
             
             'page_title': 'Create Purchase',
             'url': reverse('purchase:create_purchase'),
-            'is_purchase' : True,
+            'is_purchase_pages' : True,
             'is_purchase_page': True,
             'is_need_datetime_picker': True,
         }
@@ -530,7 +531,7 @@ def edit_purchase(request,pk):
             
             'message': message,
             'page_name' : 'edit purchase',
-            'is_purchase' : True,
+            'is_purchase_pages' : True,
             'is_purchase_page': True,        
         }
 
@@ -650,7 +651,7 @@ def edit_purchased_item(request,pk):
             'form': form,
             'page_name' : 'Edit Purchased Items',
             'page_title' : 'Edit Purchased Items',
-            'is_purchase' : True,
+            'is_purchase_pages' : True,
             'is_purchase_items_page': True,  
         }
 
@@ -670,7 +671,7 @@ def print_purchases(request):
         'purchase_list': purchase_list,
         'page_name' : 'Print Purchases',
         'page_title' : 'Print Purchases',
-        'is_purchase' : True,
+        'is_purchase_pages' : True,
         'is_purchase_items_page': True,
     }
 
@@ -755,7 +756,7 @@ def purchase_stock(request):
         'instances': instances,
         'page_name' : 'Purchase Stocks',
         'page_title' : 'Purchase Stocks',
-        'is_purchase' : True,
+        'is_purchase_pages' : True,
         'is_purchase_stock_page': True,
     }
 
@@ -780,7 +781,7 @@ def print_purchase_stock(request):
         'grand_total': total,
         'page_name' : 'Print Purchase Stock',
         'page_title' : 'Purchase Stock',
-        'is_purchase' : True,
+        'is_purchase_pages' : True,
         'is_purchase_stock_page': True,
     }
 
