@@ -90,10 +90,11 @@ class InvestorSerializer(serializers.ModelSerializer):
 class ExecutiveSerializer(serializers.ModelSerializer):
     group_names = serializers.SerializerMethodField()
     initial = serializers.SerializerMethodField()
+    investor_id = serializers.SerializerMethodField()
     
     class Meta:
         model = Executive
-        fields = ['employee_id','first_name','last_name','group_names','initial']
+        fields = ['investor_id','first_name','last_name','group_names','initial']
         
     def get_group_names(self, obj):
         group_names = obj.user.groups.all()
@@ -101,6 +102,9 @@ class ExecutiveSerializer(serializers.ModelSerializer):
     
     def get_initial(self,obj):
         return obj.get_initial().upper()
+    
+    def get_investor_id(self,obj):
+        return obj.employee_id
         
 class UserSerializer(serializers.Serializer):
     group_names = serializers.SerializerMethodField()
