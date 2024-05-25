@@ -23,7 +23,7 @@ from main.functions import encrypt_message, generate_form_errors, get_auto_id, p
 
 # Create your views here.
 @login_required
-@role_required(['superadmin','core_team','director'])
+@role_required(['superadmin','director'])
 def executive_info(request,pk):
     """
     Executive info
@@ -42,7 +42,7 @@ def executive_info(request,pk):
     return render(request, 'admin_panel/pages/executive/info.html', context)
 
 @login_required
-@role_required(['superadmin','core_team','director'])
+@role_required(['superadmin','director'])
 def executive_list(request):
     """
     Executive listings
@@ -73,7 +73,7 @@ def executive_list(request):
     return render(request, 'admin_panel/pages/executive/list.html', context)
 
 @login_required
-@role_required(['superadmin','core_team','director'])
+@role_required(['superadmin','director'])
 def create_executive(request):
     """
     create operation of Executive
@@ -97,12 +97,14 @@ def create_executive(request):
                         is_active=True,
                     )
                     
-                    if Group.objects.filter(name="investor").exists():
-                        group = Group.objects.get(name="investor")
-                    else:
-                        group = Group.objects.create(name="investor")
+                    group_names = ["executive",form.cleaned_data["department"].name]
 
-                    user_data.groups.add(group)
+                    for group_name in group_names:
+                        if Group.objects.filter(name=group_name).exists():
+                            group = Group.objects.get(name=group_name)
+                        else:
+                            group = Group.objects.create(name=group_name)
+                        user_data.groups.add(group)
                     
                     auto_id = get_auto_id(Executive)
                     regid = "IEEIE" + str(auto_id).zfill(3)
@@ -168,7 +170,7 @@ def create_executive(request):
         return render(request, 'admin_panel/pages/executive/create.html',context)
     
 @login_required
-@role_required(['superadmin','core_team','director'])
+@role_required(['superadmin','director'])
 def edit_executive(request,pk):
     """
     edit operation of investor
@@ -226,7 +228,7 @@ def edit_executive(request,pk):
         return render(request, 'admin_panel/pages/executive/create.html',context)
 
 @login_required
-@role_required(['superadmin','core_team','director'])
+@role_required(['superadmin','director'])
 def delete_executive(request, pk):
     """
     Executive deletion, it only mark as is deleted field to true

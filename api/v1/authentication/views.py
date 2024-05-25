@@ -5,6 +5,7 @@ from django.utils.html import strip_tags
 from django.contrib.auth.models import User
 from django.template.loader import render_to_string
 
+from executieves.models import Executive
 from investors.models import Investors
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.decorators import api_view, permission_classes, renderer_classes
@@ -94,8 +95,12 @@ def side_profile(request):
     user = request.user
     
     if not user.is_superuser:
-        instance = Investors.objects.get(user=user)
-        serializer = InvestorSerializer(instance,many=False)
+        if user.groups(name__in="executive"):
+            instance = Executive.objects.get(user=user)
+            serializer = InvestorSerializer(instance,many=False)
+        elif user.groups(name__in="investor"):
+            instance = Investors.objects.get(user=user)
+            serializer = InvestorSerializer(instance,many=False)
     else:
         instance = User.objects.get(pk=request.user.id)
         serializer = UserSerializer(instance,many=False)

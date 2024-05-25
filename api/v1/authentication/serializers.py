@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+from executieves.models import Executive
 from investors.models import Investors
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -78,6 +79,21 @@ class InvestorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Investors
         fields = ['investor_id','first_name','last_name','group_names','initial']
+        
+    def get_group_names(self, obj):
+        group_names = obj.user.groups.all()
+        return [group.name for group in group_names]
+    
+    def get_initial(self,obj):
+        return obj.get_initial().upper()
+    
+class ExecutiveSerializer(serializers.ModelSerializer):
+    group_names = serializers.SerializerMethodField()
+    initial = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Executive
+        fields = ['employee_id','first_name','last_name','group_names','initial']
         
     def get_group_names(self, obj):
         group_names = obj.user.groups.all()
