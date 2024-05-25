@@ -78,7 +78,7 @@ def login(request):
 @renderer_classes((JSONRenderer,))
 def logout(request):
     
-    request.user.auth_token.delete()
+    # request.user.auth_token.delete()
     
     response_data = {
         "status": status.HTTP_200_OK,

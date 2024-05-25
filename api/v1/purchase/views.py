@@ -5,6 +5,7 @@ from decimal import Decimal
 
 from django.contrib.auth.models import User
 from django.db.models import Q, Sum, Min, Max
+from django.db import transaction, IntegrityError
 from django.shortcuts import get_object_or_404
 
 from rest_framework.decorators import api_view, permission_classes, renderer_classes
@@ -126,72 +127,91 @@ def create_purchase(request):
         purchase_id = "IEEIP" + str(auto_id).zfill(3)
         
         executive = None
-        # if not request.user.is_superuser:
-        #     executive = Executive.objects.get(user=request.user,is_deleted=False)
-        
-        # Create Purchase instance
-        purchase_serializer = PurchaseSerializer(data=data)
-        if purchase_serializer.is_valid():
-            purchase = purchase_serializer.save(
-                purchase_party=purchase_party,
-                auto_id = auto_id,
-                creator = request.user,
-                executive = executive,
-                purchase_id = purchase_id 
-                )
-
-            # Create PurchasedItems instances
-            for item_data in purchased_items_data:
-                purchase_item_id = item_data.pop('purchase_item')
-                purchase_item = PurchaseItems.objects.get(pk=purchase_item_id)
-                PurchasedItems.objects.create(
-                    purchase=purchase, 
-                    purchase_item=purchase_item, 
-                    auto_id = get_auto_id(PurchasedItems),
-                    creator=request.user,
-                    **item_data
-                    )
-                
-                if (update_purchase_stock:=PurchaseStock.objects.filter(purchase_item=purchase_item,is_deleted=False)).exists():
-                    stock = PurchaseStock.objects.get(purchase_item=purchase_item,is_deleted=False)
-                    stock.qty += Decimal(item_data['qty'])
-                    if not update_purchase_stock.filter(purchase=purchase).exists():
-                        stock.purchase.add(purchase)
-                    stock.save()
-                else:
-                    purchase_item = PurchaseItems.objects.get(pk=item_data.purchase_item.pk)
-                    stock_item = PurchaseStock.objects.create(
-                        auto_id = get_auto_id(PurchaseStock),
+        if not request.user.is_superuser:
+            executive = Executive.objects.get(user=request.user,is_deleted=False)
+        try:
+            with transaction.atomic():
+                # Create Purchase instance
+                purchase_serializer = PurchaseSerializer(data=data)
+                if purchase_serializer.is_valid():
+                    purchase = purchase_serializer.save(
+                        purchase_party=purchase_party,
+                        auto_id = auto_id,
                         creator = request.user,
-                        purchase_item = purchase_item,
-                        qty = item_data['qty'],
-                    )
-                    stock_item.purchase.add(purchase)
-                    stock_item.save()
+                        executive = executive,
+                        purchase_id = purchase_id 
+                        )
 
-            # Create PurchaseExpense instances
-            for expense_data in purchased_expenses_data:
-                PurchaseExpense.objects.create(
-                    purchase=purchase,
-                    auto_id = get_auto_id(PurchaseExpense),
-                    creator=request.user,
-                    **expense_data)
-                
-            status_code = status.HTTP_201_CREATED
+                    # Create PurchasedItems instances
+                    for item_data in purchased_items_data:
+                        purchase_item_id = item_data.pop('purchase_item')
+                        purchase_item = PurchaseItems.objects.get(pk=purchase_item_id)
+                        PurchasedItems.objects.create(
+                            purchase=purchase, 
+                            purchase_item=purchase_item, 
+                            auto_id = get_auto_id(PurchasedItems),
+                            creator=request.user,
+                            **item_data
+                            )
+                        
+                        if (update_purchase_stock:=PurchaseStock.objects.filter(purchase_item=purchase_item,is_deleted=False)).exists():
+                            stock = PurchaseStock.objects.get(purchase_item=purchase_item,is_deleted=False)
+                            stock.qty += Decimal(item_data['qty'])
+                            if not update_purchase_stock.filter(purchase=purchase).exists():
+                                stock.purchase.add(purchase)
+                            stock.save()
+                        else:
+                            purchase_item = PurchaseItems.objects.get(pk=item_data.purchase_item.pk)
+                            stock_item = PurchaseStock.objects.create(
+                                auto_id = get_auto_id(PurchaseStock),
+                                creator = request.user,
+                                purchase_item = purchase_item,
+                                qty = item_data['qty'],
+                            )
+                            stock_item.purchase.add(purchase)
+                            stock_item.save()
+
+                    # Create PurchaseExpense instances
+                    for expense_data in purchased_expenses_data:
+                        PurchaseExpense.objects.create(
+                            purchase=purchase,
+                            auto_id = get_auto_id(PurchaseExpense),
+                            creator=request.user,
+                            **expense_data)
+                        
+                    status_code = status.HTTP_201_CREATED
+                    response_data = {
+                        "StatusCode": 200,
+                        "status": status_code,
+                        "data": purchase_serializer.data,
+                    }
+
+                else:
+                    status_code = status.HTTP_400_BAD_REQUEST
+                    response_data = {
+                        "StatusCode": 400,
+                        "status": status_code,
+                        "data": purchase_serializer.data,
+                    }
+                    
+        except IntegrityError as e:
+            # Handle database integrity error
             response_data = {
-                "StatusCode": 200,
-                "status": status_code,
-                "data": purchase_serializer.data,
+                "status": "false",
+                "title": "Failed",
+                "message": str(e),
             }
 
-        else:
-            status_code = status.HTTP_400_BAD_REQUEST
+        except Exception as e:
+            # Handle other exceptions
             response_data = {
-                "StatusCode": 400,
-                "status": status_code,
-                "data": purchase_serializer.data,
+                "status": "false",
+                "title": "Failed",
+                "message": str(e),
             }
         return Response(response_data, status=status_code)
+    
+    
 # def create_purchase(request):
 #     if request.method == 'POST':
         
