@@ -176,10 +176,22 @@ def create_purchase(request):
                     auto_id = get_auto_id(PurchaseExpense),
                     creator=request.user,
                     **expense_data)
+                
+            status_code = status.HTTP_201_CREATED
+            response_data = {
+                "StatusCode": 200,
+                "status": status_code,
+                "data": purchase_serializer.data,
+            }
 
-            return Response(purchase_serializer.data, status=status.HTTP_201_CREATED)
         else:
-            return Response(purchase_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            status_code = status.HTTP_400_BAD_REQUEST
+            response_data = {
+                "StatusCode": 400,
+                "status": status_code,
+                "data": purchase_serializer.data,
+            }
+        return Response(response_data, status=status_code)
 # def create_purchase(request):
 #     if request.method == 'POST':
         
