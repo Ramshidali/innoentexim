@@ -95,10 +95,10 @@ def side_profile(request):
     user = request.user
     
     if not user.is_superuser:
-        if user.groups(name__in="executive"):
+        if user.groups(name__in=["executive"]):
             instance = Executive.objects.get(user=user)
             serializer = InvestorSerializer(instance,many=False)
-        elif user.groups(name__in="investor"):
+        elif user.groups(name__in=["investor"]):
             instance = Investors.objects.get(user=user)
             serializer = InvestorSerializer(instance,many=False)
     else:
