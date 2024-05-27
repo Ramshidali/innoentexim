@@ -169,8 +169,7 @@ def create_sales(request):
                 sales_item_id = item_data.pop('sales_item')
                 stock = SalesStock.objects.get(pk=sales_item_id)
                 amount = item_data.get('amount', 0.0)
-                print(amount)
-                print(inr_exchange_rate)
+                
                 sales_item_instance = SalesItems.objects.create(
                     auto_id = get_auto_id(SalesItems),
                     creator=request.user,
@@ -181,7 +180,7 @@ def create_sales(request):
                     )
                 
                 
-                stock.qty += Decimal(item_data['qty'])
+                stock.qty -= Decimal(item_data['qty'])
                 stock.save()
 
             # Create SalesExpenses instances
