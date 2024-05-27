@@ -24,7 +24,7 @@
                   <div class="col-8">
                     <div class="numbers">
                       <p class="text-sm mb-0 text-capitalize font-weight-bold">Today's Purchase</p>
-                      <h5 class="font-weight-bolder mb-0">₹{% if todays_purchase.sub_total %} {{todays_purchase.sub_total}} {% else %} 0 {% endif %}</h5>
+                      <h5 class="font-weight-bolder mb-0">₹{{todays_purchases}}</h5>
                     </div>
                   </div>
                   <div class="col-4 text-end">
@@ -40,8 +40,8 @@
                 <div class="row">
                   <div class="col-8">
                     <div class="numbers">
-                      <p class="text-sm mb-0 text-capitalize font-weight-bold">Today's Sales</p>
-                      <h5 class="font-weight-bolder mb-0">2,300<span class="text-success text-sm font-weight-bolder">+3%</span></h5>
+                      <p class="text-sm mb-0 text-capitalize font-weight-bold">Expenses</p>
+                      <h5 class="font-weight-bolder mb-0">₹{{expenses}}</h5>
                     </div>
                   </div>
                   <div class="col-4 text-end">
@@ -60,7 +60,7 @@
                   <div class="col-8">
                     <div class="numbers">
                       <p class="text-sm mb-0 text-capitalize font-weight-bold">Today's Sales</p>
-                      <h5 class="font-weight-bolder mb-0">₹{% if todays_sales.sub_total %} {{todays_sales.sub_total}} {% else %} 0 {% endif %}</h5>
+                      <h5 class="font-weight-bolder mb-0">₹{{todays_sales}}</h5>
                     </div>
                   </div>
                   <div class="col-4 text-end">
@@ -76,10 +76,8 @@
                 <div class="row">
                   <div class="col-8">
                   <div class="numbers">
-                    <p class="text-sm mb-0 text-capitalize font-weight-bold">Sales</p>
-                    <h5 class="font-weight-bolder mb-0">$103,430
-                      <span class="text-success text-sm font-weight-bolder">+5%</span>
-                    </h5>
+                    <p class="text-sm mb-0 text-capitalize font-weight-bold">Profit</p>
+                    <h5 class="font-weight-bolder mb-0">₹{{profit}}</h5>
                   </div>
                 </div>
                 <div class="col-4 text-end">

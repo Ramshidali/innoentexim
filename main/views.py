@@ -18,8 +18,9 @@ from django.http.response import HttpResponseRedirect, HttpResponse
 # third party
 #local
 from main.decorators import role_required
-from purchase.models import Purchase
-from sales.models import Sales
+from other_expences.models import OtherExpences
+from purchase.models import *
+from sales.models import *
 
 # Create your views here.
 @login_required
@@ -31,18 +32,22 @@ def app(request):
 @login_required
 # @role_required(['superadmin','core_team','director'])
 def index(request):
-    today_date = timezone.now().date()
-    last_month_start = (today_date - timedelta(days=today_date.day)).replace(day=1)
-    todays_purchase = Purchase.objects.filter(date=date.today()).first()
-    todays_sales = Sales.objects.filter(date=date.today()).first()
+    todays_purchases = Purchase.objects.filter(date=datetime.today().date()).aggregate(total_amount=Sum('purchaseditems__amount'))['total_amount'] or 0
+    todays_sales = Sales.objects.filter(date=datetime.today().date()).aggregate(total_amount=Sum('salesitems__amount_in_inr'))['total_amount'] or 0
     
-    sales_data = Sales.objects.values('date').annotate(sub_total=Sum('salesitems__amount'))
-    sales_data_list = list(sales_data)
+    purchase_expense = PurchaseExpense.objects.filter(purchase__date=datetime.today().date()).aggregate(total_amount=Sum('amount'))['total_amount'] or 0
+    sales_expense = SalesExpenses.objects.filter(sales__date=datetime.today().date()).aggregate(total_amount=Sum('amount_in_inr'))['total_amount'] or 0
+    other_expences = OtherExpences.objects.filter(date_added__date=datetime.today().date()).aggregate(total_amount=Sum('amount'))['total_amount'] or 0
+    
+    expenses = purchase_expense + sales_expense + other_expences
+    
+    profit = todays_sales - todays_purchases - purchase_expense - sales_expense - other_expences
     
     context = {
-        'todays_purchase': todays_purchase,
+        'todays_purchases': todays_purchases,
         'todays_sales': todays_sales,
-        'sales_data_json': sales_data_list,
+        'expenses': expenses,
+        'profit' : profit,
         
         'page_name' : 'Dashboard',
         'page_title' : 'Dashboard | Innoentexim',
