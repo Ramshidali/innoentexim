@@ -6,3 +6,4 @@ from purchase.models import *
 admin.site.register(PurchaseItems)
 admin.site.register(Purchase)
 admin.site.register(PurchaseExpense)
+admin.site.register(PurchaseStock)
