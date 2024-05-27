@@ -179,9 +179,17 @@ def create_sales(request):
                     **item_data
                     )
                 
-                
-                stock.qty -= Decimal(item_data['qty'])
-                stock.save()
+                if stock.qty >= Decimal(item_data['qty']) :
+                    stock.qty -= Decimal(item_data['qty'])
+                    stock.save()
+                else: 
+                    response_data = {
+                        "StatusCode": 6001,
+                        "status": status.HTTP_400_BAD_REQUEST,
+                        "message": "no stock available",
+                    }
+
+                    return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
             # Create SalesExpenses instances
             for expense_data in salesd_expenses_data:

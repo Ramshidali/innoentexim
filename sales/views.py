@@ -1,3 +1,4 @@
+from decimal import Decimal
 import io
 import json
 from datetime import timezone
@@ -208,8 +209,17 @@ def create_sales(request):
                         item_data.save()
                         
                         stock = SalesStock.objects.filter(country=sales_data.country,purchase_item=item_data.sales_stock.purchase_item).first()
-                        stock.qty -= item_data.qty
-                        stock.save()
+                        if stock.qty >= Decimal(item_data.qty) :
+                            stock.qty -= item_data.qty
+                            stock.save()
+                        else: 
+                            response_data = {
+                                "StatusCode": 6001,
+                                "status": status.HTTP_400_BAD_REQUEST,
+                                "message": "no stock available",
+                            }
+
+                        return HttpResponse(json.dumps(response_data), content_type='application/javascript')
                         
                         # else:
                         #     stock = SalesStock.objects.create(
