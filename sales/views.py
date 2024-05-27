@@ -207,20 +207,20 @@ def create_sales(request):
                         item_data.amount_in_inr = form.cleaned_data['amount'] * inr_exchange_rate
                         item_data.save()
                         
-                        if (stock:=SalesStock.objects.filter(country=sales_data.country,purchase_item=item_data.sales_stock.purchase_item)).exists():
-                            stock = stock.first()
-                            stock.qty -= item_data.qty
-                            stock.save()
-                        else:
-                            stock = SalesStock.objects.create(
-                                auto_id = get_auto_id(SalesStock),
-                                creator = request.user,
-                                date_updated = datetime.datetime.today(),
-                                updater = request.user,
-                                country = sales_data.country,
-                                purchase_item = item_data.sales_stock.purchase_item,
-                                qty = item_data.qty,
-                            )
+                        stock = SalesStock.objects.filter(country=sales_data.country,purchase_item=item_data.sales_stock.purchase_item).first()
+                        stock.qty -= item_data.qty
+                        stock.save()
+                        
+                        # else:
+                        #     stock = SalesStock.objects.create(
+                        #         auto_id = get_auto_id(SalesStock),
+                        #         creator = request.user,
+                        #         date_updated = datetime.datetime.today(),
+                        #         updater = request.user,
+                        #         country = sales_data.country,
+                        #         purchase_item = item_data.sales_stock.purchase_item,
+                        #         qty = item_data.qty,
+                        #     )
                     
                     for form in sales_expense_formset:
                         expense_data = form.save(commit=False)
