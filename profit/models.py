@@ -67,7 +67,7 @@ class MyProfit(models.Model):
     date_added = models.DateTimeField(db_index=True, auto_now_add=True)
     year = models.IntegerField()
     month = models.IntegerField()
-    user = models.OneToOneField(User,on_delete=models.CASCADE,limit_choices_to={'groups__name__in': ['core_team', 'investor']})
+    user = models.ForeignKey(User,on_delete=models.CASCADE,limit_choices_to={'groups__name__in': ['core_team', 'investor']})
     profit = models.DecimalField(default=0, max_digits=10, decimal_places=2)
     
     class Meta:

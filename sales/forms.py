@@ -37,8 +37,8 @@ class SalesItemsForm(forms.ModelForm):
         widgets = {
             'sales_stock': forms.Select(attrs={'class': 'required form-control sales-item', 'style': 'width: auto;'}),
             'sale_type': forms.Select(attrs={'class': 'required form-control sales-type', 'style': 'width: auto;'}),
-            'no_boxes': forms.TextInput(attrs={'type': 'number', 'class': 'form-control', 'placeholder': 'Enter No.Boxes'}),
-            'qty': forms.TextInput(attrs={'type': 'number', 'class': 'required form-control', 'placeholder': 'Enter QTY'}),
+            'no_boxes': forms.TextInput(attrs={'type': 'number', 'class': 'form-control no_boxes', 'placeholder': 'Enter No.Boxes'}),
+            'qty': forms.TextInput(attrs={'type': 'number', 'class': 'required form-control sales_qty', 'placeholder': 'Enter QTY'}),
             'per_kg_amount': forms.TextInput(attrs={'type': 'number', 'class': 'required form-control amount_per_kg', 'placeholder': 'Enter Amount per kg'}),
             'amount': forms.TextInput(attrs={'type': 'number', 'class': 'required form-control', 'placeholder': 'Enter Amount'}),
         }

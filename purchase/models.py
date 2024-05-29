@@ -95,8 +95,9 @@ class Purchase(BaseModel):
         return total
 
 class PurchasedItems(BaseModel):
-    qty = models.DecimalField(max_digits=10, decimal_places=2)  # Use DecimalField for numeric values
-    amount = models.DecimalField(default=0, max_digits=10, decimal_places=2)  # Use DecimalField for numeric values
+    qty = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = models.DecimalField(default=0, max_digits=10, decimal_places=2)
+    amount_per_kg = models.DecimalField(default=0, max_digits=10, decimal_places=2)
     
     purchase_item = models.ForeignKey(PurchaseItems, on_delete=models.CASCADE)
     purchase = models.ForeignKey(Purchase, on_delete=models.CASCADE)

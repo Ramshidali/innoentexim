@@ -19,7 +19,7 @@ class ExecutiveForm(forms.ModelForm):
             'email': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Email'}), 
             'phone': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Phone Number'}), 
             'investment_amount': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Investment Amount'}), 
-            'date_of_birth': TextInput(attrs={'class': 'required form-control','id':'date_of_birth','name':'birthday','placeholder' : 'Enter Date of Birth'}), 
+            'date_of_birth': TextInput(attrs={'class': 'required form-control','id':'date_of_birth','name':'date_of_birth','placeholder' : 'Enter Date of Birth'}), 
             'state': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter State'}), 
             'country': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Country'}), 
             'zip': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Zip'}), 

@@ -124,22 +124,25 @@ def calculate_monthly_profit(year, month):
 def distribute_profits(year, month):
     monthly_profit = MonthlyProfit.objects.get(year=year, month=month)
     
-    core_team_users = User.objects.filter(groups__name='core_team')
-    investor_users = User.objects.filter(groups__name='investor')
-    
-    for core_team in core_team_users:
-        instance = CoreTeam.objects.get(user=core_team,is_deleted=False)
-        my_profit = monthly_profit.profit * instance.share_persentage / 100
+    # core_team_users = User.objects.filter(groups__name='core_team')
+    # for core_team in core_team_users:
+    #     instance = CoreTeam.objects.get(user=core_team,is_deleted=False)
+    #     my_profit = monthly_profit.profit * instance.share_persentage / 100
         
-        profit_instance, created = MyProfit.objects.get_or_create(year=year, month=month, user=core_team)
-        profit_instance.profit = my_profit
-        profit_instance.save()
+    #     profit_instance, created = MyProfit.objects.get_or_create(year=year, month=month, user=core_team)
+    #     profit_instance.profit = my_profit
+    #     profit_instance.save()
         
+    investor_users = User.objects.filter(groups__name='investor').exclude(username__endswith='_deleted')
     for investor in investor_users:
         instance = Investors.objects.get(user=investor,is_deleted=False)
         my_profit = monthly_profit.profit * instance.share_persentage / 100
         
-        profit_instance, created = MyProfit.objects.get_or_create(year=year, month=month, user=investor)
+        if MyProfit.objects.filter(year=year, month=month, user=investor).exists():
+            profit_instance = MyProfit.objects.get(year=year, month=month, user=investor)
+        else:
+            profit_instance = MyProfit.objects.create(year=year, month=month, user=investor)
+        
         profit_instance.profit = my_profit
         profit_instance.save()
         

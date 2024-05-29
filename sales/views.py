@@ -296,27 +296,27 @@ def create_sales(request):
         return render(request,'admin_panel/pages/sales/sales/create.html',context)
 
 @login_required
-@role_required(['superadmin','core_team','director'])
-def edit_sales(request,pk):
+@role_required(['superadmin', 'core_team', 'director'])
+def edit_sales(request, pk):
     """
-    edit operation of sales
+    Edit operation of sales
     :param request:
     :param pk:
     :return:
     """
     sales_instance = get_object_or_404(Sales, pk=pk)
-    salesd_items = SalesItems.objects.filter(sales=sales_instance)
-    expences = SalesExpenses.objects.filter(sales=sales_instance)
-    
+    sales_items = SalesItems.objects.filter(sales=sales_instance)
+    expenses = SalesExpenses.objects.filter(sales=sales_instance)
+
     if SalesItems.objects.filter(sales=sales_instance).exists():
         i_extra = 0
     else:
-        i_extra = 1 
-        
+        i_extra = 1
+
     if SalesExpenses.objects.filter(sales=sales_instance).exists():
         e_extra = 0
     else:
-        e_extra = 1 
+        e_extra = 1
 
     ItemsFormset = inlineformset_factory(
         Sales,
@@ -324,78 +324,105 @@ def edit_sales(request,pk):
         extra=i_extra,
         form=SalesItemsForm,
     )
-    
-    ExpencesFormset = inlineformset_factory(
+
+    ExpensesFormset = inlineformset_factory(
         Sales,
         SalesExpenses,
         extra=e_extra,
         form=SalesExpenseForm,
     )
-        
+
     message = ''
-    
+
     if request.method == 'POST':
-        form = SalesForm(request.POST,instance=sales_instance)
-        sales_items_formset = ItemsFormset(request.POST,request.FILES,
-                                            instance=sales_instance,
-                                            prefix='sales_items_formset',
-                                            form_kwargs={'empty_permitted': False})            
-        sales_expense_formset = ExpencesFormset(request.POST,
-                                            instance=sales_instance, 
-                                            prefix='sales_expense_formset', 
-                                            form_kwargs={'empty_permitted': False})            
-        
-        if form.is_valid() and  sales_items_formset.is_valid() and sales_expense_formset.is_valid():
-            #create
-            data = form.save(commit=False)
-            data.date_updated = datetime.today()
-            data.updater = request.user
-            data.date = request.POST.get('date')
-            data.save()
-            
-            inr_exchange_rate = ExchangeRate.objects.filter(country=data.country,is_active=True).latest('-date_added').rate_to_inr
-            
-            for form in sales_items_formset:
-                if form not in sales_items_formset.deleted_forms:
-                    i_data = form.save(commit=False)
-                    i_data.amount_in_inr = form.cleaned_data['amount'] * inr_exchange_rate
-                    if not i_data.auto_id :
-                        i_data.sales = sales_instance
-                        i_data.auto_id = get_auto_id(SalesItems)
-                        i_data.creator = request.user
-                    i_data.save()
+        form = SalesForm(request.POST, instance=sales_instance)
+        sales_items_formset = ItemsFormset(request.POST, request.FILES,
+                                           instance=sales_instance,
+                                           prefix='sales_items_formset',
+                                           form_kwargs={'empty_permitted': False})
+        sales_expense_formset = ExpensesFormset(request.POST,
+                                                instance=sales_instance,
+                                                prefix='sales_expense_formset',
+                                                form_kwargs={'empty_permitted': False})
 
-            for f in sales_items_formset.deleted_forms:
-                f.instance.delete()
-                
-            for form in sales_expense_formset:
-                if form not in sales_expense_formset.deleted_forms:
-                    e_data = form.save(commit=False)
-                    if not e_data.auto_id :
-                        e_data.auto_id = get_auto_id(SalesExpenses)
-                        e_data.creator = request.user
-                        e_data.sales = sales_instance
-                    e_data.save()
+        if form.is_valid() and sales_items_formset.is_valid() and sales_expense_formset.is_valid():
+            try:
+                with transaction.atomic():
+                    # Update sales data
+                    data = form.save(commit=False)
+                    data.date_updated = datetime.today()
+                    data.updater = request.user
+                    data.date = request.POST.get('date')
+                    data.save()
 
-            for f in sales_expense_formset.deleted_forms:
-                f.instance.delete()
-                
-            calculate_profit(data.date)
-                
-            response_data = {
-                "status": "true",
-                "title": "Successfully Updated",
-                "message": "Sales Updated Successfully.",
-                'redirect': 'true',
-                "redirect_url": reverse('sales:sales_list'),
-                "return" : True,
-            }
-    
+                    inr_exchange_rate = ExchangeRate.objects.filter(country=data.country, is_active=True).latest(
+                        '-date_added').rate_to_inr
+
+                    # Update sales items
+                    for form in sales_items_formset:
+                        if form not in sales_items_formset.deleted_forms:
+                            item_data = form.save(commit=False)
+                            item_data.amount_in_inr = form.cleaned_data['amount'] * inr_exchange_rate
+                            if not item_data.auto_id:
+                                item_data.sales = sales_instance
+                                item_data.auto_id = get_auto_id(SalesItems)
+                                item_data.creator = request.user
+                            item_data.save()
+
+                            # Adjust sales stock
+                            update_sales_stock_quantity(item_data)
+
+                    # Delete removed sales items
+                    for f in sales_items_formset.deleted_forms:
+                        f.instance.delete()
+
+                    # Update sales expenses
+                    for form in sales_expense_formset:
+                        if form not in sales_expense_formset.deleted_forms:
+                            expense_data = form.save(commit=False)
+                            if not expense_data.auto_id:
+                                expense_data.auto_id = get_auto_id(SalesExpenses)
+                                expense_data.creator = request.user
+                                expense_data.sales = sales_instance
+                            expense_data.save()
+
+                    # Delete removed sales expenses
+                    for f in sales_expense_formset.deleted_forms:
+                        f.instance.delete()
+
+                    # Calculate profit
+                    calculate_profit(data.date)
+
+                    response_data = {
+                        "status": "true",
+                        "title": "Successfully Updated",
+                        "message": "Sales updated successfully.",
+                        'redirect': 'true',
+                        "redirect_url": reverse('sales:sales_list'),
+                        "return": True,
+                    }
+
+            except IntegrityError as e:
+                # Handle database integrity error
+                response_data = {
+                    "status": "false",
+                    "title": "Failed",
+                    "message": str(e),
+                }
+
+            except Exception as e:
+                # Handle other exceptions
+                response_data = {
+                    "status": "false",
+                    "title": "Failed",
+                    "message": str(e),
+                }
+
         else:
-            message = generate_form_errors(form,formset=False)
-            message += generate_form_errors(sales_items_formset,formset=True)
-            message += generate_form_errors(sales_expense_formset,formset=True)
-            
+            message = generate_form_errors(form, formset=False)
+            message += generate_form_errors(sales_items_formset, formset=True)
+            message += generate_form_errors(sales_expense_formset, formset=True)
+
             response_data = {
                 "status": "false",
                 "title": "Failed",
@@ -403,29 +430,43 @@ def edit_sales(request,pk):
             }
 
         return HttpResponse(json.dumps(response_data), content_type='application/javascript')
-                        
+
     else:
         form = SalesForm(instance=sales_instance)
-        sales_items_formset = ItemsFormset(queryset=salesd_items,
-                                            prefix='sales_items_formset',
-                                            instance=sales_instance)
-        sales_expense_formset = ExpencesFormset(queryset=expences, 
-                                                    prefix='sales_expense_formset', 
-                                                    instance=sales_instance)
-        
+        sales_items_formset = ItemsFormset(queryset=sales_items,
+                                           prefix='sales_items_formset',
+                                           instance=sales_instance)
+        sales_expense_formset = ExpensesFormset(queryset=expenses,
+                                                prefix='sales_expense_formset',
+                                                instance=sales_instance)
 
         context = {
             'form': form,
             'sales_items_formset': sales_items_formset,
             'sales_expense_formset': sales_expense_formset,
-            
+
             'message': message,
-            'page_name' : 'edit sales',
-            'is_sales_pages' : True,
-            'is_sales_page': True,        
+            'page_name': 'edit sales',
+            'is_sales_pages': True,
+            'is_sales_page': True,
         }
 
         return render(request, 'admin_panel/pages/sales/sales/create.html', context)
+
+
+def update_sales_stock_quantity(sales_item):
+    """
+    Update sales stock quantity based on sales item.
+    """
+    stock = SalesStock.objects.filter(country=sales_item.sales.country,
+                                      purchase_item=sales_item.sales_stock.purchase_item).first()
+    if stock:
+        stock.qty += sales_item.qty
+        stock.save()
+    else:
+        # Handle the case if stock entry does not exist, you might need to create one or handle it based on your business logic
+        pass
+
     
 @login_required
 @role_required(['superadmin','core_team','director'])
@@ -436,52 +477,23 @@ def delete_sales(request, pk):
     :param pk:
     :return:
     """
-    # sales = Sales.objects.get(pk=pk)
-    # if sales.sales_manager_is_varified == True :
-    #     if not Sales.objects.filter(sales=sales,is_deleted=False).exists():
-    #         if (materials:=SalesMaterials.objects.filter(sales=sales,is_deleted=False)).exists():
-    #             for material in materials:
-    #                 sales_items = material.sales_item
-    #                 branch = material.sales.branch.pk
-    #                 qty = material.qty
-                    
-    #                 if (stocks:=Stock.objects.filter(sales=sales,sales_item__pk=sales_items.pk,branch__pk=branch,is_deleted=False)).exists():
-    #                     for stock in stocks:
-    #                         stock.qty -= qty
-    #                         stock.save()
-                        
-    #                         stock.sales.remove(sales)
-                            
-    #             materials.update(is_deleted=True)
-                            
-    #         sales.is_deleted=True
-    #         sales.save()
-
-    #         response_data = {
-    #             "status": "true",
-    #             "title": "Successfully Deleted",
-    #             "message": "Sales Successfully Deleted.",
-    #             "redirect": "true",
-    #             "redirect_url": reverse('sales:sales_list'),
-    #         }
-    #     else:
-    #         sales_queryset = Sales.objects.filter(sales=sales)
-    #         sales_invoice_numbers = [sales.invoice_no for sales in sales_queryset]
-    #         invoice_numbers_text = ", ".join(sales_invoice_numbers)
-    #         message = f"This sales has already included the sale of some items. Sales Invoice Numbers: {invoice_numbers_text}"
-            
-    #         response_data = {
-    #             "status": "false",
-    #             "title": "Failed",
-    #             "message": message,
-    #         }
-    # else:
-    #     sales.is_deleted=True
-    #     sales.save()
-        
-    #     SalesMaterials.objects.filter(sales=sales).update(is_deleted=True)
-    #     SalesMoreExpense.objects.filter(sales=sales).update(is_deleted=True)
-        
+    sales = Sales.objects.get(pk=pk)
+    sales_items = SalesItems.objects.filter(sales=sales)
+    
+    # update stock
+    for item in sales_items:
+        stock = SalesStock.objects.get(country=sales.country,purchase_item=item.sales_stock.purchase_item)
+        stock.qty += item.qty
+        stock.save()
+    
+    SalesExpenses.objects.filter(sales=sales).update(is_deleted=True)
+    
+    sales_items.update(is_deleted=True)
+    sales.is_deleted = True
+    sales.save()
+    
+    calculate_profit(sales.date)
+    
     response_data = {
         "status": "true",
         "title": "Successfully Deleted",

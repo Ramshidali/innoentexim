@@ -37,6 +37,7 @@
                                             <tbody>
                                                 <th style="min-width: 15px;">Items</th>
                                                 <th style="min-width: 15px;">Qty</th>
+                                                <th style="min-width: 15px;">Amount/KG</th>
                                                 <th style="min-width: 15px;">Amount</th>
                                                 <th style="min-width: 15px;"></th>
                                                 {% for item in purchase_items_formset.forms %}
@@ -50,6 +51,11 @@
                                                     <td>
                                                         <span class="qty">
                                                             {{ item.qty }}
+                                                        </span>
+                                                    </td>
+                                                    <td class="">
+                                                        <span class="amount_per_kg">
+                                                            {{ item.amount_per_kg }}
                                                         </span>
                                                     </td>
                                                     <td class="">
@@ -140,24 +146,44 @@
     }
 </style>
 <script>
-    $(document).ready(function () {
-        $('.purchase_items_formset table tr.form_set_row').formset({
-            prefix: '{{ purchase_items_formset.prefix }}',
-            formCssClass: 'dynamic-formset',
+    $('.purchase_items_formset table tr.form_set_row').formset({
+        prefix: '{{ purchase_items_formset.prefix }}',
+        formCssClass: 'dynamic-formset',
 
-            'added': function (row) {
-                
-            },
-        });
-        $('.purchase_expense_formset table tr.form_set_row').formset({
-            prefix: '{{ purchase_expense_formset.prefix }}',
-            formCssClass: 'dynamic-formset1',
-
-            'added': function (row) {
-                
-            },
-        });
-        
+        'added': function (row) {
+            
+        },
     });
+    $('.purchase_expense_formset table tr.form_set_row').formset({
+        prefix: '{{ purchase_expense_formset.prefix }}',
+        formCssClass: 'dynamic-formset1',
+
+        'added': function (row) {
+            
+        },
+    });
+    $('.amount_per_kg').keyup(function() {
+        var elemId = $(this).attr("id");
+        var formCount = elemId.match(/\d+/);
+        var amount = parseFloat($(this).val());
+        var qtyValue = parseFloat($("#id_purchase_items_formset-" + formCount + "-qty").val()); // Parse the qtyValue as a float
+    
+        var totalAmount = 0;
+        totalAmount = qtyValue * amount;
+    
+        $("#id_purchase_items_formset-" + formCount + "-amount").val(totalAmount.toFixed(2));
+    }); 
+
+    $('.purchase_qty').keyup(function() {
+        var elemId = $(this).attr("id");
+        var formCount = elemId.match(/\d+/);
+        var qtyValue = parseFloat($(this).val());
+        var amount = parseFloat($("#id_purchase_items_formset-" + formCount + "-amount_per_kg").val()); // Parse the qtyValue as a float
+    
+        var totalAmount = 0;
+        totalAmount = qtyValue * amount;
+    
+        $("#id_purchase_items_formset-" + formCount + "-amount").val(totalAmount.toFixed(2));
+    }); 
 </script>
 {% endblock static %}

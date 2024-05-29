@@ -236,6 +236,44 @@
         });
     });
 
+    $('.no_boxes').keyup(function() {
+        var elemId = $(this).attr("id");
+        var formCount = elemId.match(/\d+/);
+        var noBoxes = parseFloat($(this).val()); 
+        var salesType = $("#id_sales_items_formset-" + formCount + "-sale_type").val();
+        var qtyValue = parseFloat($("#id_sales_items_formset-" + formCount + "-qty").val());
+        var amount = parseFloat($("#id_sales_items_formset-" + formCount + "-per_kg_amount").val());
+    
+        var totalAmount = 0;
+        
+        if (salesType === "qty" && !isNaN(qtyValue) && !isNaN(amount)) {
+            totalAmount = qtyValue * amount;
+        } else if (salesType === "box" && !isNaN(noBoxes) && !isNaN(qtyValue) && !isNaN(amount)) {
+            totalAmount = noBoxes * qtyValue * amount;
+        }
+    
+        $("#id_sales_items_formset-" + formCount + "-amount").val(totalAmount.toFixed(2));
+    });
+
+    $('.sales_qty').keyup(function() {
+        var elemId = $(this).attr("id");
+        var formCount = elemId.match(/\d+/);
+        var qtyValue = parseFloat($(this).val()); 
+        var salesType = $("#id_sales_items_formset-" + formCount + "-sale_type").val();
+        var noBoxes = parseFloat($("#id_sales_items_formset-" + formCount + "-no_boxes").val());
+        var amount = parseFloat($("#id_sales_items_formset-" + formCount + "-per_kg_amount").val());
+    
+        var totalAmount = 0;
+        
+        if (salesType === "qty" && !isNaN(qtyValue) && !isNaN(amount)) {
+            totalAmount = qtyValue * amount;
+        } else if (salesType === "box" && !isNaN(noBoxes) && !isNaN(qtyValue) && !isNaN(amount)) {
+            totalAmount = noBoxes * qtyValue * amount;
+        }
+    
+        $("#id_sales_items_formset-" + formCount + "-amount").val(totalAmount.toFixed(2));
+    });
+
     $('.amount_per_kg').keyup(function() {
         var elemId = $(this).attr("id");
         var formCount = elemId.match(/\d+/);
@@ -252,7 +290,6 @@
             totalAmount = noBoxes * qtyValue * amount;
         }
     
-        // Limit the totalAmount to two decimal places and update the field
         $("#id_sales_items_formset-" + formCount + "-amount").val(totalAmount.toFixed(2));
     });
 
