@@ -7,6 +7,10 @@ from sales_party.models import SalesParty
 
 from forex_python.converter import CurrencyRates
 
+SALES_TYPES_CHOICES = (
+    ('qty','QTY'),
+    ('box','Box'),
+)
 
 # Create your models here.
 class SalesStock(BaseModel):
@@ -142,9 +146,10 @@ class Sales(BaseModel):
             total += expense.amount_in_inr
             
         return total
-        
-    
+
 class SalesItems(BaseModel):
+    no_boxes = models.PositiveIntegerField(default=0,null=True,blank=True)
+    sale_type = models.CharField(max_length=10,choices=SALES_TYPES_CHOICES)
     qty = models.DecimalField(max_digits=10, decimal_places=2)
     per_kg_amount = models.DecimalField(max_digits=10, decimal_places=2)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
@@ -160,6 +165,7 @@ class SalesItems(BaseModel):
     
     def __str__(self):
         return f'{self.qty} {self.amount}'
+    
     
 class SalesExpenses(BaseModel):
     title = models.CharField(max_length=200)

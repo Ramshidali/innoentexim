@@ -7,7 +7,7 @@
         <div class="col-12">
             <div class="multisteps-form mb-5">
                 <div class="row">
-                    <div class="col-12 col-lg-8 m-auto">
+                    <div class="col-12 col-lg-10 m-auto">
                         <form action="." method="POST" enctype="multipart/form-data" class="multisteps-form__form mb-8 ajax redirect" autocomplete="off" novalidate style="height: 700px;">
                             {% csrf_token %}
                             <div class="card multisteps-form__panel p-3 border-radius-xl bg-white js-active" data-animation="FadeIn">
@@ -40,7 +40,9 @@
                                             </thead>
                                             <tbody>
                                                 <th style="min-width: 15px;">Items</th>
-                                                <th style="min-width: 15px;">Qty</th>
+                                                <th style="min-width: 15px;">Sales Type</th>
+                                                <th style="min-width: 15px;" id="boxCountLabel">No.Boxes</th>
+                                                <th style="min-width: 15px;">QTY</th>
                                                 <th style="min-width: 15px;">Amount/KG</th>
                                                 <th style="min-width: 15px;">Amount</th>
                                                 <th style="min-width: 15px;"></th>
@@ -50,6 +52,16 @@
                                                     <td>
                                                         <span class="sales_stock">
                                                             {{ item.sales_stock }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="sales_type">
+                                                            {{ item.sale_type }}
+                                                        </span>
+                                                    </td>
+                                                    <td  id="boxCountField">
+                                                        <span class="no_boxes">
+                                                            {{ item.no_boxes }}
                                                         </span>
                                                     </td>
                                                     <td>
@@ -130,12 +142,6 @@
 {% block static %}
 {% load static %}
 <style>
-    .dynamic-formset-add td{
-        text-align: center !important;
-    }
-    .dynamic-formset1-add td{
-        text-align: center !important;
-    }
     .sales_items_formset a.add-row::before{
         content: "+ Add"
     }
@@ -148,6 +154,11 @@
     .sales_expense_formset a.remove::before{
         content: "Remove"
     }
+    .disabled-field {
+        pointer-events: none; /* Prevents any interaction with the field */
+        opacity: 0.5; /* Makes the field appear disabled */
+        background-color: #e9ecef; /* Optional: changes background color to indicate disabled state */
+    }    
 </style>
 <script>
     $(document).ready(function () {
@@ -225,17 +236,42 @@
         });
     });
 
-    $('.amount_per_kg').keyup(function(){
+    $('.amount_per_kg').keyup(function() {
         var elemId = $(this).attr("id");
         var formCount = elemId.match(/\d+/);
         var amount = parseFloat($(this).val()); // Parse the amount as a float
-        var qtyValue = parseFloat($("#id_sales_items_formset-"+formCount+"-qty").val()); // Parse the qtyValue as a float
+        var salesType = $("#id_sales_items_formset-" + formCount + "-sale_type").val(); // Get the salesType as a string
+        var noBoxes = parseFloat($("#id_sales_items_formset-" + formCount + "-no_boxes").val()); // Parse the noBoxes as a float
+        var qtyValue = parseFloat($("#id_sales_items_formset-" + formCount + "-qty").val()); // Parse the qtyValue as a float
     
-        var totalAmount = qtyValue * amount;
+        var totalAmount = 0;
+        
+        if (salesType === "qty" && !isNaN(qtyValue) && !isNaN(amount)) {
+            totalAmount = qtyValue * amount;
+        } else if (salesType === "box" && !isNaN(noBoxes) && !isNaN(qtyValue) && !isNaN(amount)) {
+            totalAmount = noBoxes * qtyValue * amount;
+        }
     
         // Limit the totalAmount to two decimal places and update the field
-        $("#id_sales_items_formset-"+formCount+"-amount").val(totalAmount.toFixed(2));
+        $("#id_sales_items_formset-" + formCount + "-amount").val(totalAmount.toFixed(2));
     });
+
+    $('.sales-type').change(function() {
+        var elemId = $(this).attr("id");
+        var formCount = elemId.match(/\d+/);
+        var noBoxes = $("#id_sales_items_formset-" + formCount + "-no_boxes");
+        var salesType = $(this).val();
+    
+        if (salesType === "qty") {
+            noBoxes.addClass("disabled-field").val(0); // Add disabled class and clear the value
+        } else if (salesType === "box") {
+            noBoxes.removeClass("disabled-field"); // Remove disabled class
+        } else {
+            // Optional: handle other cases if there are more sales types
+            noBoxes.removeClass("disabled-field"); // Ensure the field is enabled for other cases
+        }
+    });
+    
     
 </script>
 {% endblock static %}

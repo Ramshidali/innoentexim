@@ -46,6 +46,8 @@
                                         <tr>
                                             <th style="width: 2;text-align:center !important;">#</th>
                                             <th style="text-align:center !important;">Item</th>
+                                            <th style="text-align:center !important;">Sales Type</th>
+                                            <th style="text-align:center !important;">No.Boxes(if type is Box)</th>
                                             <th style="text-align:center !important;">QTY</th>
                                             <th style="text-align:right !important;">Per KG Amount</th>
                                             <th style="text-align:right !important;">Amount</th>
@@ -60,6 +62,8 @@
                                         <tr>
                                             <td class="text-sm" style="text-align:center !important;">{{ forloop.counter }}</td>
                                             <td class="text-sm" style="text-align:center !important;">{{ instance.sales_stock.purchase_item.name }}</td>
+                                            <td class="text-sm" style="text-align:center !important;">{{ instance.get_sale_type_display }}</td>
+                                            <td class="text-sm" style="text-align:center !important;">{% if instance.no_boxes %}{{ instance.no_boxes }}{% else %}-{% endif %}</td>
                                             <td class="text-sm" style="text-align:center !important;">{{ instance.qty }}</td>
                                             <td class="text-sm" style="text-align:right !important;">{{ instance.per_kg_amount }}</td>
                                             <td class="text-sm" style="text-align:right !important;">{{ instance.amount }}</td>

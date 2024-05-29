@@ -167,7 +167,7 @@ def sales_list(request):
     return render(request, 'admin_panel/pages/sales/sales/list.html', context)
 
 @login_required
-@role_required(['superadmin','core_team','director'])
+@role_required(['superadmin','Sales','director'])
 def create_sales(request):
     ItemsFormset = formset_factory(SalesItemsForm, extra=2)
     ExpensesFormset = formset_factory(SalesExpenseForm, extra=2)
@@ -219,8 +219,6 @@ def create_sales(request):
                                 "message": "no stock available",
                             }
 
-                        return HttpResponse(json.dumps(response_data), content_type='application/javascript')
-                        
                         # else:
                         #     stock = SalesStock.objects.create(
                         #         auto_id = get_auto_id(SalesStock),
