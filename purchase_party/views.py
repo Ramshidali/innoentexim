@@ -241,7 +241,7 @@ def delete_purchase_party(request, pk):
     instance.is_deleted = True
     instance.save()
     
-    user = User.objects.get(username=current_email)
+    user = User.objects.get(pk=instance.user.pk)
     user.username = append_email
     user.save()
 

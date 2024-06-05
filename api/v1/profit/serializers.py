@@ -5,7 +5,7 @@ from profit.models import DialyProfit, MonthlyProfit, MyProfit
 
 
 class DialyProfitSerializer(serializers.ModelSerializer):
-    date_added = serializers.DateTimeField(format='%Y-%m-%d')
+    # date_added = serializers.DateTimeField(format='%Y-%m-%d')
     
     class Meta:
         model = DialyProfit
@@ -13,7 +13,7 @@ class DialyProfitSerializer(serializers.ModelSerializer):
         
 class MonthlyProfitSerializer(serializers.ModelSerializer):
     month = serializers.SerializerMethodField()
-    date_added = serializers.DateTimeField(format='%Y-%m-%d')
+    # date_added = serializers.DateTimeField(format='%Y-%m-%d')
     
     class Meta:
         model = MonthlyProfit
@@ -25,7 +25,7 @@ class MonthlyProfitSerializer(serializers.ModelSerializer):
         
 class MyProfitSerializer(serializers.ModelSerializer):
     month = serializers.SerializerMethodField()
-    date_added = serializers.DateTimeField(format='%Y-%m-%d')
+    # date_added = serializers.DateTimeField(format='%Y-%m-%d')
     
     class Meta:
         model = MyProfit

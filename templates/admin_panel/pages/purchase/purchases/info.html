@@ -47,7 +47,8 @@
                                             <th style="width: 2;text-align:center !important;">#</th>
                                             <th style="text-align:center !important;">Purchase Items</th>
                                             <th style="text-align:center !important;">Qty</th>
-                                            <th style="text-align:right !important;">Amount</th>
+                                            <th style="text-align:center !important;">Amount/Kg</th>
+                                            <th style="text-align:right !important;">Total Amount</th>
                                             {% comment %} <th style="text-align:right !important;">Action</th> {% endcomment %}
                                         </tr>
                                     </thead>
@@ -59,6 +60,7 @@
                                             <td class="text-sm" style="text-align:center !important;">{{ forloop.counter }}</td>
                                             <td class="text-sm" style="text-align:center !important;">{{ instance.purchase_item.name }}</td>
                                             <td class="text-sm" style="text-align:center !important;">{{ instance.qty }}</td>
+                                            <td class="text-sm" style="text-align:center !important;">{{ instance.amount_per_kg }}</td>
                                             <td class="text-sm" style="text-align:right !important;">{{ instance.amount }}</td>
                                         </tr>
                                         {% endfor %}

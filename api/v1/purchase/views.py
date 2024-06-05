@@ -8,6 +8,7 @@ from django.db.models import Q, Sum, Min, Max
 from django.db import transaction, IntegrityError
 from django.shortcuts import get_object_or_404
 
+from profit.views import calculate_profit
 from rest_framework.decorators import api_view, permission_classes, renderer_classes
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -18,7 +19,7 @@ from main.functions import get_auto_id
 from executieves.models import Executive
 from purchase_party.models import PurchaseParty
 from purchase.models import Purchase, PurchaseExpense, PurchaseItems, PurchaseStock, PurchasedItems
-from api.v1.purchase.serializers import PurchaseItemsSerializer, PurchasePartySerializer, PurchaseReportSerializer, PurchaseSerializer
+from api.v1.purchase.serializers import PurchaseExpenceSerializer, PurchaseItemsSerializer, PurchasePartySerializer, PurchaseReportSerializer, PurchaseSerializer, PurchasedItemsSerializer
 from api.v1.authentication.functions import generate_serializer_errors, get_user_token
 
 
@@ -65,22 +66,22 @@ def purchase_report(request):
     
     filter_data = {}
     query = request.GET.get("q")
-    
-    instances = Purchase.objects.filter(is_deleted=False)
-         
     start_date = request.GET.get('startDate')
     end_date = request.GET.get('endDate')
-
+    
     if start_date or end_date:
-        start_date = datetime.strptime(start_date, '%m/%d/%Y').date()
-        end_date = datetime.strptime(end_date, '%m/%d/%Y').date()
-        instances = instances.filter(date__date__gte=start_date,date__date__lte=end_date)
+        start_date = datetime.strptime(start_date, '%Y-%m-%d %H:%M:%S.%f').date()
+        end_date = datetime.strptime(end_date, '%Y-%m-%d %H:%M:%S.%f').date()
+    else:
+        start_date = datetime.today().date()
+        end_date = datetime.today().date()
+        
+    instances = Purchase.objects.filter(date__gte=start_date,date__lte=end_date,is_deleted=False)
         
     if request.GET.get('partyId'):
         instances = instances.filter(purchase_party__pk=request.GET.get('partyId'))
     
     if query:
-
         instances = instances.filter(
             Q(invoice_no__icontains=query) |
             Q(purchase_id__icontains=query) 
@@ -88,21 +89,49 @@ def purchase_report(request):
         title = "Purchase Report - %s" % query
         filter_data['q'] = query
         
-    first_date_added = instances.aggregate(first_date_added=Min('date'))['first_date_added']
-    last_date_added = instances.aggregate(last_date_added=Max('date'))['last_date_added']
-    
-    first_date_formatted = first_date_added.strftime('%m/%d/%Y') if first_date_added else None
-    last_date_formatted = last_date_added.strftime('%m/%d/%Y') if last_date_added else None
-    
     serialized = PurchaseReportSerializer(instances.order_by('-date_added'),many=True)
-        
     status_code = status.HTTP_200_OK
     response_data = {
         "StatusCode": 6000,
         "status": status_code,
         "data": serialized.data,
-        "first_date_formatted": first_date_formatted,
-        "last_date_formatted": last_date_formatted,
+    }
+
+    return Response(response_data, status_code)
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+@renderer_classes((JSONRenderer,))
+def purchase_info(request,pk):
+    
+    purchase = Purchase.objects.get(pk=pk)
+    
+    instances = PurchasedItems.objects.filter(purchase=purchase,is_deleted=False).order_by('-date_added')
+    serialized = PurchasedItemsSerializer(instances,many=True)
+    
+    expences = PurchaseExpense.objects.filter(purchase=purchase,is_deleted=False).order_by('-date_added')
+    expence_serialized = PurchaseExpenceSerializer(expences,many=True)
+    
+    status_code = status.HTTP_200_OK
+    response_data = {
+        "StatusCode": 6000,
+        "status": status_code,
+        "data": {
+            'purchase_date': purchase.date,
+            'purchase_id': purchase.purchase_id,
+            'purchase_party': purchase.purchase_party.get_fullname(),
+            'purchase_items': {
+                'items_data': serialized.data,
+                "total_qty": purchase.total_qty(),
+                "total_amount_per_kg": purchase.materials_total_amount_per_kg(),
+                "total_amount": purchase.materials_total_amount(),
+            },
+            'purchase_expenses': {
+                'expense_data': expence_serialized.data,
+                'total_expense': purchase.materials_total_expence(),
+            },
+            'grand_total': purchase.sub_total(),
+        },
     }
 
     return Response(response_data, status_code)
@@ -161,7 +190,6 @@ def create_purchase(request):
                                 stock.purchase.add(purchase)
                             stock.save()
                         else:
-                            purchase_item = PurchaseItems.objects.get(pk=item_data.purchase_item.pk)
                             stock_item = PurchaseStock.objects.create(
                                 auto_id = get_auto_id(PurchaseStock),
                                 creator = request.user,
@@ -179,6 +207,8 @@ def create_purchase(request):
                             creator=request.user,
                             **expense_data)
                         
+                    calculate_profit(purchase.date)
+                        
                     status_code = status.HTTP_201_CREATED
                     response_data = {
                         "StatusCode": 200,
@@ -191,69 +221,24 @@ def create_purchase(request):
                     response_data = {
                         "StatusCode": 400,
                         "status": status_code,
-                        "data": purchase_serializer.data,
+                        "message": purchase_serializer.data,
                     }
                     
         except IntegrityError as e:
-            # Handle database integrity error
+            status_code = status.HTTP_400_BAD_REQUEST
             response_data = {
+                "StatusCode": 400,
                 "status": "false",
                 "title": "Failed",
                 "message": str(e),
             }
 
         except Exception as e:
-            # Handle other exceptions
+            status_code = status.HTTP_400_BAD_REQUEST
             response_data = {
+                "StatusCode": 400,
                 "status": "false",
                 "title": "Failed",
                 "message": str(e),
             }
         return Response(response_data, status=status_code)
-    
-    
-# def create_purchase(request):
-#     if request.method == 'POST':
-        
-#         auto_id = get_auto_id(Purchase)
-#         purchase_id = "IEEIP" + str(auto_id).zfill(3)
-        
-#         executive = None
-#         # if not request.user.is_superuser:
-#         #     executive = Executive.objects.get(user=request.user,is_deleted=False)
-        
-#         data = request.data
-#         data['auto_id'] = auto_id
-#         data['creator'] = request.user.pk
-#         data['executive'] = executive
-#         data['purchase_id'] = purchase_id 
-        
-#         serializer = PurchaseSerializer(data=data)
-#         if serializer.is_valid():
-#             purchase = serializer.save()
-
-#             # Update stock based on purchased items
-#             for item_data in request.data['purchased_items']:
-#                 purchase_item_id = item_data['purchase_item']
-#                 qty = item_data['qty']
-
-#                 purchase_item = get_object_or_404(PurchaseItems, pk=purchase_item_id)
-#                 if (update_purchase_stock:=PurchaseStock.objects.filter(purchase_item=purchase_item,is_deleted=False)).exists():
-#                     stock = PurchaseStock.objects.get(purchase_item=purchase_item,is_deleted=False)
-#                     stock.qty += qty
-#                     if not update_purchase_stock.filter(purchase=purchase).exists():
-#                         stock.purchase.add(purchase)
-#                     stock.save()
-#                 else:
-#                     purchase_item = PurchaseItems.objects.get(pk=item_data.purchase_item.pk)
-#                     stock_item = PurchaseStock.objects.create(
-#                         auto_id = get_auto_id(PurchaseStock),
-#                         creator = request.user,
-#                         purchase_item = purchase_item,
-#                         qty = qty,
-#                     )
-#                     stock_item.purchase.add(purchase)
-#                     stock_item.save()
-
-#             return Response(serializer.data, status=status.HTTP_201_CREATED)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

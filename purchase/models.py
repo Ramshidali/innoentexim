@@ -40,13 +40,13 @@ class Purchase(BaseModel):
     purchase_id = models.CharField(max_length=100)
     date = models.DateField(default=None, null=True, blank=True)
     
-    purchase_party = models.ForeignKey(PurchaseParty,on_delete=models.CASCADE)
-    executive = models.ForeignKey(Executive,on_delete=models.CASCADE,null=True,blank=True)
+    purchase_party = models.ForeignKey(PurchaseParty,on_delete=models.CASCADE, limit_choices_to={'is_deleted': False})
+    executive = models.ForeignKey(Executive,on_delete=models.CASCADE,null=True,blank=True, limit_choices_to={'is_deleted': False})
     
     class Meta:
         db_table = 'purchase'
-        verbose_name = ('Purchase')
-        verbose_name_plural = ('Purchase')
+        verbose_name = ('purchase')
+        verbose_name_plural = ('purchase')
     
     def __str__(self):
         return f'{self.purchase_id}'
@@ -77,6 +77,15 @@ class Purchase(BaseModel):
 
         return total
     
+    def materials_total_amount_per_kg(self):
+        total = 0
+        # Calculate the sub-total for PurchaseMaterials
+        purchased_items = self.purchaseditems_set.all()
+        for item in purchased_items:
+            total += item.amount_per_kg
+
+        return total
+    
     def materials_total_amount(self):
         total = 0
         # Calculate the sub-total for PurchaseMaterials
@@ -99,8 +108,8 @@ class PurchasedItems(BaseModel):
     amount = models.DecimalField(default=0, max_digits=10, decimal_places=2)
     amount_per_kg = models.DecimalField(default=0, max_digits=10, decimal_places=2)
     
-    purchase_item = models.ForeignKey(PurchaseItems, on_delete=models.CASCADE)
-    purchase = models.ForeignKey(Purchase, on_delete=models.CASCADE)
+    purchase_item = models.ForeignKey(PurchaseItems, on_delete=models.CASCADE, limit_choices_to={'is_deleted': False})
+    purchase = models.ForeignKey(Purchase, on_delete=models.CASCADE, limit_choices_to={'is_deleted': False})
     
     class Meta:
         db_table = 'purchased_items'
@@ -120,7 +129,7 @@ class PurchasedItems(BaseModel):
 class PurchaseExpense(BaseModel):
     title = models.CharField(max_length=200)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    purchase = models.ForeignKey(Purchase,on_delete=models.CASCADE)
+    purchase = models.ForeignKey(Purchase,on_delete=models.CASCADE, limit_choices_to={'is_deleted': False})
     
     class Meta:
         db_table = 'purchase_expences'
@@ -134,8 +143,8 @@ class PurchaseExpense(BaseModel):
 class PurchaseStock(BaseModel):
     qty = models.DecimalField(max_digits=10, decimal_places=2)
     
-    purchase = models.ManyToManyField(Purchase)
-    purchase_item = models.ForeignKey(PurchaseItems, on_delete=models.CASCADE)
+    purchase = models.ManyToManyField(Purchase, limit_choices_to={'is_deleted': False})
+    purchase_item = models.ForeignKey(PurchaseItems, on_delete=models.CASCADE, limit_choices_to={'is_deleted': False})
     
     class Meta:
         db_table = 'purchase_stock'

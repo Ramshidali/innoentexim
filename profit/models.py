@@ -12,7 +12,7 @@ from exporting.models import *
 from main.models import BaseModel
 
 class ExchangeRate(BaseModel):
-    country = models.ForeignKey(ExportingCountry, on_delete=models.CASCADE)
+    country = models.ForeignKey(ExportingCountry, on_delete=models.CASCADE, limit_choices_to={'is_deleted': False})
     currency = models.CharField(max_length=3)  # Currency code (e.g., USD, EUR)
     rate_to_inr = models.DecimalField(max_digits=10, decimal_places=6)  # Exchange rate to INR
     start_date = models.DateTimeField()
@@ -29,7 +29,7 @@ class ExchangeRate(BaseModel):
 
 class DialyProfit(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    date_added = models.DateTimeField(db_index=True, auto_now_add=True)
+    date_added = models.DateField()
     purchase = models.DecimalField(default=0, max_digits=10, decimal_places=2)
     purchase_expenses = models.DecimalField(default=0, max_digits=10, decimal_places=2)
     sales = models.DecimalField(default=0, max_digits=10, decimal_places=2)
@@ -47,7 +47,7 @@ class DialyProfit(models.Model):
     
 class MonthlyProfit(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    date_added = models.DateTimeField(db_index=True, auto_now_add=True)
+    date_added = models.DateField()
     year = models.IntegerField()
     month = models.IntegerField()
     total_revenue = models.DecimalField(default=0, max_digits=10, decimal_places=2)
@@ -64,7 +64,7 @@ class MonthlyProfit(models.Model):
     
 class MyProfit(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    date_added = models.DateTimeField(db_index=True, auto_now_add=True)
+    date_added = models.DateField()
     year = models.IntegerField()
     month = models.IntegerField()
     user = models.ForeignKey(User,on_delete=models.CASCADE,limit_choices_to={'groups__name__in': ['core_team', 'investor']})

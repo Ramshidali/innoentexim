@@ -15,15 +15,17 @@ from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 #local
 from executieves.models import Executive
+from exporting.models import ExportItem
 from main.decorators import role_required
 from main.functions import generate_form_errors, get_auto_id, get_current_role, has_group
 from profit.views import calculate_profit
 from purchase.models import Purchase, PurchaseExpense, PurchaseItems, PurchaseStock, PurchasedItems
 from purchase.forms import PurchaseExpenseForm, PurchaseForm, PurchaseItemForm, PurchasedItemsForm
+from sales.models import SalesItems
 
 # Create your views here.
 @login_required
-@role_required(['superadmin','Purchase','director'])
+@role_required(['superadmin','purchase','director'])
 def purchase_items(request):
     """
     Purchase Items
@@ -43,7 +45,7 @@ def purchase_items(request):
     return render(request, 'admin_panel/pages/purchase/purchase_items/list.html', context)
 
 @login_required
-@role_required(['superadmin','Purchase','director'])
+@role_required(['superadmin','purchase','director'])
 def create_purchase_items(request):
     PurchaseItemsFormset = formset_factory(PurchaseItemForm, extra=2)
     
@@ -92,7 +94,7 @@ def create_purchase_items(request):
         return render(request,'admin_panel/pages/purchase/purchase_items/create.html',context)
     
 @login_required
-@role_required(['superadmin','Purchase','director'])
+@role_required(['superadmin','purchase','director'])
 def edit_purchase_item(request,pk):
     """
     edit operation of purchase item
@@ -148,52 +150,41 @@ def edit_purchase_item(request,pk):
         return render(request, 'admin_panel/pages/purchase/purchase_items/edit.html',context)
 
 @login_required
-@role_required(['superadmin','Purchase','director'])
+@role_required(['superadmin', 'purchase', 'director'])
 def delete_purchase_items(request, pk):
     """
-    purchase items deletion, it only mark as is deleted field to true
+    Purchase items deletion, it only marks the is_deleted field to true
     :param request:
     :param pk:
     :return:
     """
-    invoice_numbers_text = ""
-    # data = PurchaseItems.objects.get(pk=pk)
-    # if not SalesMaterials.objects.filter(purchase_item=data, is_deleted=False).exists():
-        
-    #     data.is_deleted=True
-    #     data.save()
+    export_items_exist = ExportItem.objects.filter(is_deleted=False, purchasestock__purchase_item__pk=pk).exists()
+    sales_items_exist = SalesItems.objects.filter(is_deleted=False, sales_stock__purchase_item__pk=pk).exists()
     
-    #     if (instances:=PurchaseMaterials.objects.filter(purchase_item=data)).exists():
-    #         instances.update(is_deleted=True)
+    if not export_items_exist and not sales_items_exist:
+        purchase_item = get_object_or_404(PurchaseItems, pk=pk)
+        purchase_item.is_deleted = True
+        purchase_item.save()
             
-    #     if (stocks:=Stock.objects.filter(purchase_item=data)).exists():
-    #         stocks.update(is_deleted=True)
-
-    #     response_data = {
-    #         "status": "true",
-    #         "title": "Successfully Deleted",
-    #         "message": "Purchase Item Successfully Deleted.",
-    #         "redirect": "true",
-    #         "redirect_url": reverse('purchase:purchase_items'),
-    #     }
-    # else:
-    #     sales_material_queryset = SalesMaterials.objects.filter(purchase_item=data)
-    #     sales_invoice_numbers = [sales_material.sales.invoice_no for sales_material in sales_material_queryset]
-    #     unique_invoice_numbers = list(set(sales_invoice_numbers))
-    #     invoice_numbers_text = ", ".join(unique_invoice_numbers)
-
-    message = f"This purchase item has already included the sale of some items. Sales Invoice Numbers: {invoice_numbers_text}"
-    
-    response_data = {
-        "status": "false",
-        "title": "Failed",
-        "message": message,
-    }
+        response_data = {
+            "statusCode": 200,
+            "status": "true",
+            "title": "Success",
+            "message": "Purchase items deleted successfully.",
+        }
+    else:
+        message = "This item has already been used in export or sales entries, so it can't be deleted."
+        response_data = {
+            "statusCode": 400,
+            "status": "false",
+            "title": "Failed",
+            "message": message,
+        }
 
     return HttpResponse(json.dumps(response_data), content_type='application/javascript')
 
 @login_required
-@role_required(['superadmin','Purchase','director'])
+@role_required(['superadmin','purchase','director'])
 def purchase(request,pk):
     """
     Purchase
@@ -214,26 +205,8 @@ def purchase(request,pk):
 
     return render(request, 'admin_panel/pages/purchase/purchases/info.html', context)
 
-# @login_required
-# @role_required(['superadmin','Purchase','director'])
-# def print_purchase(request,pk):
-#     """
-#     Print Purchase
-#     :param request:
-#     :return: Purchase Print
-#     """
-#     instance = Purchase.objects.get(pk=pk,is_deleted=False)
-    
-#     context = {
-#         'instance': instance,
-#         'page_name' : 'Purchase Report',
-#         'page_title' : 'Purchase Report',
-#     }
-
-#     return render(request, 'admin_panel/pages/purchase/print_purchase.html', context)
-
 @login_required
-@role_required(['superadmin','Purchase','director'])
+@role_required(['superadmin','purchase','director'])
 def purchase_reports(request):
     """
     Purchase Report
@@ -285,7 +258,7 @@ def purchase_reports(request):
     return render(request, 'admin_panel/pages/purchase/purchases/list.html', context)
 
 @login_required
-@role_required(['superadmin','Purchase','director'])
+@role_required(['superadmin','purchase','director'])
 def create_purchase(request):
     ItemsFormset = formset_factory(PurchasedItemsForm, extra=2)
     PurchaseExpensesFormset = formset_factory(PurchaseExpenseForm, extra=2)
@@ -408,10 +381,9 @@ def create_purchase(request):
         
         return render(request,'admin_panel/pages/purchase/purchases/create.html',context)
 
-from django.db import transaction
 
 @login_required
-@role_required(['superadmin', 'Purchase', 'director'])
+@role_required(['superadmin', 'purchase', 'director'])
 def edit_purchase(request, pk):
     """
     Edit operation of purchase
@@ -450,6 +422,15 @@ def edit_purchase(request, pk):
     message = ''
 
     if request.method == 'POST':
+        purchased_items.update(
+            qty = 0,
+            amount = 0,
+            amount_per_kg = 0
+        )
+        expenses.update(
+            amount = 0,
+        )
+        
         purchase_form = PurchaseForm(request.POST, instance=purchase_instance)
         purchase_items_formset = ItemsFormset(request.POST, request.FILES,
                                               instance=purchase_instance,
@@ -461,73 +442,90 @@ def edit_purchase(request, pk):
                                                    form_kwargs={'empty_permitted': False})
 
         if purchase_form.is_valid() and purchase_items_formset.is_valid() and purchase_expense_formset.is_valid():
-            try:
-                with transaction.atomic():
-                    # Update purchase data
-                    purchase_instance = purchase_form.save(commit=False)
-                    purchase_instance.date_updated = datetime.today()
-                    purchase_instance.updater = request.user
-                    purchase_instance.date = request.POST.get('date')
-                    purchase_instance.save()
+            # try:
+            #     with transaction.atomic():
+            # Update purchase data
+            purchase_instance = purchase_form.save(commit=False)
+            purchase_instance.date_updated = datetime.today().now()
+            purchase_instance.updater = request.user
+            purchase_instance.date = request.POST.get('date')
+            purchase_instance.save()
 
-                    # Update purchase items
-                    for form in purchase_items_formset:
-                        if form not in purchase_items_formset.deleted_forms:
-                            item_data = form.save(commit=False)
-                            if not item_data.auto_id:
-                                item_data.purchase = purchase_instance
-                                item_data.auto_id = get_auto_id(PurchasedItems)
-                                item_data.creator = request.user
-                            item_data.save()
+            # Update purchase items
+            for form in purchase_items_formset:
+                if form not in purchase_items_formset.deleted_forms:
+                    item_data = form.save(commit=False)
+                    if not item_data.auto_id:
+                        item_data.purchase = purchase_instance
+                        item_data.auto_id = get_auto_id(PurchasedItems)
+                        item_data.creator = request.user
+                        
+                        if (update_purchase_stock:=PurchaseStock.objects.filter(purchase_item=item_data.purchase_item,is_deleted=False)).exists():
+                            stock = PurchaseStock.objects.get(purchase_item=item_data.purchase_item,is_deleted=False)
+                            stock.qty += item_data.qty
+                            if not update_purchase_stock.filter(purchase=purchase_instance).exists():
+                                stock.purchase.add(purchase_instance)
+                            stock.save()
+                        else:
+                            purchase_item = PurchaseItems.objects.get(pk=item_data.purchase_item.pk)
+                            stock_item = PurchaseStock.objects.create(
+                                auto_id = get_auto_id(PurchaseStock),
+                                creator = request.user,
+                                purchase_item = purchase_item,
+                                qty = item_data.qty,
+                            )
+                            stock_item.purchase.add(purchase_instance)
+                            stock_item.save()
+                    item_data.save()
 
-                            # Adjust stock quantities
-                            update_stock_quantity(item_data)
+                    # Adjust stock quantities
+                    update_stock_quantity(request,item_data)
 
-                    # Delete removed purchase items
-                    for form in purchase_items_formset.deleted_forms:
-                        form.instance.delete()
+            # Delete removed purchase items
+            for form in purchase_items_formset.deleted_forms:
+                form.instance.delete()
 
-                    # Update purchase expenses
-                    for form in purchase_expense_formset:
-                        if form not in purchase_expense_formset.deleted_forms:
-                            expense_data = form.save(commit=False)
-                            if not expense_data.auto_id:
-                                expense_data.auto_id = get_auto_id(PurchaseExpense)
-                                expense_data.creator = request.user
-                                expense_data.purchase = purchase_instance
-                            expense_data.save()
+            # Update purchase expenses
+            for form in purchase_expense_formset:
+                if form not in purchase_expense_formset.deleted_forms:
+                    expense_data = form.save(commit=False)
+                    if not expense_data.auto_id:
+                        expense_data.auto_id = get_auto_id(PurchaseExpense)
+                        expense_data.creator = request.user
+                        expense_data.purchase = purchase_instance
+                    expense_data.save()
 
-                    # Delete removed purchase expenses
-                    for form in purchase_expense_formset.deleted_forms:
-                        form.instance.delete()
+            # Delete removed purchase expenses
+            for form in purchase_expense_formset.deleted_forms:
+                form.instance.delete()
 
-                    # Calculate profit
-                    calculate_profit(purchase_instance.date)
+            # Calculate profit
+            calculate_profit(purchase_instance.date)
 
-                    response_data = {
-                        "status": "true",
-                        "title": "Successfully Updated",
-                        "message": "Purchase updated successfully.",
-                        "redirect": "true",
-                        "redirect_url": reverse('purchase:purchase_reports'),
-                        "return": True,
-                    }
+            response_data = {
+                "status": "true",
+                "title": "Successfully Updated",
+                "message": "Purchase updated successfully.",
+                "redirect": "true",
+                "redirect_url": reverse('purchase:purchase_reports'),
+                "return": True,
+            }
 
-            except IntegrityError as e:
-                # Handle database integrity error
-                response_data = {
-                    "status": "false",
-                    "title": "Failed",
-                    "message": str(e),
-                }
+            # except IntegrityError as e:
+            #     # Handle database integrity error
+            #     response_data = {
+            #         "status": "false",
+            #         "title": "Failed",
+            #         "message": str(e),
+            #     }
 
-            except Exception as e:
-                # Handle other exceptions
-                response_data = {
-                    "status": "false",
-                    "title": "Failed",
-                    "message": str(e),
-                }
+            # except Exception as e:
+            #     # Handle other exceptions
+            #     response_data = {
+            #         "status": "false",
+            #         "title": "Failed",
+            #         "message": str(e),
+            #     }
 
         else:
             message = generate_form_errors(purchase_form, formset=False)
@@ -585,43 +583,56 @@ def update_stock_quantity(request, purchased_item):
 
     
 @login_required
-@role_required(['superadmin','Purchase','director'])
+@role_required(['superadmin', 'purchase', 'director'])
 def delete_purchase(request, pk):
-    """
-    purchase deletion, it only mark as is deleted field to true
-    :param request:
-    :param pk:
-    :return:
-    """
-    purchase = Purchase.objects.get(pk=pk)
-    purchase_items = PurchasedItems.objects.filter(purchase=purchase)
-    
-    for item in purchase_items:
-        stock = PurchaseStock.objects.get(purchase_item=item.purchase_item)
-        stock.qty += item.qty
-        stock.save()
-    
-    PurchaseExpense.objects.filter(purchase=purchase).update(is_deleted=True)
-    
-    purchase_items.update(is_deleted=True)
-    
-    purchase.is_deleted = True
-    purchase.save()
-    
-    calculate_profit(purchase.date)
+    purchase = get_object_or_404(Purchase, pk=pk)
+    purchased_date = purchase.date
+    items = PurchasedItems.objects.filter(purchase=purchase)
+    expences = PurchaseExpense.objects.filter(purchase=purchase)
+
+    insufficient_stock = []
+    for item in items:
+        try:
+            stock = PurchaseStock.objects.get(purchase_item=item.purchase_item)
+            if item.qty >= stock.qty:
+                insufficient_stock.append(f"{item.purchase_item.name} (available: {stock.qty})")
+            else:
+                stock.qty -= item.qty
+                stock.save()
+                
+                item.is_deleted = True
+                item.save()
+        except PurchaseStock.DoesNotExist:
+            insufficient_stock.append(f"{item.purchase_item.name} (no stock record)")
+            
+    if insufficient_stock:
+        message = "No Stock Available for the following items: " + ", ".join(insufficient_stock)
+        response_data = {
+            "statusCode": 400,
+            "status": "false",
+            "title": "Failed",
+            "message": message,
+        }
+    else:
+        for expence in expences:
+            expence.is_deleted = True
+            expence.save()
         
-    response_data = {
-        "status": "true",
-        "title": "Successfully Deleted",
-        "message": "Purchase Successfully Deleted.",
-        "redirect": "true",
-        "redirect_url": reverse('purchase:purchase_reports'),
-    }
-    
+        purchase.is_deleted = True
+        purchase.save()
+        # Calculate profit
+        calculate_profit(purchased_date)
+        response_data = {
+            "statusCode": 200,
+            "status": "true",
+            "title": "Success",
+            "message": "Purchase items deleted successfully.",
+        }
+
     return HttpResponse(json.dumps(response_data), content_type='application/javascript')
 
 @login_required
-@role_required(['superadmin','Purchase','director'])
+@role_required(['superadmin','purchase','director'])
 def edit_purchased_item(request,pk):
     """
     edit operation of purchased item
@@ -633,6 +644,9 @@ def edit_purchased_item(request,pk):
         
     message = ''
     if request.method == 'POST':
+        instance.amount = 0
+        instance.save()
+        
         form = PurchasedItemsForm(request.POST,instance=instance)
         
         if form.is_valid():
@@ -641,6 +655,11 @@ def edit_purchased_item(request,pk):
             data.date_updated = datetime.today()
             data.updater = request.user
             data.save()
+            
+            # Adjust stock quantities
+            update_stock_quantity(data)
+            # Calculate profit
+            calculate_profit(data.purchase.date)
                     
             response_data = {
                 "status": "true",
@@ -676,7 +695,7 @@ def edit_purchased_item(request,pk):
         return render(request, 'admin_panel/pages/create/create.html',context)
 
 @login_required
-@role_required(['superadmin','Purchase','director'])
+@role_required(['superadmin','purchase','director'])
 def print_purchases(request):
     """
     Purchase Print
@@ -761,7 +780,7 @@ def export_purchases(request):
 
 
 @login_required
-@role_required(['superadmin','Purchase','director'])
+@role_required(['superadmin','purchase','director'])
 def purchase_stock(request):
     """
     Purchase Stocks
@@ -781,7 +800,7 @@ def purchase_stock(request):
     return render(request, 'admin_panel/pages/purchase/purchase_stock/list.html', context)
 
 @login_required
-@role_required(['superadmin','Purchase','director'])
+@role_required(['superadmin','purchase','director'])
 def print_purchase_stock(request):
     """
     Purchase stock Print
@@ -806,7 +825,7 @@ def print_purchase_stock(request):
     return render(request, 'admin_panel/pages/purchase/purchase_stock/print.html', context)
 
 @login_required
-@role_required(['superadmin','Purchase','director','investor'])
+@role_required(['superadmin','purchase','director','investor'])
 def export_purchase_stock(request):
     filter_data = {}
     instances = PurchaseStock.objects.filter(is_deleted=False)

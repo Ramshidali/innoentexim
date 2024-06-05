@@ -17,8 +17,8 @@ class SalesStock(BaseModel):
     qty = models.DecimalField(max_digits=10, decimal_places=2)
     
     export = models.ManyToManyField(Exporting)
-    purchase_item = models.ForeignKey(PurchaseItems, on_delete=models.CASCADE)
-    country = models.ForeignKey(ExportingCountry, on_delete=models.CASCADE)
+    purchase_item = models.ForeignKey(PurchaseItems, on_delete=models.CASCADE, limit_choices_to={'is_deleted': False})
+    country = models.ForeignKey(ExportingCountry, on_delete=models.CASCADE, limit_choices_to={'is_deleted': False})
     
     class Meta:
         db_table = 'sales_stock'
@@ -34,10 +34,10 @@ class Sales(BaseModel):
     date = models.DateField(default=None, null=True, blank=True)
     exchange_rate = models.DecimalField(max_digits=10, decimal_places=2)
     
-    country = models.ForeignKey(ExportingCountry,on_delete=models.CASCADE)
+    country = models.ForeignKey(ExportingCountry,on_delete=models.CASCADE, limit_choices_to={'is_deleted': False})
     sales_staff = models.ForeignKey("auth.User",on_delete=models.CASCADE,related_name="sales_staff")
-    sales_party = models.ForeignKey(SalesParty,on_delete=models.CASCADE, null=True, blank=True)
-    exporting = models.ManyToManyField(Exporting)
+    sales_party = models.ForeignKey(SalesParty,on_delete=models.CASCADE, null=True, blank=True, limit_choices_to={'is_deleted': False})
+    exporting = models.ManyToManyField(Exporting, limit_choices_to={'is_deleted': False})
     
     
     class Meta:
@@ -155,8 +155,8 @@ class SalesItems(BaseModel):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     amount_in_inr = models.DecimalField(max_digits=10, decimal_places=2)
     
-    sales = models.ForeignKey(Sales, on_delete=models.CASCADE)
-    sales_stock = models.ForeignKey(SalesStock, on_delete=models.CASCADE)
+    sales = models.ForeignKey(Sales, on_delete=models.CASCADE, limit_choices_to={'is_deleted': False})
+    sales_stock = models.ForeignKey(SalesStock, on_delete=models.CASCADE, limit_choices_to={'is_deleted': False})
     
     class Meta:
         db_table = 'sales_items'
@@ -172,7 +172,7 @@ class SalesExpenses(BaseModel):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     amount_in_inr = models.DecimalField(max_digits=10, decimal_places=2)
     
-    sales = models.ForeignKey(Sales,on_delete=models.CASCADE)
+    sales = models.ForeignKey(Sales,on_delete=models.CASCADE, limit_choices_to={'is_deleted': False})
     
     class Meta:
         db_table = 'sales_expences'

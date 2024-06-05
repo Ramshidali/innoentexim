@@ -98,14 +98,21 @@ class SalesSerializer(serializers.ModelSerializer):
         fields = ['date', 'sales_party']
     
 class SalesItemsSerializer(serializers.ModelSerializer):
+    sale_type = serializers.SerializerMethodField()
+    sales_item = serializers.SerializerMethodField()
     
     class Meta:
         model = SalesItems
-        fields = ['qty','per_kg_amount','amount','amount_in_inr']
+        fields = ['sales_item','no_boxes','sale_type','qty','per_kg_amount','amount','amount_in_inr']
+        
+    def get_sale_type(self,obj):
+        return obj.get_sale_type_display()
+    
+    def get_sales_item(self,obj):
+        return obj.sales_stock.purchase_item.name
         
 class SalesExpenceSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = SalesExpenses
         fields = ['title', 'amount','amount_in_inr']
-        

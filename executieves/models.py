@@ -23,7 +23,7 @@ class Executive(BaseModel):
     image = VersatileImageField('Image', upload_to="core_team/profile_pic", blank=True, null=True)
     
     user = models.OneToOneField(User,on_delete=models.CASCADE)
-    department = models.ForeignKey(Departments,on_delete=models.CASCADE)
+    department = models.ForeignKey(Departments,on_delete=models.CASCADE, limit_choices_to={'is_deleted': False})
     
     class Meta:
         db_table = 'executives'

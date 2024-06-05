@@ -26,7 +26,7 @@ class Departments(BaseModel):
 
 class Directors(BaseModel):
     user = models.OneToOneField(User,limit_choices_to={'is_superuser': False, 'groups__name__in': ["investor"]},on_delete=models.CASCADE)
-    department = models.ForeignKey(Departments,on_delete=models.CASCADE,blank=True,null=True)
+    department = models.ForeignKey(Departments,on_delete=models.CASCADE,blank=True,null=True, limit_choices_to={'is_deleted': False})
     
     class Meta:
         db_table = 'directors'

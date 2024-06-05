@@ -10,12 +10,12 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         # Get today's date
         today_date = timezone.now().date()
+        year = today_date.year
+        month = today_date.month
 
         # Calculate profit for today's date
         profit = calculate_profit(today_date)
         
-        year = today_date.year
-        month = today_date.month
         calculate_monthly_profit(year, month)
         
         distribute_profits(year, month)

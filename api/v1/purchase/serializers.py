@@ -48,10 +48,14 @@ class PurchaseReportSerializer(serializers.ModelSerializer):
         return obj.sub_total()
     
 class PurchasedItemsSerializer(serializers.ModelSerializer):
+    purchase_item = serializers.SerializerMethodField()
     
     class Meta:
         model = PurchasedItems
-        fields = ['qty', 'amount', 'purchase_item']
+        fields = ['qty','amount_per_kg','amount','purchase_item']
+    
+    def get_purchase_item(self,obj):
+        return obj.purchase_item.name
         
 class PurchaseExpenceSerializer(serializers.ModelSerializer):
     

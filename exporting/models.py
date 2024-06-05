@@ -50,8 +50,8 @@ class CourierPartner(BaseModel):
 class Exporting(BaseModel):
     exporting_id = models.CharField(max_length=200)
     date = models.DateField(default=None, null=True, blank=True)
-    exporting_country = models.ForeignKey(ExportingCountry, on_delete=models.CASCADE)
-    courier_partner = models.ForeignKey(CourierPartner, on_delete=models.CASCADE)
+    exporting_country = models.ForeignKey(ExportingCountry, on_delete=models.CASCADE, limit_choices_to={'is_deleted': False})
+    courier_partner = models.ForeignKey(CourierPartner, on_delete=models.CASCADE, limit_choices_to={'is_deleted': False})
     is_editable = models.BooleanField(default=False)
 
     class Meta:
@@ -107,8 +107,8 @@ class Exporting(BaseModel):
 class ExportItem(BaseModel):
     qty = models.PositiveIntegerField()
     
-    export = models.ForeignKey(Exporting, on_delete=models.CASCADE)
-    purchasestock = models.ForeignKey(PurchaseStock, on_delete=models.CASCADE)
+    export = models.ForeignKey(Exporting, on_delete=models.CASCADE, limit_choices_to={'is_deleted': False})
+    purchasestock = models.ForeignKey(PurchaseStock, on_delete=models.CASCADE, limit_choices_to={'is_deleted': False})
 
     class Meta:
         db_table = 'export_item'
@@ -123,7 +123,7 @@ class ExportStatus(models.Model):
     date_added = models.DateTimeField(db_index=True, auto_now_add=True)
     status = models.CharField(max_length=200,choices=EXPORT_STATUS, default="010")
     caption = models.TextField()
-    export = models.ForeignKey(Exporting, on_delete=models.CASCADE)
+    export = models.ForeignKey(Exporting, on_delete=models.CASCADE, limit_choices_to={'is_deleted': False})
     creator = models.ForeignKey(
         "auth.User", blank=True, related_name="creator_%(class)s_objects", on_delete=models.CASCADE)
 

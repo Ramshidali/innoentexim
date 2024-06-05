@@ -8,6 +8,7 @@ urlpatterns = [
     re_path(r'^sales-stock/$', views.sales_stock),
     re_path(r'^export-countries/$', views.export_country),
     
+    re_path(r'^sales-info/(?P<pk>.*)/$', views.sales_info),
     re_path(r'^sales-report/$', views.sales_report),
     re_path(r'^create-sales/$', views.create_sales),
 ]

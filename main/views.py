@@ -32,12 +32,14 @@ def app(request):
 @login_required
 # @role_required(['superadmin','core_team','director'])
 def index(request):
-    todays_purchases = Purchase.objects.filter(date=datetime.today().date()).aggregate(total_amount=Sum('purchaseditems__amount'))['total_amount'] or 0
-    todays_sales = Sales.objects.filter(date=datetime.today().date()).aggregate(total_amount=Sum('salesitems__amount_in_inr'))['total_amount'] or 0
+    purchase = Purchase.objects.filter(date=datetime.today().date(),is_deleted=False)
+    todays_purchases = PurchasedItems.objects.filter(purchase__in=purchase,is_deleted=False).aggregate(total_amount=Sum('amount'))['total_amount'] or 0
+    sales = Sales.objects.filter(date=datetime.today().date(),is_deleted=False)
+    todays_sales = SalesItems.objects.filter(sales__in=sales,is_deleted=False).aggregate(total_amount=Sum('amount_in_inr'))['total_amount'] or 0
     
-    purchase_expense = PurchaseExpense.objects.filter(purchase__date=datetime.today().date()).aggregate(total_amount=Sum('amount'))['total_amount'] or 0
-    sales_expense = SalesExpenses.objects.filter(sales__date=datetime.today().date()).aggregate(total_amount=Sum('amount_in_inr'))['total_amount'] or 0
-    other_expences = OtherExpences.objects.filter(date_added__date=datetime.today().date()).aggregate(total_amount=Sum('amount'))['total_amount'] or 0
+    purchase_expense = PurchaseExpense.objects.filter(purchase__in=purchase,is_deleted=False).aggregate(total_amount=Sum('amount'))['total_amount'] or 0
+    sales_expense = SalesExpenses.objects.filter(sales__in=sales,is_deleted=False).aggregate(total_amount=Sum('amount_in_inr'))['total_amount'] or 0
+    other_expences = OtherExpences.objects.filter(date_added__date=datetime.today().date(),is_deleted=False).aggregate(total_amount=Sum('amount'))['total_amount'] or 0
     
     expenses = purchase_expense + sales_expense + other_expences
     

@@ -21,24 +21,17 @@ from api.v1.profit.serializers import DialyProfitSerializer, MonthlyProfitSerial
 @renderer_classes((JSONRenderer,))
 def dialy_profit(request):
     filter_data = {}
+    start_date = request.GET.get('startDate')
+    end_date = request.GET.get('endDate')
     
-    instances = DialyProfit.objects.all().order_by("-date_added")
+    if start_date or end_date:
+        start_date = datetime.strptime(start_date, '%Y-%m-%d %H:%M:%S.%f').date()
+        end_date = datetime.strptime(end_date, '%Y-%m-%d %H:%M:%S.%f').date()
+    else:
+        start_date = datetime.today().date()
+        end_date = datetime.today().date()
     
-    date_range = request.GET.get('date_range')
-
-    if date_range:
-        start_date_str, end_date_str = date_range.split(' - ')
-        start_date = datetime.strptime(start_date_str, '%m/%d/%Y').date()
-        end_date = datetime.strptime(end_date_str, '%m/%d/%Y').date()
-        instances = instances.filter(date_added__range=[start_date, end_date])
-        filter_data['date_range'] = date_range
-    
-    first_date_added = instances.aggregate(first_date_added=Min('date_added'))['first_date_added']
-    last_date_added = instances.aggregate(last_date_added=Max('date_added'))['last_date_added']
-    
-    first_date_formatted = first_date_added.strftime('%m/%d/%Y') if first_date_added else None
-    last_date_formatted = last_date_added.strftime('%m/%d/%Y') if last_date_added else None
-    
+    instances = DialyProfit.objects.filter(date_added__gte=start_date,date_added__lte=end_date).order_by("-date_added")
     serialized = DialyProfitSerializer(instances,many=True)
         
     status_code = status.HTTP_200_OK
@@ -46,8 +39,6 @@ def dialy_profit(request):
         "StatusCode": 6000,
         "status": status_code,
         "data": serialized.data,
-        "first_date_formatted": first_date_formatted,
-        "last_date_formatted": last_date_formatted,
     }
 
     return Response(response_data, status_code)
@@ -57,24 +48,17 @@ def dialy_profit(request):
 @renderer_classes((JSONRenderer,))
 def monthly_profit(request):
     filter_data = {}
+    start_date = request.GET.get('startDate')
+    end_date = request.GET.get('endDate')
     
-    instances = MonthlyProfit.objects.all().order_by("-date_added")
+    if start_date or end_date:
+        start_date = datetime.strptime(start_date, '%Y-%m-%d %H:%M:%S.%f').date()
+        end_date = datetime.strptime(end_date, '%Y-%m-%d %H:%M:%S.%f').date()
+    else:
+        start_date = datetime.today().date()
+        end_date = datetime.today().date()
     
-    date_range = request.GET.get('date_range')
-
-    if date_range:
-        start_date_str, end_date_str = date_range.split(' - ')
-        start_date = datetime.strptime(start_date_str, '%m/%d/%Y').date()
-        end_date = datetime.strptime(end_date_str, '%m/%d/%Y').date()
-        instances = instances.filter(date_added__range=[start_date, end_date])
-        filter_data['date_range'] = date_range
-    
-    first_date_added = instances.aggregate(first_date_added=Min('date_added'))['first_date_added']
-    last_date_added = instances.aggregate(last_date_added=Max('date_added'))['last_date_added']
-    
-    first_date_formatted = first_date_added.strftime('%m/%d/%Y') if first_date_added else None
-    last_date_formatted = last_date_added.strftime('%m/%d/%Y') if last_date_added else None
-    
+    instances = MonthlyProfit.objects.filter(date_added__gte=start_date,date_added__lte=end_date).order_by("-date_added")
     serialized = MonthlyProfitSerializer(instances,many=True)
         
     status_code = status.HTTP_200_OK
@@ -82,8 +66,6 @@ def monthly_profit(request):
         "StatusCode": 6000,
         "status": status_code,
         "data": serialized.data,
-        "first_date_formatted": first_date_formatted,
-        "last_date_formatted": last_date_formatted,
     }
 
     return Response(response_data, status_code)
@@ -93,30 +75,19 @@ def monthly_profit(request):
 @renderer_classes((JSONRenderer,))
 def my_profit(request):
     filter_data = {}
+    start_date = request.GET.get('startDate')
+    end_date = request.GET.get('endDate')
     
-    instances = MyProfit.objects.all()
+    if start_date or end_date:
+        start_date = datetime.strptime(start_date, '%Y-%m-%d %H:%M:%S.%f').date()
+        end_date = datetime.strptime(end_date, '%Y-%m-%d %H:%M:%S.%f').date()
+    else:
+        start_date = datetime.today().date()
+        end_date = datetime.today().date()
     
-    if request.user.groups.filter(name__in=['core_team','investor']).exists():
-        for i in instances:
-            print(i.user,"")
-            print(request.user)
+    instances = MyProfit.objects.filter(date_added__gte=start_date,date_added__lte=end_date)
+    if request.user.groups.filter(name='investor').exists():
         instances = instances.filter(user=request.user)
-        
-    date_range = request.GET.get('date_range')
-
-    if date_range:
-        start_date_str, end_date_str = date_range.split(' - ')
-        start_date = datetime.strptime(start_date_str, '%m/%d/%Y').date()
-        end_date = datetime.strptime(end_date_str, '%m/%d/%Y').date()
-        instances = instances.filter(date_added__range=[start_date, end_date])
-        filter_data['date_range'] = date_range
-        
-    first_date_added = MyProfit.objects.aggregate(first_date_added=Min('date_added'))['first_date_added']
-    last_date_added = MyProfit.objects.aggregate(last_date_added=Max('date_added'))['last_date_added']
-    
-    first_date_formatted = first_date_added.strftime('%m/%d/%Y') if first_date_added else None
-    last_date_formatted = last_date_added.strftime('%m/%d/%Y') if last_date_added else None
-    print(instances)
     serialized = MyProfitSerializer(instances.order_by("-date_added"),many=True)
         
     status_code = status.HTTP_200_OK
@@ -124,8 +95,6 @@ def my_profit(request):
         "StatusCode": 6000,
         "status": status_code,
         "data": serialized.data,
-        "first_date_formatted": first_date_formatted,
-        "last_date_formatted": last_date_formatted,
     }
 
     return Response(response_data, status_code)

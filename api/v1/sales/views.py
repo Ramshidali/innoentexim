@@ -20,7 +20,7 @@ from main.functions import get_auto_id
 from executieves.models import Executive
 from sales_party.models import SalesParty
 from sales.models import Sales, SalesExpenses, SalesItems, SalesStock
-from api.v1.sales.serializers import ExportingCountrySerializer, SalesItemsSerializer, SalesPartySerializer, SalesReportSerializer, SalesSerializer, SalesStockSerializer
+from api.v1.sales.serializers import ExportingCountrySerializer, SalesExpenceSerializer, SalesItemsSerializer, SalesPartySerializer, SalesReportSerializer, SalesSerializer, SalesStockSerializer
 from api.v1.authentication.functions import generate_serializer_errors, get_user_token
 
 @api_view(['GET'])
@@ -86,17 +86,26 @@ def sales_report(request):
     
     filter_data = {}
     query = request.GET.get("q")
+    start_date = request.GET.get('startDate')
+    end_date = request.GET.get('endDate')
+    sales_party = request.GET.get('salesParty')
+    country = request.GET.get('country')
     
-    instances = Sales.objects.filter(is_deleted=False)
+    if start_date or end_date:
+        start_date = datetime.strptime(start_date, '%Y-%m-%d %H:%M:%S.%f').date()
+        end_date = datetime.strptime(end_date, '%Y-%m-%d %H:%M:%S.%f').date()
+    else:
+        start_date = datetime.today().date()
+        end_date = datetime.today().date()
+    
+    instances = Sales.objects.filter(date__gte=start_date,date__lte=end_date,is_deleted=False)
+    
+    if sales_party:
+        instances = instances.filter(sales_party__pk=sales_party)
+        
+    if country:
+        instances = instances.filter(country__pk=country)
          
-    date_range = request.GET.get('date_range')
-
-    if date_range:
-        start_date_str, end_date_str = date_range.split(' - ')
-        start_date = datetime.strptime(start_date_str, '%m/%d/%Y').date()
-        end_date = datetime.strptime(end_date_str, '%m/%d/%Y').date()
-        instances = instances.filter(date__range=[start_date, end_date])
-    
     if query:
 
         instances = instances.filter(
@@ -106,12 +115,6 @@ def sales_report(request):
         title = "Sales Report - %s" % query
         filter_data['q'] = query
         
-    first_date_added = instances.aggregate(first_date_added=Min('date'))['first_date_added']
-    last_date_added = instances.aggregate(last_date_added=Max('date'))['last_date_added']
-    
-    first_date_formatted = first_date_added.strftime('%m/%d/%Y') if first_date_added else None
-    last_date_formatted = last_date_added.strftime('%m/%d/%Y') if last_date_added else None
-    
     serialized = SalesReportSerializer(instances.order_by('-date_added'),many=True)
         
     status_code = status.HTTP_200_OK
@@ -119,8 +122,48 @@ def sales_report(request):
         "StatusCode": 6000,
         "status": status_code,
         "data": serialized.data,
-        "first_date_formatted": first_date_formatted,
-        "last_date_formatted": last_date_formatted,
+    }
+
+    return Response(response_data, status_code)
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+@renderer_classes((JSONRenderer,))
+def sales_info(request,pk):
+    
+    sales = Sales.objects.get(pk=pk)
+    
+    instances = SalesItems.objects.filter(sales=sales,is_deleted=False).order_by('-date_added')
+    serialized = SalesItemsSerializer(instances,many=True)
+    
+    expences = SalesExpenses.objects.filter(sales=sales,is_deleted=False).order_by('-date_added')
+    expence_serialized = SalesExpenceSerializer(expences,many=True)
+    
+    status_code = status.HTTP_200_OK
+    response_data = {
+        "StatusCode": 6000,
+        "status": status_code,
+        "data": {
+            'sales_date': sales.date,
+            'sales_id': sales.sales_id,
+            'sales_party': sales.sales_party.get_fullname(),
+            'sales_country': sales.country.country_name,
+            'sales_items': {
+                'items_data': serialized.data,
+            },
+            'sales_expenses': {
+                'expense_data': expence_serialized.data,
+            },
+            "total_qty": sales.total_qty(),
+            "total_amount": sales.items_total_amount(),
+            "total_amount_inr": sales.items_total_inr_amount(),
+            
+            "total_amount_expense": sales.items_total_expence(),
+            "total_amount_expense_inr": sales.expenses_items_total_inr_amount(),
+            
+            "total_sub_total_amount": sales.sub_total(),
+            "total_sub_total_inr_amount": sales.sub_total_inr(),
+        },
     }
 
     return Response(response_data, status_code)
@@ -139,7 +182,8 @@ def create_sales(request):
         # Extract salesd_items and salesd_expenses data
         salesd_items_data = data.pop('sales_items', [])
         salesd_expenses_data = data.pop('sales_expenses', [])
-
+        
+        print(salesd_items_data)
         # Create sales_party instance
         sales_party = SalesParty.objects.get(pk=sales_party_id)
         date_part = datetime.now().strftime('%Y%m%d')
@@ -166,7 +210,7 @@ def create_sales(request):
 
             # Create SalesItems instances
             for item_data in salesd_items_data:
-                sales_item_id = item_data.pop('sales_item')
+                sales_item_id = item_data.pop('sale_item')
                 stock = SalesStock.objects.get(pk=sales_item_id)
                 amount = item_data.get('amount', 0.0)
                 

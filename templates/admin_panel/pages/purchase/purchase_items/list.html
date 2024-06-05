@@ -39,7 +39,7 @@
                                         {% for instance in instances %}
                                         <tr>
                                             <td class="text-sm text-center" style="">{{ forloop.counter }}</td>
-                                            <td class="text-sm  text-center" >{{ instance.date_added }}</td>
+                                            <td class="text-sm  text-center" >{{ instance.date_added|date }}</td>
                                             <td class="text-sm text-left text-capitalize">{{ instance.get_user }}</td>
                                             <td class="text-sm text-left text-capitalize">{{ instance.name }}</td>
                                             <td style="text-align:right !important;">

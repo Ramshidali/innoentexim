@@ -18,7 +18,7 @@ class ExpenceTypes(BaseModel):
 class OtherExpences(BaseModel):
     remark = models.CharField(max_length=200,blank=True,null=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    expence_type = models.ForeignKey(ExpenceTypes,on_delete=models.CASCADE)
+    expence_type = models.ForeignKey(ExpenceTypes,on_delete=models.CASCADE, limit_choices_to={'is_deleted': False})
     
     class Meta:
         db_table = 'other_expences'
