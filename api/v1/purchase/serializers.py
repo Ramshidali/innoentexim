@@ -48,13 +48,14 @@ class PurchaseReportSerializer(serializers.ModelSerializer):
         return obj.sub_total()
     
 class PurchasedItemsSerializer(serializers.ModelSerializer):
-    purchase_item = serializers.SerializerMethodField()
+    purchase_item_name = serializers.SerializerMethodField()
     
     class Meta:
         model = PurchasedItems
-        fields = ['qty','amount_per_kg','amount','purchase_item']
+        fields = ['purchase_item','qty','amount_per_kg','amount','purchase_item_name']
+        read_only_fields = ['purchase_item']
     
-    def get_purchase_item(self,obj):
+    def get_purchase_item_name(self,obj):
         return obj.purchase_item.name
         
 class PurchaseExpenceSerializer(serializers.ModelSerializer):
@@ -73,3 +74,21 @@ class PurchaseSerializer(serializers.ModelSerializer):
         
     def get_purchase_party(self,obj):
         return obj.purchase_party.get_fullname()
+    
+class PurchaseEditSerializer(serializers.ModelSerializer):
+    purchase_items = serializers.SerializerMethodField()
+    purchase_expenses = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Purchase
+        fields = ['id','purchase_id','date','purchase_party','executive','purchase_items','purchase_expenses']
+        read_only_fields = ['id','purchase_id','executive']
+        
+    def get_purchase_items(self,obj):
+        items = PurchasedItems.objects.filter(purchase=obj,is_deleted=False)
+        return PurchasedItemsSerializer(items,many=True).data
+    
+    def get_purchase_expenses(self,obj):
+        expenses = PurchaseExpense.objects.filter(purchase=obj,is_deleted=False)
+        return PurchaseExpenceSerializer(expenses,many=True).data
+        

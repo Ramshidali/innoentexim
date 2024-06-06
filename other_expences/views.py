@@ -173,7 +173,9 @@ def delete_other_expence_type(request, pk):
     :param pk:
     :return:
     """
-    ExpenceTypes.objects.filter(pk=pk).update(is_deleted=True)
+    instance = ExpenceTypes.objects.get(pk=pk)
+    instance.is_deleted = True
+    instance.save()
 
     response_data = {
         "status": "true",
@@ -359,7 +361,9 @@ def delete_other_expence(request, pk):
     :param pk:
     :return:
     """
-    OtherExpences.objects.filter(pk=pk).update(is_deleted=True)
+    instance = OtherExpences.objects.get(pk=pk)
+    instance.is_deleted = True
+    instance.save()
 
     response_data = {
         "status": "true",

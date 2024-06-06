@@ -75,7 +75,7 @@
                                                 <a href="{% url 'other_expences:edit_other_expence_type' pk=instance.pk %}" class="mx-3">
                                                     <i class="fas fa-user-edit text-secondary" aria-hidden="true"></i>
                                                 </a>
-                                                <a class="action-button remove" href="{% url 'other_expences:delete_other_expence_type' pk=instance.pk %}" data-id="{{instance.pk}}" data-text="{{confirm_delete_message}}" data-title="Are you sure?" data-bs-toggle="tooltip" data-bs-original-title="Delete">
+                                                <a class="action-button remove" href="{% url 'other_expences:delete_other_expence' pk=instance.pk %}" data-id="{{instance.pk}}" data-text="{{confirm_delete_message}}" data-title="Are you sure?" data-bs-toggle="tooltip" data-bs-original-title="Delete">
                                                     <i class="fas fa-trash text-secondary" aria-hidden="true"></i>
                                                 </a>
                                             </td>

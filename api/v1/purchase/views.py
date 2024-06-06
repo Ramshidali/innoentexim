@@ -19,7 +19,7 @@ from main.functions import get_auto_id
 from executieves.models import Executive
 from purchase_party.models import PurchaseParty
 from purchase.models import Purchase, PurchaseExpense, PurchaseItems, PurchaseStock, PurchasedItems
-from api.v1.purchase.serializers import PurchaseExpenceSerializer, PurchaseItemsSerializer, PurchasePartySerializer, PurchaseReportSerializer, PurchaseSerializer, PurchasedItemsSerializer
+from api.v1.purchase.serializers import PurchaseEditSerializer, PurchaseExpenceSerializer, PurchaseItemsSerializer, PurchasePartySerializer, PurchaseReportSerializer, PurchaseSerializer, PurchasedItemsSerializer
 from api.v1.authentication.functions import generate_serializer_errors, get_user_token
 
 
@@ -242,3 +242,123 @@ def create_purchase(request):
                 "message": str(e),
             }
         return Response(response_data, status=status_code)
+    
+    
+@api_view(['POST'])
+@permission_classes((IsAuthenticated,))
+@renderer_classes((JSONRenderer,))
+def edit_purchase(request,pk):
+    if request.method == 'POST':
+        data = request.data
+
+        # Extract purchase_party primary key from data
+        purchase_party_id = data.pop('purchase_party')
+
+        # Extract purchased_items and purchased_expenses data
+        purchased_items_data = data.pop('purchased_items', [])
+        purchased_expenses_data = data.pop('purchased_expenses', [])
+
+        # Create purchase_party instance
+        purchase_party = PurchaseParty.objects.get(pk=purchase_party_id)
+        auto_id = get_auto_id(Purchase)
+        purchase_id = "IEEIP" + str(auto_id).zfill(3)
+        
+        executive = None
+        if not request.user.is_superuser:
+            executive = Executive.objects.get(user=request.user,is_deleted=False)
+        try:
+            with transaction.atomic():
+                # Create Purchase instance
+                purchase_serializer = PurchaseSerializer(data=data)
+                if purchase_serializer.is_valid():
+                    purchase = purchase_serializer.save(
+                        purchase_party=purchase_party,
+                        auto_id = auto_id,
+                        creator = request.user,
+                        executive = executive,
+                        purchase_id = purchase_id 
+                        )
+
+                    # Create PurchasedItems instances
+                    for item_data in purchased_items_data:
+                        purchase_item_id = item_data.pop('purchase_item')
+                        purchase_item = PurchaseItems.objects.get(pk=purchase_item_id)
+                        PurchasedItems.objects.create(
+                            purchase=purchase, 
+                            purchase_item=purchase_item, 
+                            auto_id = get_auto_id(PurchasedItems),
+                            creator=request.user,
+                            **item_data
+                            )
+                        
+                        if (update_purchase_stock:=PurchaseStock.objects.filter(purchase_item=purchase_item,is_deleted=False)).exists():
+                            stock = PurchaseStock.objects.get(purchase_item=purchase_item,is_deleted=False)
+                            stock.qty += Decimal(item_data['qty'])
+                            if not update_purchase_stock.filter(purchase=purchase).exists():
+                                stock.purchase.add(purchase)
+                            stock.save()
+                        else:
+                            stock_item = PurchaseStock.objects.create(
+                                auto_id = get_auto_id(PurchaseStock),
+                                creator = request.user,
+                                purchase_item = purchase_item,
+                                qty = item_data['qty'],
+                            )
+                            stock_item.purchase.add(purchase)
+                            stock_item.save()
+
+                    # Create PurchaseExpense instances
+                    for expense_data in purchased_expenses_data:
+                        PurchaseExpense.objects.create(
+                            purchase=purchase,
+                            auto_id = get_auto_id(PurchaseExpense),
+                            creator=request.user,
+                            **expense_data)
+                        
+                    calculate_profit(purchase.date)
+                        
+                    status_code = status.HTTP_201_CREATED
+                    response_data = {
+                        "StatusCode": 200,
+                        "status": status_code,
+                        "data": purchase_serializer.data,
+                    }
+
+                else:
+                    status_code = status.HTTP_400_BAD_REQUEST
+                    response_data = {
+                        "StatusCode": 400,
+                        "status": status_code,
+                        "message": purchase_serializer.data,
+                    }
+                    
+        except IntegrityError as e:
+            status_code = status.HTTP_400_BAD_REQUEST
+            response_data = {
+                "StatusCode": 400,
+                "status": "false",
+                "title": "Failed",
+                "message": str(e),
+            }
+
+        except Exception as e:
+            status_code = status.HTTP_400_BAD_REQUEST
+            response_data = {
+                "StatusCode": 400,
+                "status": "false",
+                "title": "Failed",
+                "message": str(e),
+            }
+    
+    else:
+        purchase = Purchase.objects.get(pk=pk)
+        serialized_data = PurchaseEditSerializer(purchase,many=False)
+        
+        status_code = status.HTTP_201_CREATED
+        response_data = {
+            "StatusCode": 200,
+            "status": status_code,
+            "data": serialized_data.data,
+        }
+            
+    return Response(response_data, status=status_code)
