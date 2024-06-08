@@ -70,11 +70,11 @@ class ExportingItemsForm(forms.ModelForm):
         instance = kwargs.get('instance')
         super().__init__(*args, **kwargs)
         
-        if instance:
-            self.fields['purchasestock'].queryset = PurchaseStock.objects.filter(pk=instance.pk)
-        else:
-            # valid_purchase_items = PurchaseStock.objects.filter(qty__gt=0).values_list('purchasestock', flat=True)
+        if not instance:
             self.fields['purchasestock'].queryset = PurchaseStock.objects.filter(qty__gt=0)
+            # self.fields['purchasestock'].queryset = PurchaseStock.objects.filter(pk=instance.pk)
+        # else:
+            # valid_purchase_items = PurchaseStock.objects.filter(qty__gt=0).values_list('purchasestock', flat=True)
             
     def clean(self):
         cleaned_data = super().clean()

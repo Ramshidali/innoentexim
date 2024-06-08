@@ -14,7 +14,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.contrib.auth.decorators import login_required
 from django.forms import formset_factory, inlineformset_factory
-from profit.views import calculate_profit
+from profit.views import calculate_profit, profit_calculation
 # rest framework
 from rest_framework import status
 # third
@@ -59,7 +59,7 @@ def sales_item_qty(request):
     return HttpResponse(json.dumps(response_data),status=status_code, content_type="application/json")
 
 @login_required
-@role_required(['superadmin','core_team','director'])
+@role_required(['superadmin','sales','investor'])
 def sales_stock(request):
     """
     Sales Stock
@@ -86,7 +86,7 @@ def sales_stock(request):
     return render(request, 'admin_panel/pages/sales/stock/list.html', context)
 
 @login_required
-@role_required(['superadmin','core_team','director'])
+@role_required(['superadmin','sales','investor'])
 def sales_info(request,pk):
     """
     Sale Info
@@ -96,10 +96,13 @@ def sales_info(request,pk):
     
     instance = Sales.objects.get(pk=pk)
     sales_items = SalesItems.objects.filter(sales=instance,is_deleted=False)
+    sales_expenses = SalesExpenses.objects.filter(sales=instance,is_deleted=False)
 
     context = {
         'instance': instance,
         'sales_items': sales_items,
+        'sales_expenses': sales_expenses,
+        
         'page_name' : 'Sale Info',
         'page_title' : 'Sale Info',
     }
@@ -107,7 +110,7 @@ def sales_info(request,pk):
     return render(request, 'admin_panel/pages/sales/sales/info.html', context)
 
 @login_required
-@role_required(['superadmin','core_team','director'])
+@role_required(['superadmin','sales','investor'])
 def sales_list(request):
     """
     Sales List
@@ -238,7 +241,8 @@ def create_sales(request):
                         expense_data.amount_in_inr = form.cleaned_data['amount'] * inr_exchange_rate
                         expense_data.save()
                     
-                    calculate_profit(sales_data.date)
+                    # calculate_profit(sales_data.date)
+                    profit_calculation()
                     
                     response_data = {
                         "status": "true",
@@ -391,7 +395,7 @@ def edit_sales(request, pk):
                         f.instance.delete()
 
                     # Calculate profit
-                    calculate_profit(data.date)
+                    profit_calculation()
 
                     response_data = {
                         "status": "true",
@@ -469,7 +473,7 @@ def update_sales_stock_quantity(sales_item):
 
     
 @login_required
-@role_required(['superadmin','core_team','director'])
+@role_required(['superadmin','sales','investor'])
 def delete_sales(request, pk):
     """
     sales deletion, it only mark as is deleted field to true
@@ -492,7 +496,7 @@ def delete_sales(request, pk):
     sales.is_deleted = True
     sales.save()
     
-    calculate_profit(sales.date)
+    profit_calculation()
     
     response_data = {
         "status": "true",
@@ -506,7 +510,7 @@ def delete_sales(request, pk):
 
 
 @login_required
-@role_required(['superadmin','core_team','director'])
+@role_required(['superadmin','sales','investor'])
 def print_sales(request):
     """
     Sales Print

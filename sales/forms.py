@@ -44,11 +44,11 @@ class SalesItemsForm(forms.ModelForm):
         }
         
     def __init__(self, *args, **kwargs):
-        instance = kwargs.get('instance')
         super().__init__(*args, **kwargs)
         
-        if instance:
-            self.fields['sales_stock'].queryset = SalesStock.objects.filter(pk=instance.pk)
+        if 'instance' in kwargs:
+            instance = kwargs['instance']
+            self.fields['sales_stock'].queryset = SalesStock.objects.filter(qty__gt=0) | SalesStock.objects.filter(pk=instance.sales_stock.pk)
         else:
             self.fields['sales_stock'].queryset = SalesStock.objects.filter(qty__gt=0)
             

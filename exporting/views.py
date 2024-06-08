@@ -453,7 +453,7 @@ def delete_courier_partner(request, pk):
     return HttpResponse(json.dumps(response_data), content_type='application/javascript')
 
 @login_required
-@role_required(['superadmin','core_team','director'])
+@role_required(['superadmin','core_team','executive','director'])
 def exporting(request,pk):
     """
     Exporting
@@ -493,7 +493,7 @@ def exporting(request,pk):
 #     return render(request, 'admin_panel/pages/exporting/print_exporting.html', context)
 
 @login_required
-@role_required(['superadmin','core_team'])
+@role_required(['superadmin','core_team','executive'])
 def exporting_list(request):
     """
     Exporting Report
@@ -562,7 +562,7 @@ def exporting_list(request):
     return render(request, 'admin_panel/pages/export/exporting/list.html', context)
 
 @login_required
-@role_required(['superadmin','core_team'])
+@role_required(['superadmin','core_team','executive'])
 def create_exporting(request):
     ExportingItemsFormset = formset_factory(ExportingItemsForm, extra=2)
     
@@ -660,7 +660,7 @@ def create_exporting(request):
         return render(request,'admin_panel/pages/export/exporting/create.html',context)
 
 @login_required
-@role_required(['superadmin','core_team','director'])
+@role_required(['superadmin','core_team','director','executive'])
 def edit_exporting(request,pk):
     """
     edit operation of exporting
@@ -669,7 +669,7 @@ def edit_exporting(request,pk):
     :return:
     """
     export_instance = get_object_or_404(Exporting, pk=pk)
-    exportingd_items = ExportItem.objects.filter(export=export_instance)
+    exporting_items = ExportItem.objects.filter(export=export_instance)
     
     if ExportItem.objects.filter(export=export_instance).exists():
         i_extra = 0
@@ -686,6 +686,36 @@ def edit_exporting(request,pk):
     message = ''
     
     if request.method == 'POST':
+        
+        if ExportStatus.objects.filter(export=export_instance,status="025").exists():
+            for item in exporting_items:
+                if not SalesStock.objects.get(country=item.export.exporting_country,purchase_item=item.purchasestock.purchase_item,is_deleted=False).qty > 0:
+                    
+                    response_data = {
+                    "status": "false",
+                    "title": "Failed",
+                    "message": f'no stock available in {item.purchasestock.purchase_item.name} in sales stock'
+                    }
+
+                    return HttpResponse(json.dumps(response_data), content_type='application/javascript')
+                
+        
+        for exporting_item in exporting_items:
+            
+            if PurchaseStock.objects.filter(purchase_item=exporting_item.purchasestock.purchase_item,is_deleted=False).exists():
+                stock = PurchaseStock.objects.get(purchase_item=exporting_item.purchasestock.purchase_item,is_deleted=False)
+                stock.qty += exporting_item.qty
+                stock.save()
+            if ExportStatus.objects.filter(export=export_instance,status="025").exists():
+                if SalesStock.objects.filter(country=exporting_item.export.exporting_country,purchase_item=exporting_item.purchasestock.purchase_item,is_deleted=False).exists():
+                    stock = SalesStock.objects.get(country=exporting_item.export.exporting_country,purchase_item=exporting_item.purchasestock.purchase_item,is_deleted=False)
+                    stock.qty -= exporting_item.qty
+                    stock.save()
+        
+        exporting_items.update(
+            qty = 0,
+        )
+        
         exporting_form = ExportingForm(request.POST,instance=export_instance)
         exporting_items_formset = ExportingItemsFormset(request.POST,request.FILES,
                                             instance=export_instance,
@@ -708,9 +738,21 @@ def edit_exporting(request,pk):
                         i_data.auto_id = get_auto_id(ExportItem)
                         i_data.creator = request.user
                     i_data.save()
+                    
+                if (purchase_stock:=PurchaseStock.objects.filter(purchase_item=i_data.purchasestock.purchase_item)).exists():
+                    purchase_stock = purchase_stock.first()
+                    purchase_stock.qty -= i_data.qty
+                    purchase_stock.save()
 
             for f in exporting_items_formset.deleted_forms:
                 f.instance.delete()
+                
+            ExportStatus.objects.create(
+                status = "010",
+                caption = "export edited",
+                export = export_instance,
+                creator = request.user,
+            )
                 
             response_data = {
                 "status": "true",
@@ -735,7 +777,7 @@ def edit_exporting(request,pk):
                         
     else:
         exporting_form = ExportingForm(instance=export_instance)
-        exporting_items_formset = ExportingItemsFormset(queryset=exportingd_items,
+        exporting_items_formset = ExportingItemsFormset(queryset=exporting_items,
                                             prefix='exporting_items_formset',
                                             instance=export_instance)
 
@@ -760,52 +802,39 @@ def delete_exporting(request, pk):
     :param pk:
     :return:
     """
-    # exporting = Exporting.objects.get(pk=pk)
-    # if exporting.exporting_manager_is_varified == True :
-    #     if not Sales.objects.filter(export=exporting,is_deleted=False).exists():
-    #         if (materials:=ExportingMaterials.objects.filter(export=exporting,is_deleted=False)).exists():
-    #             for material in materials:
-    #                 exporting_items = material.exporting_item
-    #                 branch = material.exporting.branch.pk
-    #                 qty = material.qty
-                    
-    #                 if (stocks:=Stock.objects.filter(export=exporting,exporting_item__pk=exporting_items.pk,branch__pk=branch,is_deleted=False)).exists():
-    #                     for stock in stocks:
-    #                         stock.qty -= qty
-    #                         stock.save()
-                        
-    #                         stock.exporting.remove(exporting)
-                            
-    #             materials.update(is_deleted=True)
-                            
-    #         exporting.is_deleted=True
-    #         exporting.save()
+    
+    export_instance = get_object_or_404(Exporting, pk=pk)
+    exporting_items = ExportItem.objects.filter(export=export_instance)
+    
+    if ExportStatus.objects.filter(export=export_instance,status="025").exists():
+        for item in exporting_items:
+            if not SalesStock.objects.get(country=item.export.exporting_country,purchase_item=item.purchasestock.purchase_item,is_deleted=False).qty > 0:
+                response_data = {
+                "status": "false",
+                "title": "Failed",
+                "message": f'no stock available in {item.purchasestock.purchase_item.name} in sales stock'
+                }
 
-    #         response_data = {
-    #             "status": "true",
-    #             "title": "Successfully Deleted",
-    #             "message": "Exporting Successfully Deleted.",
-    #             "redirect": "true",
-    #             "redirect_url": reverse('exporting:exporting_list'),
-    #         }
-    #     else:
-    #         sales_queryset = Sales.objects.filter(export=exporting)
-    #         sales_invoice_numbers = [sales.invoice_no for sales in sales_queryset]
-    #         invoice_numbers_text = ", ".join(sales_invoice_numbers)
-    #         message = f"This exporting has already included the sale of some items. Sales Invoice Numbers: {invoice_numbers_text}"
+                return HttpResponse(json.dumps(response_data), content_type='application/javascript')
+    
+    for exporting_item in exporting_items:
             
-    #         response_data = {
-    #             "status": "false",
-    #             "title": "Failed",
-    #             "message": message,
-    #         }
-    # else:
-    #     exporting.is_deleted=True
-    #     exporting.save()
-        
-    #     ExportingMaterials.objects.filter(export=exporting).update(is_deleted=True)
-    #     ExportingMoreExpense.objects.filter(export=exporting).update(is_deleted=True)
-        
+        if PurchaseStock.objects.filter(purchase_item=exporting_item.purchasestock.purchase_item,is_deleted=False).exists():
+            stock = PurchaseStock.objects.get(purchase_item=exporting_item.purchasestock.purchase_item,is_deleted=False)
+            stock.qty += exporting_item.qty
+            stock.save()
+            
+        if ExportStatus.objects.filter(export=export_instance,status="025").exists():
+            if SalesStock.objects.filter(country=exporting_item.export.exporting_country,purchase_item=exporting_item.purchasestock.purchase_item,is_deleted=False).exists():
+                stock = SalesStock.objects.get(country=exporting_item.export.exporting_country,purchase_item=exporting_item.purchasestock.purchase_item,is_deleted=False)
+                stock.qty -= exporting_item.qty
+                stock.save()
+            
+    exporting_items.update(is_deleted=True)
+    
+    export_instance.is_deleted = True
+    export_instance.save()
+    
     response_data = {
         "status": "true",
         "title": "Successfully Deleted",
@@ -817,7 +846,7 @@ def delete_exporting(request, pk):
     return HttpResponse(json.dumps(response_data), content_type='application/javascript')
 
 @login_required
-@role_required(['superadmin','core_team'])
+@role_required(['superadmin','core_team','executive'])
 def update_expoting_status(request):
     """
     updation operation of exporting status
@@ -857,6 +886,10 @@ def update_expoting_status(request):
                         )
                         stock_item.export.add(export)
                         stock_item.save()
+                    
+                    # stock = PurchaseStock.objects.get(purchase_item=item.purchasestock.purchase_item,is_deleted=False)
+                    # stock.qty -= item.qty
+                    # stock.save()
            
             response_data = {
                 "status": "true",

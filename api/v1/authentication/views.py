@@ -115,3 +115,26 @@ def side_profile(request):
         "data": serializer.data,
     }
     return Response(response_data, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+@renderer_classes((JSONRenderer,))
+def profile(request):
+    user = request.user
+
+    if user.groups.filter(name="executive").exists():
+        instance = Executive.objects.get(user=user)
+        serializer = ExecutiveSerializer(instance)
+    elif user.groups.filter(name="investor").exists():
+        instance = Investors.objects.get(user=user)
+        serializer = InvestorSerializer(instance)
+    else:
+        # Handle the case where the user is neither an executive nor an investor
+        raise ValueError("User does not belong to a recognized group")
+        
+    response_data = {
+        "status": status.HTTP_200_OK,
+        "StatusCode": 6000,
+        "data": serializer.data,
+    }
+    return Response(response_data, status=status.HTTP_200_OK)

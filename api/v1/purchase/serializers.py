@@ -52,8 +52,8 @@ class PurchasedItemsSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = PurchasedItems
-        fields = ['purchase_item','qty','amount_per_kg','amount','purchase_item_name']
-        read_only_fields = ['purchase_item']
+        fields = ['id','purchase_item','qty','amount_per_kg','amount','purchase_item_name']
+        read_only_fields = ['id','purchase_item']
     
     def get_purchase_item_name(self,obj):
         return obj.purchase_item.name
@@ -62,7 +62,8 @@ class PurchaseExpenceSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = PurchaseExpense
-        fields = ['title', 'amount']
+        fields = ['id','title', 'amount']
+        read_only_fields = ['id']
 
 class PurchaseSerializer(serializers.ModelSerializer):
     purchase_party = serializers.SerializerMethodField()

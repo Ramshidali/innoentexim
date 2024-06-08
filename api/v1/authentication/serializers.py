@@ -75,10 +75,11 @@ class ResetPasswordSerializer(serializers.Serializer):
 class InvestorSerializer(serializers.ModelSerializer):
     group_names = serializers.SerializerMethodField()
     initial = serializers.SerializerMethodField()
+    profile_image = serializers.SerializerMethodField()
     
     class Meta:
         model = Investors
-        fields = ['investor_id','first_name','last_name','group_names','initial']
+        fields = ['investor_id','first_name','last_name','group_names','initial','profile_image','email','phone','date_of_birth','address','state','country','zip']
         
     def get_group_names(self, obj):
         group_names = obj.user.groups.all()
@@ -87,14 +88,20 @@ class InvestorSerializer(serializers.ModelSerializer):
     def get_initial(self,obj):
         return obj.get_initial().upper()
     
+    def get_profile_image(self,obj) :
+        if obj.image:
+            request = self.context.get('request')
+            return request.build_absolute_uri(obj.image.url)
+    
 class ExecutiveSerializer(serializers.ModelSerializer):
     group_names = serializers.SerializerMethodField()
     initial = serializers.SerializerMethodField()
     investor_id = serializers.SerializerMethodField()
+    profile_image = serializers.SerializerMethodField()
     
     class Meta:
         model = Executive
-        fields = ['investor_id','first_name','last_name','group_names','initial']
+        fields = ['investor_id','first_name','last_name','group_names','initial','profile_image','email','phone','date_of_birth','address','state','country','zip','department']
         
     def get_group_names(self, obj):
         group_names = obj.user.groups.all()
@@ -105,6 +112,11 @@ class ExecutiveSerializer(serializers.ModelSerializer):
     
     def get_investor_id(self,obj):
         return obj.employee_id
+    
+    def get_profile_image(self,obj) :
+        if obj.image:
+            request = self.context.get('request')
+            return request.build_absolute_uri(obj.image.url)
         
 class UserSerializer(serializers.Serializer):
     group_names = serializers.SerializerMethodField()

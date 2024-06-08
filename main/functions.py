@@ -90,61 +90,60 @@ def get_auto_id(model):
 
 
 def get_current_role(request):
+    # Ensure the user is authenticated and active before proceeding
+    if request.user.is_authenticated and request.user.is_active:
+        # Get all user groups and print their names
+        user_groups = request.user.groups.all()
+        for group in user_groups:
+            print(group.name)
+    
+    # Initialize all role flags to False
     is_superadmin = False
     is_staff = False
-    is_dealer = False
     is_core_team = False
     is_investor = False
     is_executive = False
     is_director = False
     is_sales = False
     is_purchase = False
-
-    if request.user.is_authenticated:        
+    
+    # List to collect all roles
+    roles = []
+    
+    # If the user is authenticated, determine their roles
+    if request.user.is_authenticated:
+        # Check if the user is a superadmin
+        is_superadmin = request.user.is_superuser and request.user.is_active
+        if is_superadmin:
+            roles.append("superadmin")
         
-        if User.objects.filter(id=request.user.id,is_superuser=True,is_active=True).exists():
-            is_superadmin = True
+        # Get all group names associated with the user
+        group_names = request.user.groups.values_list('name', flat=True)
+        print(list(group_names))  # Convert to list for better readability in print output
         
-        if User.objects.filter(id=request.user.id,is_active=True,groups__name="staff").exists():
-            is_staff = True
-            
-        if User.objects.filter(id=request.user.id,is_active=True,groups__name="core_team").exists():
-            is_core_team = True
-            
-        if User.objects.filter(id=request.user.id,is_active=True,groups__name="investor").exists():
-            is_investor = True
-            
-        if User.objects.filter(id=request.user.id,is_active=True,groups__name="executive").exists():
-            is_executive = True
-            
-        if User.objects.filter(id=request.user.id,is_active=True,groups__name="director").exists():
-            is_director = True
-            
-        if User.objects.filter(id=request.user.id,is_active=True,groups__name="sales").exists():
-            is_sales = True
-            
-        if User.objects.filter(id=request.user.id,is_active=True,groups__name="purchase").exists():
-            is_purchase = True
-
-    current_role = "user"
-    if is_superadmin:
-        current_role = "superadmin"
-    elif is_staff:
-        current_role = "staff"
-    elif is_core_team:
-        current_role = "core_team"
-    elif is_investor:
-        current_role = "investor"
-    elif is_executive:
-        current_role = "executive"
-    elif is_director :
-        current_role = "director"
-    elif is_sales :
-        current_role = "sales"
-    elif is_purchase :
-        current_role = "purchase"
-                
+        # Check membership in each group and add to roles list
+        if 'staff' in group_names:
+            roles.append('staff')
+        if 'core_team' in group_names:
+            roles.append('core_team')
+        if 'investor' in group_names:
+            roles.append('investor')
+        if 'executive' in group_names:
+            roles.append('executive')
+        if 'director' in group_names:
+            roles.append('director')
+        if 'sales' in group_names:
+            roles.append('sales')
+        if 'purchase' in group_names:
+            roles.append('purchase')
+    
+    # Determine the current role by concatenating roles
+    current_role = ', '.join(roles) if roles else "user"  # Default role if no specific roles match
+    
+    print(current_role)  # Print the determined role
+    
     return current_role
+
 
 
 def randomnumber(n):

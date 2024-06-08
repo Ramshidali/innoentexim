@@ -14,6 +14,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 # third party
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
+
+from profit.views import profit_calculation
 #local
 from . forms import *
 from . models import *
@@ -263,6 +265,8 @@ def create_other_expence(request):
             data.date_updated = datetime.datetime.today()
             data.updater = request.user
             data.save()
+            
+            profit_calculation()
 
             response_data = {
                 "status": "true",
@@ -317,6 +321,8 @@ def edit_other_expence(request,pk):
             data.date_updated = datetime.datetime.today()
             data.updater = request.user
             data.save()
+            
+            profit_calculation()
                     
             response_data = {
                 "status": "true",
@@ -364,7 +370,9 @@ def delete_other_expence(request, pk):
     instance = OtherExpences.objects.get(pk=pk)
     instance.is_deleted = True
     instance.save()
-
+    
+    profit_calculation()
+    
     response_data = {
         "status": "true",
         "title": "Successfully Deleted",

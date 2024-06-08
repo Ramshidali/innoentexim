@@ -1,11 +1,10 @@
 from django.db import models
-from exporting.models import Exporting, ExportingCountry
+from django.core.validators import MinValueValidator
 
 from main.models import BaseModel
-from purchase.models import PurchaseItems
 from sales_party.models import SalesParty
-
-from forex_python.converter import CurrencyRates
+from purchase.models import PurchaseItems
+from exporting.models import Exporting, ExportingCountry
 
 SALES_TYPES_CHOICES = (
     ('qty','QTY'),
@@ -14,7 +13,7 @@ SALES_TYPES_CHOICES = (
 
 # Create your models here.
 class SalesStock(BaseModel):
-    qty = models.DecimalField(max_digits=10, decimal_places=2)
+    qty = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
     
     export = models.ManyToManyField(Exporting)
     purchase_item = models.ForeignKey(PurchaseItems, on_delete=models.CASCADE, limit_choices_to={'is_deleted': False})
@@ -149,7 +148,7 @@ class Sales(BaseModel):
 
 class SalesItems(BaseModel):
     no_boxes = models.PositiveIntegerField(default=0,null=True,blank=True)
-    sale_type = models.CharField(max_length=10,choices=SALES_TYPES_CHOICES)
+    sale_type = models.CharField(max_length=10,choices=SALES_TYPES_CHOICES,default="qty")
     qty = models.DecimalField(max_digits=10, decimal_places=2)
     per_kg_amount = models.DecimalField(max_digits=10, decimal_places=2)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
@@ -164,7 +163,7 @@ class SalesItems(BaseModel):
         verbose_name_plural = ('Sales Items')
     
     def __str__(self):
-        return f'{self.qty} {self.amount}'
+        return f'{self.sale_type} {self.qty} {self.amount}'
     
     
 class SalesExpenses(BaseModel):

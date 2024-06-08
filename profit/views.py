@@ -23,6 +23,17 @@ from main.functions import generate_form_errors, get_auto_id, get_current_role, 
 from . models import *
 from . forms import *
 
+def profit_calculation():
+    # Get today's date
+    today_date = timezone.now().date()
+    year = today_date.year
+    month = today_date.month
+
+    # Calculate profit for today's date
+    profit = calculate_profit(today_date)
+    calculate_monthly_profit(year, month)
+    distribute_profits(year, month)
+
 # Create your views here.
 def calculate_profit(issued_date):
     # Filter purchases for the given date
@@ -58,7 +69,7 @@ def calculate_profit(issued_date):
     instance.purchase_expenses = purchase_expense_total
     instance.sales = sales_total
     instance.sales_expenses = sales_expense_total
-    instance.total_expenses = purchase_total + purchase_expense_total +sales_expense_total
+    instance.total_expenses = purchase_total + purchase_expense_total + sales_expense_total
     instance.profit = profit
     instance.save()
     # print(profit)
@@ -108,7 +119,8 @@ def calculate_monthly_profit(year, month):
     # Subtract other expenses for the same month
     other_expenses = OtherExpences.objects.filter(
         date_added__year=year,
-        date_added__month=month
+        date_added__month=month,
+        is_deleted=False
     ).aggregate(total_expenses=Sum('amount'))['total_expenses'] or 0
 
     # Calculate final monthly profit
@@ -155,7 +167,7 @@ def distribute_profits(year, month):
         profit_instance.save()
         
 @login_required
-@role_required(['superadmin','core_team','director'])
+@role_required(['superadmin','investor'])
 def exchange_rates(request):
     """
     Exchange Rate
@@ -175,7 +187,7 @@ def exchange_rates(request):
     return render(request, 'admin_panel/pages/exchange/list.html', context)
 
 @login_required
-@role_required(['superadmin','core_team','director'])
+@role_required(['superadmin','investor'])
 def create_exchange_rate(request):
     
     message = ''
@@ -227,7 +239,7 @@ def create_exchange_rate(request):
         return render(request,'admin_panel/pages/exchange/create.html',context)
     
 @login_required
-@role_required(['superadmin','core_team','director'])
+@role_required(['superadmin','investor'])
 def edit_exchange_rate(request,pk):
     """
     edit operation of export item
@@ -288,7 +300,7 @@ def edit_exchange_rate(request,pk):
         return render(request, 'admin_panel/pages/exchange/create.html',context)
 
 @login_required
-@role_required(['superadmin','core_team','director'])
+@role_required(['superadmin','investor'])
 def delete_exchange_rate(request, pk):
     """
     exchange rates deletion, it only mark as is deleted field to true
@@ -296,44 +308,18 @@ def delete_exchange_rate(request, pk):
     :param pk:
     :return:
     """
-    invoice_numbers_text = ""
-    # data = ExchangeRate.objects.get(pk=pk)
-    # if not SalesMaterials.objects.filter(export_item=data, is_deleted=False).exists():
-        
-    #     data.is_deleted=True
-    #     data.save()
-    
-    #     if (instances:=PurchaseMaterials.objects.filter(export_item=data)).exists():
-    #         instances.update(is_deleted=True)
-            
-    #     if (stocks:=Stock.objects.filter(export_item=data)).exists():
-    #         stocks.update(is_deleted=True)
-
-    #     response_data = {
-    #         "status": "true",
-    #         "title": "Successfully Deleted",
-    #         "message": "Purchase Item Successfully Deleted.",
-    #         "redirect": "true",
-    #         "redirect_url": reverse('profit:exchange_rates'),
-    #     }
-    # else:
-    #     sales_material_queryset = SalesMaterials.objects.filter(export_item=data)
-    #     sales_invoice_numbers = [sales_material.sales.invoice_no for sales_material in sales_material_queryset]
-    #     unique_invoice_numbers = list(set(sales_invoice_numbers))
-    #     invoice_numbers_text = ", ".join(unique_invoice_numbers)
-
-    message = f"This export item has already included the sale of some items. Sales Invoice Numbers: {invoice_numbers_text}"
+    instances = ExchangeRate.objects.filter(pk=pk).update(is_deleted=True)
     
     response_data = {
-        "status": "false",
-        "title": "Failed",
-        "message": message,
+        "status": "true",
+        "title": "Success",
+        "message": "exchange Rate deleted succesfully",
     }
 
     return HttpResponse(json.dumps(response_data), content_type='application/javascript')
 
 @login_required
-@role_required(['superadmin','core_team','director'])
+@role_required(['superadmin','investor'])
 def print_exchange_rates(request):
     """
     Print Exchange Rate
@@ -354,7 +340,7 @@ def print_exchange_rates(request):
 
 def export_exchange_rates(request):
     # Fetch all Exchange Rates
-    exchange_rates = ExchangeRate.objects.all()
+    exchange_rates = ExchangeRate.objects.filter(is_deleted=False)
 
     # Create a workbook and a worksheet
     wb = Workbook()
@@ -392,7 +378,7 @@ def export_exchange_rates(request):
 
 
 @login_required
-@role_required(['superadmin','core_team','director'])
+@role_required(['superadmin','investor'])
 def dialy_profits(request):
     """
     Profits
@@ -433,7 +419,7 @@ def dialy_profits(request):
     return render(request, 'admin_panel/pages/profit/dialy_list.html', context)
 
 @login_required
-@role_required(['superadmin','core_team','director'])
+@role_required(['superadmin','investor'])
 def print_dialy_profits(request):
     """
     Profits print
@@ -454,7 +440,7 @@ def print_dialy_profits(request):
     return render(request, 'admin_panel/pages/profit/print_dialy_list.html', context)
 
 @login_required
-@role_required(['superadmin','core_team','director','investor'])
+@role_required(['superadmin','investor','investor'])
 def export_dialy_profits(request):
     filter_data = {}
     profit_pk = request.GET.get("profit_pk")
@@ -503,7 +489,7 @@ def export_dialy_profits(request):
 
 
 @login_required
-@role_required(['superadmin','core_team','director'])
+@role_required(['superadmin','investor'])
 def monthly_profits(request):
     """
     Profits
@@ -544,7 +530,7 @@ def monthly_profits(request):
     return render(request, 'admin_panel/pages/profit/monthly_list.html', context)
 
 @login_required
-@role_required(['superadmin','core_team','director'])
+@role_required(['superadmin','investor'])
 def print_monthly_profits(request):
     """
     Profits
@@ -566,7 +552,7 @@ def print_monthly_profits(request):
     return render(request, 'admin_panel/pages/profit/print_monthly_list.html', context)
 
 @login_required
-@role_required(['superadmin','core_team','director','investor'])
+@role_required(['superadmin','investor','investor'])
 def export_monthly_profits(request):
     filter_data = {}
     profit_pk = request.GET.get("profit_pk")
@@ -613,7 +599,7 @@ def export_monthly_profits(request):
     return response
 
 @login_required
-@role_required(['superadmin','core_team','director','investor'])
+@role_required(['superadmin','investor','investor'])
 def users_profits(request):
     """
     Profits
@@ -661,7 +647,7 @@ def users_profits(request):
     return render(request, 'admin_panel/pages/profit/my_list.html', context)
 
 @login_required
-@role_required(['superadmin','core_team','director'])
+@role_required(['superadmin','investor'])
 def print_my_profits(request):
     """
     Profits
@@ -682,7 +668,7 @@ def print_my_profits(request):
     return render(request, 'admin_panel/pages/profit/print_my_list.html', context)
 
 @login_required
-@role_required(['superadmin','core_team','director','investor'])
+@role_required(['superadmin','investor','investor'])
 def export_my_profits(request):
     filter_data = {}
     profit_pk = request.GET.get("profit_pk")

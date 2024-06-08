@@ -13,4 +13,5 @@ urlpatterns = [
     re_path(r'^logout/$', views.logout),
     
     re_path(r'^nav-profile/$', views.side_profile),
+    re_path(r'^profile/$', views.profile),
 ]

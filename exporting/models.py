@@ -105,7 +105,7 @@ class Exporting(BaseModel):
             return ""
 
 class ExportItem(BaseModel):
-    qty = models.PositiveIntegerField()
+    qty = models.DecimalField(max_digits=10, decimal_places=2)
     
     export = models.ForeignKey(Exporting, on_delete=models.CASCADE, limit_choices_to={'is_deleted': False})
     purchasestock = models.ForeignKey(PurchaseStock, on_delete=models.CASCADE, limit_choices_to={'is_deleted': False})

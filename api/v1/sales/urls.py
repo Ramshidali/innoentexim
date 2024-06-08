@@ -11,4 +11,5 @@ urlpatterns = [
     re_path(r'^sales-info/(?P<pk>.*)/$', views.sales_info),
     re_path(r'^sales-report/$', views.sales_report),
     re_path(r'^create-sales/$', views.create_sales),
+    re_path(r'^delete-sales/(?P<pk>.*)/$', views.delete_sales),
 ]
