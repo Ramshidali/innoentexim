@@ -180,3 +180,61 @@ class SalesExpenses(BaseModel):
     
     def __str__(self):
         return f'{self.title} {self.amount}'
+    
+class Damage(BaseModel):
+    damage_id = models.CharField(max_length=200)
+    date = models.DateField()
+    
+    country = models.ForeignKey(ExportingCountry,on_delete=models.CASCADE, limit_choices_to={'is_deleted': False})
+    
+    class Meta:
+        db_table = 'damege'
+        verbose_name = ('Damage')
+        verbose_name_plural = ('Damage')
+    
+    def __str__(self):
+        return f'{self.id}'
+    
+    def save(self, *args, **kwargs):
+        if not self.date:
+            self.date = self.date_added.date()
+        super().save(*args, **kwargs)
+    
+    def total_qty(self):
+        total = 0
+        # Calculate the sub-total for DamageItems
+        damage_items = DamageItems.objects.filter(damage=self)
+        for item in damage_items:
+            total += item.qty
+
+        return total
+
+class DamageItems(BaseModel):
+    no_boxes = models.PositiveIntegerField(default=0,null=True,blank=True)
+    weight_type = models.CharField(max_length=10,choices=SALES_TYPES_CHOICES,default="qty")
+    qty = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    damage = models.ForeignKey(Damage, on_delete=models.CASCADE, limit_choices_to={'is_deleted': False})
+    stock_item = models.ForeignKey(SalesStock, on_delete=models.CASCADE, limit_choices_to={'is_deleted': False})
+    
+    class Meta:
+        db_table = 'damage_items'
+        verbose_name = ('Damage Items')
+        verbose_name_plural = ('Damage Items')
+    
+    def __str__(self):
+        return f'{self.weight_type} - {self.qty}'
+    
+class DamageStock(BaseModel):
+    qty = models.DecimalField(default=0,max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
+    
+    purchase_item = models.ForeignKey(PurchaseItems, on_delete=models.CASCADE, limit_choices_to={'is_deleted': False})
+    country = models.ForeignKey(ExportingCountry, on_delete=models.CASCADE, limit_choices_to={'is_deleted': False})
+    
+    class Meta:
+        db_table = 'damage_stock'
+        verbose_name = ('Damage Stock')
+        verbose_name_plural = ('Damage Stock')
+    
+    def __str__(self):
+        return f'{self.purchase_item.name} - {self.qty}'

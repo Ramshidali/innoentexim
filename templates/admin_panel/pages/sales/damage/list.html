@@ -1,0 +1,163 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load main_templates_tags %}
+{% block content %}
+{% get_have_group request.user.id 'sales' as is_sales %}
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+    
+                <div class="card-header pb-0">
+                    <div class="d-lg-flex">
+                        <div>
+                            <h5 class="mb-0">List View</h5>
+                        </div>
+                        <div class="ms-auto my-auto mt-lg-0 mt-4">
+                            <div class="ms-auto my-auto d-flex ">
+                                <a href="{% url 'sales:print_damage' %}" class="btn btn-outline-warning btn-sm mb-0 mx-1" target="_blank"><i class="ri-printer-line" style="font-size:12px;"></i>&nbsp; Print</a>
+                                <a href="{% url 'sales:export_damage' %}" class="btn btn-outline-dark btn-sm mb-0 mx-1"><i class="ri-upload-line" style="font-size:12px;"></i>&nbsp; Export</a>
+                                {% if is_sales %}
+                                <a href="{% url 'sales:create_damage' %}" class="btn bg-gradient-success btn-sm mb-0 mx-1"><i class="ri-add-line" style="font-size:12px;"></i>&nbsp; Add</a>
+                                {% endif %}
+                                <div class="dropdown">
+                                    <button class="btn bg-gradient-info dropdown-toggle btn-sm mb-0" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false"><i class="ri-filter-line" style="font-size:12px;"></i>&nbsp; Filter</button>
+                                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton" style="">
+                                        <form action="." method="GET" class="px-4 py-3">
+                                            <div class="form-group">
+                                                <label for="inputField">Select Date</label>
+                                                <input type="text" id="reportrange" class="form-control" name="date_range" value="{% if not filter_data.date_range %}{{first_date_formatted}} - {{last_date_formatted}}{% else %}{{filter_data.date_range}}{% endif %}" style="display: inline;width: max-content;">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="inputField">Sales Party</label>
+                                                <select class="form-control" name="party">
+                                                    {% get_sales_parties as parties %}
+                                                    <option value="">All</option>
+                                                    {% for p in parties %}
+                                                    <option value="{{p.pk}}" {% if filter_data.party|stringformat:"s" == p.pk|stringformat:"s" %}selected{% endif %}>{{p.get_fullname}}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="inputField">Country</label>
+                                                <select class="form-control" name="sale_country">
+                                                    {% get_countries as countries %}
+                                                    <option value="">All</option>
+                                                    {% for c in countries %}
+                                                    <option value="{{c.pk}}" {% if filter_data.sale_country|stringformat:"s" == c.pk|stringformat:"s" %}selected{% endif %}>{{c.country_name}}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">Apply</button>
+                                        </form>
+                                    </div>
+                                </div>
+                                {% if filter_data %}
+                                <a href="." class="btn btn-info btn-sm mb-0 mx-1">Reset</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body px-0 pb-0">
+                    <div class="table-responsive">
+                        <div class="dataTable-wrapper dataTable-loading no-footer sortable searchable fixed-columns">
+                            <div class="dataTable-container">
+                                <table class="table table-flush dataTable-table" id="products-list">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th style="width: 2;text-align:center !important;">#</th>
+                                            <th style="text-align:center !important;">Date</th>
+                                            <th style="text-align:center !important;">Damage ID</th>
+                                            <th style="text-align:left !important;">Country</th>
+                                            <th style="text-align:center !important;">Qty</th>
+                                            <th style="text-align:right !important;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% load el_pagination_tags %}
+                                        {% paginate 20 instances %}
+                                        {% for instance in instances %}
+                                        <tr>
+                                            <td class="text-sm" style="text-align:center !important;">{{ forloop.counter }}</td>
+                                            <td class="text-sm" style="text-align:center !important;">{{ instance.date }}</td>
+                                            <td class="text-sm" style="text-align:center !important;">{{ instance.damage_id }}</td>
+                                            <td class="text-sm" style="text-align:left !important;">{{ instance.country.country_name }}</td>
+                                            <td class="text-sm" style="text-align:center !important;">{{ instance.total_qty }}</td>
+                                            <td class="text-sm" style="text-align:right !important;">
+                                                <a href="{% url 'sales:damage_info' pk=instance.pk %}" data-bs-toggle="tooltip" data-bs-original-title="Preview">
+                                                    <i class="fas fa-eye text-secondary" aria-hidden="true"></i>
+                                                </a>
+                                                <a href="{% url 'sales:edit_damage' pk=instance.pk %}" class="mx-3">
+                                                    <i class="fas fa-user-edit text-secondary" aria-hidden="true"></i>
+                                                </a>
+                                                <a class="action-button remove" href="{% url 'sales:delete_damage' pk=instance.pk %}" data-id="{{instance.pk}}" data-text="{{confirm_delete_message}}" data-title="Are you sure?" data-bs-toggle="tooltip" data-bs-original-title="Delete">
+                                                    <i class="fas fa-trash text-secondary" aria-hidden="true"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {% comment %} <div class="clearfix"></div>
+                            <div class="row pagi my-3">
+                                <div class="col-sm-6 col-xs-6 text-left my-pagina">{% show_pages %}</div>
+                                <div class="col-sm-6 col-xs-6 text-right tot my-pagination align-items-center">
+                                    <div class="m-t-10">
+                                        Showing {{title}}
+                                        <span class="current_page_index">{{ pages.current_start_index }}</span> - <span
+                                        class="current_end_status"></span> of <span
+                                        class="total_count"></span>
+                                    </div>
+                                </div>
+                            </div> {% endcomment %}
+                            
+                            {% get_pages %}
+                            <div class="dataTable-bottom">
+                                <div class="dataTable-info">Showing {{ pages.current_start_index }} to {{ pages.current_end_index }} of {{ pages.total_count }} entries</div>
+                                <nav class="dataTable-pagination">
+                                    <ul class="dataTable-pagination-list">
+                                        {% if pages.has_previous %}
+                                        <li class="pager"><a href="#" data-page="{{ pages.previous_page_number }}">‹</a></li>
+                                        {% endif %}
+                                        {% for page_number in pages.paginator.page_range %}
+                                        <li class="{% if page_number == pages.number %}active{% endif %}">
+                                            <a href="#" data-page="{{ page_number }}">{{ page_number }}</a>
+                                        </li>
+                                        {% endfor %}
+                                        {% if pages.has_next %}
+                                        <li class="pager"><a href="#" data-page="{{ pages.next_page_number }}">›</a></li>
+                                        {% endif %}
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {%include 'admin_panel/includes/footer.html' %}
+</div>
+{% endblock content %}
+{% block static %}
+{% load static %}
+<script type="text/javascript">
+    $(document).ready(function () {
+        var defaultDateRange = "{{ filter_data.date_range }}";
+    
+        if (defaultDateRange) {
+            $('#reportrange').val(defaultDateRange);
+        }
+        $('#reportrange').daterangepicker({
+            autoApply: true,
+            locale: {
+                format: 'MM/DD/YYYY'
+            }
+        });
+    });
+</script>
+{% endblock static %}

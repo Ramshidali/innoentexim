@@ -38,8 +38,9 @@
                                                     <th style="width: 2;text-align:center !important;">#</th>
                                                     <th style="text-align:center !important;">Date</th>
                                                     <th style="text-align:center !important;">Purchase</th>
-                                                    <th style="text-align:center !important;">Purchase Expense</th>
-                                                    <th style="text-align:center !important;">Sales Expense</th>
+                                                    <th style="text-align:center !important;">Purchase Expenses</th>
+                                                    <th style="text-align:center !important;">Sales Expenses</th>
+                                                    <th style="text-align:center !important;">Other Expenses</th>
                                                     <th style="text-align:center !important;">Total Expenses</th>
                                                     <th style="text-align:center !important;">Sales</th>
                                                     <th style="text-align:center !important;">Profit</th>
@@ -53,6 +54,7 @@
                                                     <td class="text-sm text-end">{{ instance.purchase }}</td>
                                                     <td class="text-sm text-end">{{ instance.purchase_expenses }}</td>
                                                     <td class="text-sm text-end">{{ instance.sales_expenses }}</td>
+                                                    <td class="text-sm text-end">{{ instance.other_expences }}</td>
                                                     <td class="text-sm text-end">{{ instance.total_expenses }}</td>
                                                     <td class="text-sm text-end">{{ instance.sales }}</td>
                                                     {% if instance.profit > 0 %}

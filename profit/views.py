@@ -60,8 +60,11 @@ def calculate_profit(issued_date):
     # Calculate total sales expenses amount
     sales_expense_total = sales_expenses.aggregate(total=Sum('amount_in_inr'))['total'] or 0
     
+    # Subtract other expenses for the same month
+    other_expenses = OtherExpences.objects.filter(date_added__date=issued_date,is_deleted=False).aggregate(total_expenses=Sum('amount'))['total_expenses'] or 0
+    
     # Calculate the profit
-    profit = sales_total - purchase_total - purchase_expense_total - sales_expense_total
+    profit = sales_total - purchase_total - purchase_expense_total - sales_expense_total - other_expenses
     
     # Update or create DailyProfit instance
     instance, created = DialyProfit.objects.get_or_create(date_added=issued_date)
@@ -69,7 +72,8 @@ def calculate_profit(issued_date):
     instance.purchase_expenses = purchase_expense_total
     instance.sales = sales_total
     instance.sales_expenses = sales_expense_total
-    instance.total_expenses = purchase_total + purchase_expense_total + sales_expense_total
+    instance.other_expences = other_expenses
+    instance.total_expenses = purchase_total + purchase_expense_total + sales_expense_total + other_expenses
     instance.profit = profit
     instance.save()
     # print(profit)
@@ -116,15 +120,8 @@ def calculate_monthly_profit(year, month):
         date_added__lte=last_day_of_month
     ).aggregate(monthly_profit=Sum('profit'))['monthly_profit'] or 0
 
-    # Subtract other expenses for the same month
-    other_expenses = OtherExpences.objects.filter(
-        date_added__year=year,
-        date_added__month=month,
-        is_deleted=False
-    ).aggregate(total_expenses=Sum('amount'))['total_expenses'] or 0
-
     # Calculate final monthly profit
-    final_monthly_profit = monthly_profit - other_expenses
+    final_monthly_profit = monthly_profit
 
     # Save the calculated monthly profit to MonthlyProfit model
     if MonthlyProfit.objects.filter(year=year, month=month).exists():
@@ -136,22 +133,12 @@ def calculate_monthly_profit(year, month):
             date_added=datetime.today().date()
             )
     
-    monthly_profit_instance.other_expences = other_expenses
     monthly_profit_instance.total_revenue = monthly_profit
     monthly_profit_instance.profit = final_monthly_profit
     monthly_profit_instance.save()
 
 def distribute_profits(year, month):
     monthly_profit = MonthlyProfit.objects.get(year=year, month=month)
-    
-    # core_team_users = User.objects.filter(groups__name='core_team')
-    # for core_team in core_team_users:
-    #     instance = CoreTeam.objects.get(user=core_team,is_deleted=False)
-    #     my_profit = monthly_profit.profit * instance.share_persentage / 100
-        
-    #     profit_instance, created = MyProfit.objects.get_or_create(year=year, month=month, user=core_team)
-    #     profit_instance.profit = my_profit
-    #     profit_instance.save()
         
     investor_users = User.objects.filter(groups__name='investor').exclude(username__endswith='_deleted')
     for investor in investor_users:

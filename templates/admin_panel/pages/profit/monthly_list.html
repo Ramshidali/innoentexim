@@ -41,7 +41,6 @@
                                             <th style="text-align:center !important;">Month</th>
                                             <th style="text-align:center !important;">Year</th>
                                             <th style="text-align:end !important;">Total Revenue</th>
-                                            <th style="text-align:end !important;">Other Expenses</th>
                                             <th style="text-align:end !important;">Profit</th>
                                         </tr>
                                     </thead>
@@ -57,7 +56,6 @@
                                             </td>
                                             <td class="text-sm text-center">{{ instance.year }}</td>
                                             <td class="text-sm text-end">{{ instance.total_revenue }}</td>
-                                            <td class="text-sm text-end">{{ instance.other_expences }}</td>
                                             {% if instance.profit > 0 %}
                                             <td class="text-sm text-end text-success"><i class="fa fa-arrow-up text-success" aria-hidden="true"></i> {{ instance.profit }}</td>
                                             {% else %}

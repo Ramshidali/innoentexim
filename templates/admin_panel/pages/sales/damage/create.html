@@ -1,0 +1,225 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="multisteps-form mb-5">
+                <div class="row">
+                    <div class="col-12 col-lg-10 m-auto">
+                        <form action="." method="POST" enctype="multipart/form-data" class="multisteps-form__form mb-8 ajax redirect" autocomplete="off" novalidate style="height: 700px;">
+                            {% csrf_token %}
+                            <div class="card multisteps-form__panel p-3 border-radius-xl bg-white js-active" data-animation="FadeIn">
+                                <h5 class="font-weight-bolder mb-0">Damages</h5>
+                                <p class="mb-0 text-sm">Items Info</p>
+                                <div class="multisteps-form__content">
+                                    <div class="row mt-3">
+                                        <div class="col-12 col-sm-6 mt-3 mt-sm-0">
+                                            <label>Date</label>
+                                            {{form.date}}
+                                        </div>
+                                        <div class="col-12 col-sm-6">
+                                            <label>Country</label>
+                                            {{form.country}}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="table-responsive card-body add_item_container damage_items_formset">
+                                        <table id="data-table-basic" class="table table-striped table-vmiddle">
+                                            <thead>
+                                                <tr>
+                                                    <th data-column-id="image" colspan="4">Add Damage Items</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <th style="min-width: 15px;">Items</th>
+                                                <th style="min-width: 15px;">Weight Type</th>
+                                                <th style="min-width: 15px;" id="boxCountLabel">No.Boxes</th>
+                                                <th style="min-width: 15px;">QTY</th>
+                                                <th style="min-width: 15px;"></th>
+                                                {% for item in damage_items_formset.forms %}
+                                                <tr class="form_set_row damage_items_formset">
+                                                    {{item.id}}
+                                                    <td>
+                                                        <span class="stock_item">
+                                                            {{ item.stock_item }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="weight_type">
+                                                            {{ item.weight_type }}
+                                                        </span>
+                                                    </td>
+                                                    <td  id="boxCountField">
+                                                        <span class="no_boxes">
+                                                            {{ item.no_boxes }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="qty">
+                                                            {{ item.qty }}
+                                                        </span>
+                                                    </td>
+                                                    <td class="delete">
+                                                        {% if item.instance.pk %}{{ item.DELETE }}{% endif %}
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                        {{ damage_items_formset.management_form }}
+                                    </div>
+                                </div>
+                                <div class="button-row d-flex mt-4">
+                                    <button class="btn bg-gradient-dark ms-auto mb-0" type="submit">Submit</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {%include 'admin_panel/includes/footer.html' %}
+</div>
+{% endblock content %}
+{% block static %}
+{% load static %}
+<style>
+    .damage_items_formset a.add-row::before{
+        content: "+ Add"
+    }
+    .damage_items_formset a.remove::before{
+        content: "Remove"
+    }
+    .disabled-field {
+        pointer-events: none; /* Prevents any interaction with the field */
+        opacity: 0.5; /* Makes the field appear disabled */
+        background-color: #e9ecef; /* Optional: changes background color to indicate disabled state */
+    }    
+</style>
+<script>
+    $(document).ready(function () {
+        $('.damage_items_formset table tr.form_set_row').formset({
+            prefix: '{{ damage_items_formset.prefix }}',
+            formCssClass: 'dynamic-formset',
+
+            'added': function (row) {
+                
+            },
+        });
+    });
+
+    $(document).ready(function () {
+        // Script to handle changing options of the damage-item select field
+        $('#id_country').change(function () {
+            var countryId = $(this).val();
+            var url = "{% url 'sales:get_sales_product_items' %}";
+            $.ajax({
+                url: url,
+                data: {'country_id': countryId},
+                dataType: 'json',
+                success: function (data) {
+                    var options = '<option value="">Select</option>'; // Initialize options variable
+                    $.each(data, function (index, item) {
+                        options += '<option value="' + item.id + '">' + item.name + '</option>'; // Append each option
+                    });
+                    $('.damage-item').html(options); // Replace all options in the select field
+                }
+            });
+        });
+
+        // Script to handle updating the qty field
+        $(".damage-item").change(function(){
+            var itemValue = $(this).val();
+            var digitValue = $(this).attr("id");
+            digitValue = digitValue.match(/\d+/);
+
+            if (digitValue !== null) {
+                digitValue = digitValue[0];
+            }
+
+            var country = $('#id_country').val();
+            var url = "{% url 'sales:sales_item_qty' %}";
+
+            $.ajax({
+                type: 'GET',
+                url: url,
+                dataType: 'json',
+                data: {
+                    'item_pk': itemValue,
+                    'country': country,
+                },
+
+                success: function (data) {
+                    var qty = data['qty'];
+                    $("#id_damage_items_formset-" + digitValue + "-qty").val(qty);
+                },
+
+                error: function (data) {
+                    var title = data["title"];
+                    var errorMessagesStr = data["responseJSON"]["message"];
+                },
+            });
+
+        });
+    });
+
+    $('.no_boxes').keyup(function() {
+        var elemId = $(this).attr("id");
+        var formCount = elemId.match(/\d+/);
+        var noBoxes = parseFloat($(this).val()); 
+        var damageType = $("#id_damage_items_formset-" + formCount + "-weight_type").val();
+        var qtyValue = parseFloat($("#id_damage_items_formset-" + formCount + "-qty").val());
+        var amount = parseFloat($("#id_damage_items_formset-" + formCount + "-per_kg_amount").val());
+    
+        var totalAmount = 0;
+        
+        if (damageType === "qty" && !isNaN(qtyValue) && !isNaN(amount)) {
+            totalAmount = qtyValue * amount;
+        } else if (damageType === "box" && !isNaN(noBoxes) && !isNaN(qtyValue) && !isNaN(amount)) {
+            totalAmount = noBoxes * qtyValue * amount;
+        }
+    
+        $("#id_damage_items_formset-" + formCount + "-amount").val(totalAmount.toFixed(2));
+    });
+
+    $('.damage_qty').keyup(function() {
+        var elemId = $(this).attr("id");
+        var formCount = elemId.match(/\d+/);
+        var qtyValue = parseFloat($(this).val()); 
+        var damageType = $("#id_damage_items_formset-" + formCount + "-weight_type").val();
+        var noBoxes = parseFloat($("#id_damage_items_formset-" + formCount + "-no_boxes").val());
+        var amount = parseFloat($("#id_damage_items_formset-" + formCount + "-per_kg_amount").val());
+    
+        var totalAmount = 0;
+        
+        if (damageType === "qty" && !isNaN(qtyValue) && !isNaN(amount)) {
+            totalAmount = qtyValue * amount;
+        } else if (damageType === "box" && !isNaN(noBoxes) && !isNaN(qtyValue) && !isNaN(amount)) {
+            totalAmount = noBoxes * qtyValue * amount;
+        }
+    
+        $("#id_damage_items_formset-" + formCount + "-amount").val(totalAmount.toFixed(2));
+    });
+
+    $('.damage-type').change(function() {
+        var elemId = $(this).attr("id");
+        var formCount = elemId.match(/\d+/);
+        var noBoxes = $("#id_damage_items_formset-" + formCount + "-no_boxes");
+        var damageType = $(this).val();
+    
+        if (damageType === "qty") {
+            noBoxes.addClass("disabled-field").val(0); // Add disabled class and clear the value
+        } else if (damageType === "box") {
+            noBoxes.removeClass("disabled-field"); // Remove disabled class
+        } else {
+            // Optional: handle other cases if there are more damage types
+            noBoxes.removeClass("disabled-field"); // Ensure the field is enabled for other cases
+        }
+    });
+</script>
+{% endblock static %}

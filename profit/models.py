@@ -34,6 +34,7 @@ class DialyProfit(models.Model):
     purchase_expenses = models.DecimalField(default=0, max_digits=10, decimal_places=2)
     sales = models.DecimalField(default=0, max_digits=10, decimal_places=2)
     sales_expenses = models.DecimalField(default=0, max_digits=10, decimal_places=2)
+    other_expences = models.DecimalField(default=0, max_digits=10, decimal_places=2)
     total_expenses = models.DecimalField(default=0, max_digits=10, decimal_places=2)
     profit = models.DecimalField(default=0, max_digits=10, decimal_places=2)
     
@@ -51,7 +52,6 @@ class MonthlyProfit(models.Model):
     year = models.IntegerField()
     month = models.IntegerField()
     total_revenue = models.DecimalField(default=0, max_digits=10, decimal_places=2)
-    other_expences = models.DecimalField(default=0, max_digits=10, decimal_places=2)
     profit = models.DecimalField(default=0, max_digits=10, decimal_places=2)
 
     class Meta:
