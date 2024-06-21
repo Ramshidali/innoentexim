@@ -18,11 +18,12 @@ class OtherExpencesForm(forms.ModelForm):
 
     class Meta:
         model = OtherExpences
-        fields = ['remark','amount','expence_type',]
+        fields = ['remark','expence_type','country_rate','country']
 
         widgets = {
             'remark': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Remark'}),
-            'amount': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Amount'}),
+            'country_rate': TextInput(attrs={'class': 'required form-control','placeholder' : 'Enter Amount'}),
             'expence_type': Select(attrs={'class': 'required form-control'}), 
+            'country': Select(attrs={'class': 'required form-control'}), 
         }
     

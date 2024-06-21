@@ -15,6 +15,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 
+from profit.models import ExchangeRate
 from profit.views import profit_calculation
 #local
 from . forms import *
@@ -257,13 +258,19 @@ def create_other_expence(request):
     if request.method == 'POST':
         # if instance go to edit
         form = OtherExpencesForm(request.POST)
-            
         if form.is_valid():
+            if form.cleaned_data['country'].country_name != "India":
+                inr_rate = ExchangeRate.objects.filter(country=form.cleaned_data['country'],is_active=True).latest('-date_added').rate_to_inr
+            else:
+                inr_rate = 1
+            
             data = form.save(commit=False)
             data.auto_id = get_auto_id(OtherExpences)
             data.creator = request.user
             data.date_updated = datetime.datetime.today()
             data.updater = request.user
+            data.exchange_rate = inr_rate
+            data.amount = inr_rate * form.cleaned_data['country_rate']
             data.save()
             
             profit_calculation()
@@ -316,10 +323,18 @@ def edit_other_expence(request,pk):
         form = OtherExpencesForm(request.POST,files=request.FILES,instance=instance)
         
         if form.is_valid():
-            #update OtherExpences
+            if form.cleaned_data['country'].country_name != "India":
+                inr_rate = ExchangeRate.objects.filter(country=form.cleaned_data['country'],is_active=True).latest('-date_added').rate_to_inr
+            else:
+                inr_rate = 1
+            
             data = form.save(commit=False)
+            data.auto_id = get_auto_id(OtherExpences)
+            data.creator = request.user
             data.date_updated = datetime.datetime.today()
             data.updater = request.user
+            data.exchange_rate = inr_rate
+            data.amount = inr_rate * form.cleaned_data['country_rate']
             data.save()
             
             profit_calculation()
@@ -429,19 +444,23 @@ def export_other_expenses(request):
     ws = wb.active
 
     # Define column headers
-    ws.append(['#', 'Remark', 'Amount', 'Expense Type'])
+    ws.append(['#', 'Date Added', 'Country', 'Expense Type', 'Remark', 'Currency', 'Exchange Rate', 'Amount'])
 
     # Iterate through other expenses and write to the worksheet
     for index, expense in enumerate(other_expenses, start=1):
         ws.append([
             index,
-            expense.remark if expense.remark else '',
-            expense.amount,
+            expense.date_added.date(),
+            expense.country.country_name if expense.country else '',
             expense.expence_type.name if expense.expence_type else '',
+            expense.remark,
+            expense.country_rate,
+            expense.exchange_rate,
+            expense.amount,
         ])
 
     # Adjust column widths
-    column_widths = [5, 30, 15, 20]  # Adjust as needed
+    column_widths = [5, 30, 15, 20, 50, 15, 15, 15]  # Adjust as needed
     for i, width in enumerate(column_widths, start=1):
         col_letter = get_column_letter(i)
         ws.column_dimensions[col_letter].width = width

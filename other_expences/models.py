@@ -1,5 +1,6 @@
 from django.db import models
 
+from exporting.models import ExportingCountry
 from main.models import BaseModel
 
 # Create your models here.
@@ -17,7 +18,11 @@ class ExpenceTypes(BaseModel):
 
 class OtherExpences(BaseModel):
     remark = models.CharField(max_length=200,blank=True,null=True)
+    exchange_rate = models.DecimalField(max_digits=10, decimal_places=2)
+    country_rate = models.DecimalField(max_digits=10, decimal_places=2)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    country = models.ForeignKey(ExportingCountry,on_delete=models.CASCADE, limit_choices_to={'is_deleted': False})
     expence_type = models.ForeignKey(ExpenceTypes,on_delete=models.CASCADE, limit_choices_to={'is_deleted': False})
     
     class Meta:

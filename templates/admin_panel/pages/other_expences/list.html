@@ -55,8 +55,11 @@
                                         <tr>
                                             <th style="width: 2;text-align:center !important;">#</th>
                                             <th style="text-align:center !important;">Date Added</th>
+                                            <th style="text-align:start !important;">Country</th>
                                             <th style="text-align:start !important;">Expence Type</th>
                                             <th style="text-align:start !important;">Remark</th>
+                                            <th style="text-align:right !important;">Currency</th>
+                                            <th style="text-align:right !important;">Exchange Rate</th>
                                             <th style="text-align:right !important;">Amount</th>
                                             <th style="text-align:right !important;">Action</th>
                                         </tr>
@@ -68,8 +71,11 @@
                                         <tr>
                                             <td class="text-sm text-center" style="">{{ forloop.counter }}</td>
                                             <td class="text-sm text-center">{{ instance.date_added|date:"d-M-Y" }}</td>
+                                            <td class="text-sm text-start text-capitalize">{{ instance.country.country_name }}</td>
                                             <td class="text-sm text-start text-capitalize">{{ instance.expence_type.name }}</td>
                                             <td class="text-sm text-start text-capitalize">{{ instance.remark }}</td>
+                                            <td class="text-sm text-end text-capitalize">{{ instance.country_rate }}</td>
+                                            <td class="text-sm text-end text-capitalize">{{ instance.exchange_rate }}</td>
                                             <td class="text-sm text-end text-capitalize">{{ instance.amount }}</td>
                                             <td style="text-align:end !important;">
                                                 <a href="{% url 'other_expences:edit_other_expence' pk=instance.pk %}" class="mx-3">
@@ -82,7 +88,7 @@
                                         </tr>
                                         {% endfor %}
                                         <tr>
-                                            <td class="font-weight-bold text-end" colspan="4">Grand Total: </td>
+                                            <td class="font-weight-bold text-end" colspan="7">Grand Total: </td>
                                             <td class="font-weight-bold text-end">{{total_amount}}</td>
                                             <td class="font-weight-bold text-center"></td>
                                         </tr>

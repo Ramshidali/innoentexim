@@ -35,26 +35,32 @@
                                         <table class="table mb-0" style="width:100%;" border="1">
                                             <thead>
                                                 <tr>
-                                                    <th class="text-center">#</th>
-                                                    <th class="text-center">Date</th>
-                                                    <th class="text-left">Expence Type</th>
-                                                    <th class="text-left">Remark</th>
-                                                    <th class="text-center">Amount</th>
+                                                    <th style="width: 2;text-align:center !important;">#</th>
+                                                    <th style="text-align:center !important;">Date Added</th>
+                                                    <th style="text-align:start !important;">Country</th>
+                                                    <th style="text-align:start !important;">Expence Type</th>
+                                                    <th style="text-align:start !important;">Remark</th>
+                                                    <th style="text-align:right !important;">Currency</th>
+                                                    <th style="text-align:right !important;">Exchange Rate</th>
+                                                    <th style="text-align:right !important;">Amount</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {% for instance in instances %}
                                                 <tr>
-                                                    <td class="text-center">{{ forloop.counter }}</td>
-                                                    <td class="text-center">{{ instance.date_added|date }}</td>
-                                                    <td class="text-left">{{ instance.expence_type.name }}</td>
-                                                    <td class="text-left">{{ instance.remark }}</td>
-                                                    <td class="text-center">{{ instance.amount }}</td>
+                                                    <td class="text-sm text-center" style="">{{ forloop.counter }}</td>
+                                                    <td class="text-sm text-center">{{ instance.date_added|date:"d-M-Y" }}</td>
+                                                    <td class="text-sm text-start text-capitalize">{{ instance.country.country_name }}</td>
+                                                    <td class="text-sm text-start text-capitalize">{{ instance.expence_type.name }}</td>
+                                                    <td class="text-sm text-start text-capitalize">{{ instance.remark }}</td>
+                                                    <td class="text-sm text-right text-capitalize">{{ instance.country_rate }}</td>
+                                                    <td class="text-sm text-right text-capitalize">{{ instance.exchange_rate }}</td>
+                                                    <td class="text-sm text-right text-capitalize">{{ instance.amount }}</td>
                                                 </tr>
                                                 {% endfor %}
                                                 <tr>
-                                                    <td class="text-right text-bold" colspan="4"><strong>Grand Total</strong></td>
-                                                    <td class="amount-row text-center text-bold"><strong>{{total_amount}}</strong></td>
+                                                    <td class="text-right text-bold" colspan="7"><strong>Grand Total</strong></td>
+                                                    <td class="amount-row text-right text-bold"><strong>{{total_amount}}</strong></td>
                                                 </tr>
                                             </tbody>
                                         </table>

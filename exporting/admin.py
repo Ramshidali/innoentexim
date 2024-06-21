@@ -17,3 +17,12 @@ class ExportStatusAdmin(admin.ModelAdmin):
 admin.site.register(ExportStatus,ExportStatusAdmin)
 admin.site.register(CourierPartner)
 admin.site.register(Exporting)
+
+class ExportingCountryAdmin(admin.ModelAdmin):
+    list_display = [
+        'id',
+        'date_added',
+        'country_name',
+        'cash_type',
+        ]
+admin.site.register(ExportingCountry,ExportingCountryAdmin)
