@@ -390,15 +390,15 @@ def edit_sales(request, pk):
                                 item_data.creator = request.user
                             item_data.save()
                         
-                            stock = SalesStock.objects.filter(country=item_data.sales.country,purchase_item=item_data.sales_stock.purchase_item).first()
-                            if sales_item.sale_type == "box":
-                                item_qty = sales_item.qty * sales_item.no_boxes
-                            else:
-                                item_qty = sales_item.qty
-                            
-                            if stock:
-                                stock.qty -= item_qty
-                                stock.save()
+                        stock = SalesStock.objects.filter(country=item_data.sales.country,purchase_item=item_data.sales_stock.purchase_item).first()
+                        if sales_item.sale_type == "box":
+                            item_qty = sales_item.qty * sales_item.no_boxes
+                        else:
+                            item_qty = sales_item.qty
+                        
+                        if stock:
+                            stock.qty -= item_qty
+                            stock.save()
 
                     # Delete removed sales items
                     for f in sales_items_formset.deleted_forms:

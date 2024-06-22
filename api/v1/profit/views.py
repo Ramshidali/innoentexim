@@ -58,7 +58,7 @@ def monthly_profit(request):
         start_date = datetime.today().date()
         end_date = datetime.today().date()
     
-    instances = MonthlyProfit.objects.filter(date_added__gte=start_date,date_added__lte=end_date).order_by("-date_added")
+    instances = MonthlyProfit.objects.all().order_by("-date_added")
     serialized = MonthlyProfitSerializer(instances,many=True)
         
     status_code = status.HTTP_200_OK
