@@ -397,7 +397,7 @@ def edit_sales(request, pk):
                                 item_qty = sales_item.qty
                             
                             if stock:
-                                stock.qty += item_qty
+                                stock.qty -= item_qty
                                 stock.save()
 
                     # Delete removed sales items
