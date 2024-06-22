@@ -225,8 +225,8 @@ def create_sales(request):
                             qty = Decimal(item_data['no_boxes']) * Decimal(item_data['qty'])
 
                         # Check if there is enough stock
-                        if stock.qty >= Decimal(item_data['qty']):
-                            stock.qty -= Decimal(item_data['qty'])
+                        if stock.qty >= Decimal(qty):
+                            stock.qty -= Decimal(qty)
                             stock.save()
                         else:
                             raise ValueError(f"Not enough stock for item {sales_item_id}. Available: {stock.qty}, Requested: {qty}")
@@ -301,9 +301,15 @@ def delete_sales(request,pk):
             sales_expenses = SalesExpenses.objects.filter(sales=sales_instance,is_deleted=False)
             
             for item in sales_items:
+                
+                if item.sale_type == "box":
+                    item_qty = item.qty * item.no_boxes
+                else:
+                    item_qty = item.qty
+                
                 stock_instance = SalesStock.objects.filter(purchase_item=item.sales_stock.purchase_item)
                 stock_instance = stock_instance.first()
-                stock_instance.qty += item.qty
+                stock_instance.qty += item_qty
                 stock_instance.save()
                 
                 item.is_deleted = True

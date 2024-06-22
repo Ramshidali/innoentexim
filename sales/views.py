@@ -211,9 +211,14 @@ def create_sales(request):
                         item_data.amount_in_inr = form.cleaned_data['amount'] * inr_exchange_rate
                         item_data.save()
                         
+                        if item_data.sale_type == "box":
+                            item_qty = item_data.qty * item_data.no_boxes
+                        else:
+                            item_qty = item_data.qty
+                        
                         stock = SalesStock.objects.filter(country=sales_data.country,purchase_item=item_data.sales_stock.purchase_item).first()
-                        if stock.qty >= Decimal(item_data.qty) :
-                            stock.qty -= item_data.qty
+                        if stock.qty >= Decimal(item_qty) :
+                            stock.qty -= item_qty
                             stock.save()
                         else: 
                             response_data = {
@@ -352,6 +357,18 @@ def edit_sales(request, pk):
         if form.is_valid() and sales_items_formset.is_valid() and sales_expense_formset.is_valid():
             try:
                 with transaction.atomic():
+                    
+                    for sales_item in sales_items:
+                        stock = SalesStock.objects.filter(country=sales_item.sales.country,purchase_item=sales_item.sales_stock.purchase_item).first()
+                        if sales_item.sale_type == "box":
+                            item_qty = sales_item.qty * sales_item.no_boxes
+                        else:
+                            item_qty = sales_item.qty
+                        
+                        if stock:
+                            stock.qty += item_qty
+                            stock.save()
+                    
                     # Update sales data
                     data = form.save(commit=False)
                     data.date_updated = datetime.today()
@@ -372,9 +389,16 @@ def edit_sales(request, pk):
                                 item_data.auto_id = get_auto_id(SalesItems)
                                 item_data.creator = request.user
                             item_data.save()
-
-                            # Adjust sales stock
-                            update_sales_stock_quantity(item_data)
+                        
+                            stock = SalesStock.objects.filter(country=item_data.sales.country,purchase_item=item_data.sales_stock.purchase_item).first()
+                            if sales_item.sale_type == "box":
+                                item_qty = sales_item.qty * sales_item.no_boxes
+                            else:
+                                item_qty = sales_item.qty
+                            
+                            if stock:
+                                stock.qty += item_qty
+                                stock.save()
 
                     # Delete removed sales items
                     for f in sales_items_formset.deleted_forms:
@@ -456,21 +480,6 @@ def edit_sales(request, pk):
         }
 
         return render(request, 'admin_panel/pages/sales/sales/create.html', context)
-
-
-def update_sales_stock_quantity(sales_item):
-    """
-    Update sales stock quantity based on sales item.
-    """
-    stock = SalesStock.objects.filter(country=sales_item.sales.country,
-                                      purchase_item=sales_item.sales_stock.purchase_item).first()
-    if stock:
-        stock.qty += sales_item.qty
-        stock.save()
-    else:
-        # Handle the case if stock entry does not exist, you might need to create one or handle it based on your business logic
-        pass
-
     
 @login_required
 @role_required(['superadmin','sales','investor'])
@@ -486,8 +495,14 @@ def delete_sales(request, pk):
     
     # update stock
     for item in sales_items:
+        
+        if item.sale_type == "box":
+            item_qty = item.qty * item.no_boxes
+        else:
+            item_qty = item.qty
+        
         stock = SalesStock.objects.get(country=sales.country,purchase_item=item.sales_stock.purchase_item)
-        stock.qty += item.qty
+        stock.qty += item_qty
         stock.save()
     
     SalesExpenses.objects.filter(sales=sales).update(is_deleted=True)
@@ -795,7 +810,12 @@ def create_damage(request):
                                 purchase_item=item_data.stock_item.purchase_item
                                 )
                             
-                        damage_stock.qty += item_data.qty
+                        if item_data.weight_type == "box":
+                            item_qty = item_data.qty * item_data.no_boxes
+                        else:
+                            item_qty = item_data.qty
+                            
+                        damage_stock.qty += item_qty
                         damage_stock.save()
                         
                         sales_stock = SalesStock.objects.get(
@@ -803,10 +823,9 @@ def create_damage(request):
                             purchase_item=item_data.stock_item.purchase_item
                             )
                         
-                        sales_stock.qty -= item_data.qty
+                        sales_stock.qty -= item_qty
                         sales_stock.save()
                         
-
                     response_data = {
                         "status": "true",
                         "title": "Successfully Created",
@@ -895,6 +914,33 @@ def edit_damage(request, pk):
         if form.is_valid() and damage_items_formset.is_valid():
             try:
                 with transaction.atomic():
+                    for damage_item in damage_items:
+                        if (damage_stock:=DamageStock.objects.filter(country=damage_item.damage.country,purchase_item=damage_item.stock_item.purchase_item)).exists():
+                                damage_stock = damage_stock.first()
+                        else:
+                            damage_stock = DamageStock.objects.create(
+                                auto_id = get_auto_id(DamageStock),
+                                creator = request.user,
+                                country=damage_item.damage.country,
+                                purchase_item=damage_item.stock_item.purchase_item
+                                )
+                            
+                        if damage_item.weight_type == "box":
+                            item_qty = damage_item.qty * damage_item.no_boxes
+                        else:
+                            item_qty = damage_item.qty
+                            
+                        damage_stock.qty -= item_qty
+                        damage_stock.save()
+                        
+                        sales_stock = SalesStock.objects.get(
+                            country=damage_item.damage.country,
+                            purchase_item=damage_item.stock_item.purchase_item
+                            )
+                        
+                        sales_stock.qty += item_qty
+                        sales_stock.save()
+                    
                     # Update damage data
                     data = form.save(commit=False)
                     data.date_updated = datetime.today()
@@ -911,6 +957,32 @@ def edit_damage(request, pk):
                                 item_data.auto_id = get_auto_id(DamageItems)
                                 item_data.creator = request.user
                             item_data.save()
+                            
+                            if (damage_stock:=DamageStock.objects.filter(country=data.country,purchase_item=item_data.stock_item.purchase_item)).exists():
+                                damage_stock = damage_stock.first()
+                            else:
+                                damage_stock = DamageStock.objects.create(
+                                    auto_id = get_auto_id(DamageStock),
+                                    creator = request.user,
+                                    country=data.country,
+                                    purchase_item=item_data.stock_item.purchase_item
+                                    )
+                                
+                            if item_data.weight_type == "box":
+                                item_qty = item_data.qty * item_data.no_boxes
+                            else:
+                                item_qty = item_data.qty
+                                
+                            damage_stock.qty += item_qty
+                            damage_stock.save()
+                            
+                            sales_stock = SalesStock.objects.get(
+                                country=data.country,
+                                purchase_item=item_data.stock_item.purchase_item
+                                )
+                            
+                            sales_stock.qty -= item_qty
+                            sales_stock.save()
 
                     # Delete removed damage items
                     for f in damage_items_formset.deleted_forms:
