@@ -23,14 +23,15 @@ from main.functions import generate_form_errors, get_auto_id, get_current_role, 
 from . models import *
 from . forms import *
 
-def profit_calculation():
+def profit_calculation(date):
     # Get today's date
-    today_date = timezone.now().date()
-    year = today_date.year
-    month = today_date.month
+    if date is None:
+        date = timezone.now().date()
+    year = date.year
+    month = date.month
 
     # Calculate profit for today's date
-    profit = calculate_profit(today_date)
+    calculate_profit(date)
     calculate_monthly_profit(year, month)
     distribute_profits(year, month)
 
@@ -79,34 +80,34 @@ def calculate_profit(issued_date):
     # print(profit)
     # return profit
 
-    if profit < instance.total_expenses:
-        balance_profit(issued_date)
+#     if profit < instance.total_expenses:
+#         balance_profit(issued_date)
 
-def balance_profit(issued_date):
-    # Get the first day of the current month
-    instance, created = DialyProfit.objects.get_or_create(date_added=issued_date)
-    first_day_of_month = issued_date.replace(day=1)
+# def balance_profit(issued_date):
+#     # Get the first day of the current month
+#     instance, created = DialyProfit.objects.get_or_create(date_added=issued_date)
+#     first_day_of_month = issued_date.replace(day=1)
 
-    # Get the last day of the previous month
-    last_day_of_previous_month = first_day_of_month - timedelta(days=1)
+#     # Get the last day of the previous month
+#     last_day_of_previous_month = first_day_of_month - timedelta(days=1)
 
-    # Get profits of the previous month
-    previous_month_profits = DialyProfit.objects.filter(
-        date_added__year=last_day_of_previous_month.year,
-        date_added__month=last_day_of_previous_month.month
-    ).order_by('-date_added')
+#     # Get profits of the previous month
+#     previous_month_profits = DialyProfit.objects.filter(
+#         date_added__year=last_day_of_previous_month.year,
+#         date_added__month=last_day_of_previous_month.month
+#     ).order_by('-date_added')
 
-    # Iterate over profits and try to balance profit
-    for prev_instance in previous_month_profits:
-        if prev_instance.profit > 0:  # Ensure profit is not a loss
-            remaining_profit = prev_instance.profit - prev_instance.total_expenses
-            shortfall = instance.total_expenses - instance.profit
-            amount_to_balance = min(shortfall, remaining_profit)
-            prev_instance.profit -= amount_to_balance
-            instance.profit += amount_to_balance
-            prev_instance.save()
-            instance.save()
-            break  # Stop when profit is balanced
+#     # Iterate over profits and try to balance profit
+#     for prev_instance in previous_month_profits:
+#         if prev_instance.profit > 0:  # Ensure profit is not a loss
+#             remaining_profit = prev_instance.profit - prev_instance.total_expenses
+#             shortfall = instance.total_expenses - instance.profit
+#             amount_to_balance = min(shortfall, remaining_profit)
+#             prev_instance.profit -= amount_to_balance
+#             instance.profit += amount_to_balance
+#             prev_instance.save()
+#             instance.save()
+#             break  # Stop when profit is balanced
         
 def calculate_monthly_profit(year, month):
     # Get the first and last date of the month
@@ -148,8 +149,9 @@ def distribute_profits(year, month):
         if MyProfit.objects.filter(year=year, month=month, user=investor).exists():
             profit_instance = MyProfit.objects.get(year=year, month=month, user=investor)
         else:
-            profit_instance = MyProfit.objects.create(date_added=datetime.today().date(),year=year, month=month, user=investor)
+            profit_instance = MyProfit.objects.create(year=year, month=month, user=investor)
         
+        profit_instance.date_added = datetime.today().date()
         profit_instance.profit = my_profit
         profit_instance.save()
         

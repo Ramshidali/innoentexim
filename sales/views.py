@@ -247,7 +247,7 @@ def create_sales(request):
                         expense_data.save()
                     
                     # calculate_profit(sales_data.date)
-                    profit_calculation()
+                    profit_calculation(sales_data.date)
                     
                     response_data = {
                         "status": "true",
@@ -419,7 +419,7 @@ def edit_sales(request, pk):
                         f.instance.delete()
 
                     # Calculate profit
-                    profit_calculation()
+                    profit_calculation(datetime.strptime(sales_instance.date, '%Y-%m-%d').date())
 
                     response_data = {
                         "status": "true",
@@ -511,7 +511,7 @@ def delete_sales(request, pk):
     sales.is_deleted = True
     sales.save()
     
-    profit_calculation()
+    profit_calculation(sales.date)
     
     response_data = {
         "status": "true",

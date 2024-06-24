@@ -17,7 +17,7 @@ class MonthlyProfitSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = MonthlyProfit
-        fields = ['id','date_added','year','month','total_revenue','other_expences','profit']
+        fields = ['id','date_added','year','month','total_revenue','profit']
     
     def get_month(self,obj):
         month_name = calendar.month_name[obj.month]

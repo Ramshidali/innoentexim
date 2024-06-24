@@ -210,7 +210,7 @@ def create_purchase(request):
                             **expense_data)
                         
                     # calculate_profit(purchase.date)
-                    profit_calculation()
+                    profit_calculation(purchase.date)
                         
                     status_code = status.HTTP_201_CREATED
                     response_data = {
@@ -399,7 +399,7 @@ def delete_purchase(request,pk):
             purchase_instance.save()
             
             # calculate_profit(purchase_instance.date)
-            profit_calculation()
+            profit_calculation(purchase_instance.date)
             
             status_code = status.HTTP_200_OK
             response_data = {

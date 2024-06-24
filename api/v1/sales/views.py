@@ -252,7 +252,7 @@ def create_sales(request):
                         )
                     
                     # calculate_profit(sales.date)
-                    profit_calculation()
+                    profit_calculation(sales.date)
                     
                     status_code = status.HTTP_201_CREATED
                     response_data = {
@@ -321,7 +321,7 @@ def delete_sales(request,pk):
             sales_instance.save()
             
             # calculate_profit(sales_instance.date)
-            profit_calculation()
+            profit_calculation(sales_instance.date)
             
             status_code = status.HTTP_200_OK
             response_data = {

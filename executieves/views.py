@@ -36,7 +36,7 @@ def executive_info(request,pk):
         'instance': instance,
         'page_name' : 'Executive Info',
         'page_title' : 'Executive Info',
-        'is_executive' : True,
+        'is_executive_page' : True,
     }
 
     return render(request, 'admin_panel/pages/executive/info.html', context)
@@ -67,7 +67,7 @@ def executive_list(request):
         'page_name' : 'Executive',
         'page_title' : 'Executive',
         'filter_data' :filter_data,
-        'is_executive' : True,
+        'is_executive_page' : True,
     }
 
     return render(request, 'admin_panel/pages/executive/list.html', context)
@@ -164,7 +164,7 @@ def create_executive(request):
             
             'is_need_datetime_picker': True,
             'is_need_forms': True,
-            'is_executive' : True,
+            'is_executive_page' : True,
         }
 
         return render(request, 'admin_panel/pages/executive/create.html',context)
@@ -222,7 +222,7 @@ def edit_executive(request,pk):
             
             'is_need_datetime_picker': True,
             'is_need_forms': True,
-            'is_executive' : True,
+            'is_executive_page' : True,
         }
 
         return render(request, 'admin_panel/pages/executive/create.html',context)

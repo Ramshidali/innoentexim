@@ -328,7 +328,7 @@ def create_purchase(request):
                         expense_data.save()
                         
                     # calculate_profit(purchase_data.date)
-                    profit_calculation()
+                    profit_calculation(purchase_data.date)
                         
                     response_data = {
                         "status": "true",
@@ -513,7 +513,7 @@ def edit_purchase(request, pk):
 
                     # Calculate profit
                     # calculate_profit(purchase_instance.date)
-                    profit_calculation()
+                    profit_calculation(datetime.strptime(purchase_instance.date, '%Y-%m-%d').date())
 
                     response_data = {
                         "status": "true",
@@ -626,7 +626,7 @@ def delete_purchase(request, pk):
             purchase_instance.save()
             
             # calculate_profit(purchase_instance.date)
-            profit_calculation()
+            profit_calculation(purchase_instance.date)
             
             response_data = {
                 "StatusCode": 200,
@@ -682,7 +682,7 @@ def edit_purchased_item(request,pk):
             update_stock_quantity(data)
             # Calculate profit
             # calculate_profit(data.purchase.date)
-            profit_calculation()
+            profit_calculation(data.purchase.date)
                     
             response_data = {
                 "status": "true",

@@ -273,7 +273,7 @@ def create_other_expence(request):
             data.amount = inr_rate * form.cleaned_data['country_rate']
             data.save()
             
-            profit_calculation()
+            profit_calculation(data.date_added.date())
 
             response_data = {
                 "status": "true",
@@ -337,7 +337,7 @@ def edit_other_expence(request,pk):
             data.amount = inr_rate * form.cleaned_data['country_rate']
             data.save()
             
-            profit_calculation()
+            profit_calculation(instance.date_added.date())
                     
             response_data = {
                 "status": "true",
@@ -386,7 +386,7 @@ def delete_other_expence(request, pk):
     instance.is_deleted = True
     instance.save()
     
-    profit_calculation()
+    profit_calculation(instance.date_added.date())
     
     response_data = {
         "status": "true",
