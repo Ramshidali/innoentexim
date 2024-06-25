@@ -149,7 +149,7 @@ def distribute_profits(year, month):
         if MyProfit.objects.filter(year=year, month=month, user=investor).exists():
             profit_instance = MyProfit.objects.get(year=year, month=month, user=investor)
         else:
-            profit_instance = MyProfit.objects.create(year=year, month=month, user=investor)
+            profit_instance = MyProfit.objects.create(date_added=datetime.today().date(), year=year, month=month, user=investor)
         
         profit_instance.date_added = datetime.today().date()
         profit_instance.profit = my_profit
